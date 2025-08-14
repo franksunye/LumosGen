@@ -1,10 +1,8 @@
 # LumosGen - AI-Powered Content Generation for VS Code
 
-[![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)](./CHANGELOG.md)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](./LICENSE)
-[![VS Code](https://img.shields.io/badge/VS%20Code-1.74.0+-orange.svg)](https://code.visualstudio.com/)
-
 > *"Lumos!"* - Illuminate your content creation process with AI ✨
+
+**Status: MVP Development** 🚧
 
 LumosGen is a VS Code extension that automatically generates and updates content using AI when you save files in your workspace. Perfect for maintaining documentation, summaries, and overviews of your projects.
 
@@ -17,19 +15,17 @@ LumosGen is a VS Code extension that automatically generates and updates content
 - **📊 Real-time Feedback**: Progress notifications and detailed logging
 - **🛡️ Safe & Secure**: Local processing with optional cloud AI integration
 
-## 📦 Installation
+## 🚀 Development Setup
 
-### From Source (MVP Version)
+### Prerequisites
+- VS Code 1.74.0 or higher
+- Node.js 16.x or higher
 
+### Getting Started
 1. Clone this repository
 2. Install dependencies: `npm install`
 3. Compile TypeScript: `npm run compile`
 4. Press `F5` in VS Code to launch Extension Development Host
-
-### Prerequisites
-
-- VS Code 1.74.0 or higher
-- Node.js 16.x or higher
 
 ## ⚙️ Configuration
 
@@ -174,26 +170,25 @@ MIT License - see LICENSE file for details.
 - Built with VS Code Extension API
 - Powered by AI for intelligent content generation
 
-## 📚 Documentation
+## 🔧 Development Status
 
-- **[Quick Start Guide](./docs/QUICK_START.md)** - Get up and running in minutes
-- **[Design Document](./docs/DESIGN_DOCUMENT.md)** - Technical architecture and design
-- **[Contributing Guide](./docs/CONTRIBUTING.md)** - How to contribute to the project
-- **[Examples](./examples/)** - Sample files and use cases
+This is an MVP (Minimum Viable Product) in active development. Core features are functional but the project is not yet ready for production use.
 
-## 🤝 Contributing
+### Current Features ✅
+- File watching for Markdown files
+- AI-powered content generation (Mock + OpenAI)
+- Multiple templates (Summary, TOC, Changelog)
+- VS Code integration and commands
 
-We welcome contributions! Please see our [Contributing Guide](./docs/CONTRIBUTING.md) for details.
+### TODO 🚧
+- Performance optimization
+- Enhanced error handling
+- Additional AI service providers
+- VS Code Marketplace preparation
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](./LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- Inspired by the "Lumos" spell from Harry Potter
-- Built with VS Code Extension API
-- Powered by AI for intelligent content generation
+MIT License - see [LICENSE](./LICENSE) file for details.
 
 ---
 
