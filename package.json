@@ -8,13 +8,13 @@
     "name": "LumosGen Contributors"
   },
   "license": "MIT",
-  "homepage": "https://github.com/your-username/LumosGen#readme",
+  "homepage": "https://github.com/franksunye/LumosGen#readme",
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-username/LumosGen.git"
+    "url": "https://github.com/franksunye/LumosGen.git"
   },
   "bugs": {
-    "url": "https://github.com/your-username/LumosGen/issues"
+    "url": "https://github.com/franksunye/LumosGen/issues"
   },
   "engines": {
     "vscode": "^1.74.0"
