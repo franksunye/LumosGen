@@ -1,0 +1,116 @@
+{
+  "name": "lumosgen",
+  "displayName": "LumosGen",
+  "description": "AI-powered content generation for VS Code - illuminate your content creation process",
+  "version": "0.1.0",
+  "publisher": "lumosgen",
+  "author": {
+    "name": "LumosGen Contributors"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/your-username/LumosGen#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/LumosGen.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-username/LumosGen/issues"
+  },
+  "engines": {
+    "vscode": "^1.74.0"
+  },
+  "categories": [
+    "Other",
+    "Machine Learning"
+  ],
+  "keywords": [
+    "ai",
+    "content generation",
+    "markdown",
+    "automation",
+    "documentation"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "configuration": {
+      "title": "LumosGen",
+      "properties": {
+        "lumosGen.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable LumosGen file watching and content generation"
+        },
+        "lumosGen.watchPatterns": {
+          "type": "array",
+          "default": ["**/*.md"],
+          "description": "File patterns to watch for changes"
+        },
+        "lumosGen.outputFile": {
+          "type": "string",
+          "default": "LumosGen-Summary.md",
+          "description": "Output file name for generated content"
+        },
+        "lumosGen.aiService": {
+          "type": "object",
+          "default": {
+            "type": "mock",
+            "endpoint": "",
+            "apiKey": "",
+            "model": "gpt-3.5-turbo"
+          },
+          "description": "AI service configuration"
+        },
+        "lumosGen.triggerDelay": {
+          "type": "number",
+          "default": 2000,
+          "description": "Delay in milliseconds before triggering content generation"
+        },
+        "lumosGen.template": {
+          "type": "string",
+          "default": "summary",
+          "enum": ["summary", "toc", "changelog"],
+          "description": "Content generation template"
+        }
+      }
+    },
+    "commands": [
+      {
+        "command": "lumosGen.generateContent",
+        "title": "Generate Content",
+        "category": "LumosGen"
+      },
+      {
+        "command": "lumosGen.toggleWatcher",
+        "title": "Toggle File Watcher",
+        "category": "LumosGen"
+      },
+      {
+        "command": "lumosGen.diagnose",
+        "title": "Diagnose Issues",
+        "category": "LumosGen"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile",
+    "test": "node ./scripts/demo-test.js",
+    "lint": "echo 'Linting not configured yet'",
+    "clean": "rimraf out",
+    "package": "vsce package",
+    "demo": "node ./scripts/demo-test.js"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.74.0",
+    "@types/node": "16.x",
+    "typescript": "^4.9.4"
+  },
+  "dependencies": {
+    "axios": "^1.6.0"
+  }
+}
