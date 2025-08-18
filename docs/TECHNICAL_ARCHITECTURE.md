@@ -13,17 +13,18 @@
 ## 🎯 架构设计目标
 
 ### 核心需求
-1. **文档变更记忆**：系统能够"记住"哪些Markdown文档被修改，实现增量更新
-2. **知识库管理**：高效处理GitHub项目中的文档作为知识源
-3. **内容生成优化**：基于文档变更智能生成和更新营销网站内容
-4. **智能博客生成**：支持全量生成新博客和部分修改已有博客的双重能力
-5. **可扩展性**：支持从MVP到企业级的架构演进
+1. **真正的Agentic智能**：构建具备自主感知、智能决策、持续学习的AI Agent系统
+2. **多Agent协作**：实现专业化Agent集群的智能协调和任务分工
+3. **自适应学习**：从用户交互和环境变化中持续学习和优化策略
+4. **可配置自主性**：支持从完全自主到人工监督的多级别智能控制
+5. **Agent-Human协作**：实现人机协作的智能营销内容管理
 
 ### 设计原则
-- **渐进式演进**：分阶段实施，避免过度工程化
-- **向后兼容**：每个阶段保持API兼容性
-- **性能优先**：确保VS Code扩展的响应速度
-- **KISS原则**：保持架构简洁，符合MVP精神
+- **Agentic优先**：以Agent智能化为核心，而非简单的自动化
+- **协作智能**：多Agent专业化分工，集体智慧解决复杂问题
+- **持续学习**：从每次交互中学习，不断优化决策和策略
+- **人机协作**：Agent增强人类能力，而非完全替代
+- **可控自主性**：用户可配置Agent的自主程度和干预级别
 
 ## 🏗️ 当前架构分析
 
@@ -51,66 +52,140 @@ LumosGen/
 - ✅ 响应式网站生成
 - ✅ SEO优化支持
 
-### 架构局限（核心技术缺失）
-- ❌ **缺乏文档变更追踪**：无法感知项目演进
-- ❌ **无增量更新机制**：只能全量重新生成
-- ❌ **无智能记忆能力**：无法记住变更历史和上下文
-- ❌ **Mock AI实现**：缺乏真实的AI生成能力
-- ❌ **无持续价值创造**：一次性工具，用户粘性低
+### 架构局限（Agentic能力缺失）
+- ❌ **缺乏真正的智能化**：只是自动化工具，无自主决策能力
+- ❌ **无Agent协作机制**：单一流程处理，无专业化分工
+- ❌ **无学习和记忆**：无法从经验中学习和优化策略
+- ❌ **被动响应模式**：需要人工触发，无主动感知能力
+- ❌ **固定行为模式**：无法适应不同场景和用户偏好
 
-## 🚀 渐进式架构演进方案
+## 🚀 Agentic架构演进方案
 
-### 阶段1：智能缓存架构（Sprint 4-5）
+### 阶段1：多Agent系统基础（Sprint 4-5）
 
-#### 核心组件设计
+#### 核心Agent架构设计
 
-**1. 文档变更追踪器**
+**1. 基础Agent框架**
 ```typescript
-interface DocumentChangeTracker {
-  // 追踪文档变更
-  trackChanges(filePath: string, content: string): ChangeSet;
-  
-  // 获取增量更新
-  getIncrementalUpdates(): DocumentDelta[];
-  
-  // 检测语义变更
-  detectSemanticChanges(oldContent: string, newContent: string): SemanticChange[];
-  
-  // 失效缓存
-  invalidateCache(patterns: string[]): void;
+interface BaseAgent {
+  // Agent身份和能力
+  id: string;
+  capabilities: AgentCapability[];
+  autonomyLevel: AutonomyLevel;
+
+  // 核心Agent方法
+  perceive(environment: Environment): Promise<Perception>;
+  reason(perception: Perception, context: AgentContext): Promise<Decision>;
+  act(decision: Decision): Promise<ActionResult>;
+  learn(experience: AgentExperience): Promise<void>;
+
+  // Agent间通信
+  sendMessage(targetAgent: string, message: AgentMessage): Promise<void>;
+  receiveMessage(message: AgentMessage): Promise<AgentResponse>;
 }
 
-interface ChangeSet {
-  filePath: string;
-  changeType: 'created' | 'modified' | 'deleted';
-  timestamp: Date;
-  contentHash: string;
-  semanticChanges: SemanticChange[];
+**2. 专业化Agent设计**
+```typescript
+// 项目监控Agent
+class ProjectWatcherAgent extends BaseAgent {
+  async perceive(environment: Environment): Promise<Perception> {
+    // 自主感知项目环境变化
+    const projectChanges = await this.scanProjectEnvironment();
+    const semanticAnalysis = await this.analyzeChangeSemantics(projectChanges);
+
+    return {
+      type: 'project_changes',
+      data: semanticAnalysis,
+      confidence: this.calculateConfidence(semanticAnalysis),
+      timestamp: new Date()
+    };
+  }
+
+  async reason(perception: Perception, context: AgentContext): Promise<Decision> {
+    // 智能决策是否需要通知其他Agent
+    const decision = await this.llm.reason(`
+      Project changes detected: ${JSON.stringify(perception.data)}
+      Context: ${JSON.stringify(context)}
+
+      Should I notify other agents? What priority level?
+      Consider: change significance, user preferences, system load
+    `);
+
+    return this.parseDecision(decision);
+  }
 }
 
-interface SemanticChange {
-  type: 'title' | 'section' | 'content' | 'structure';
-  location: string;
-  oldValue?: string;
-  newValue?: string;
-  impact: 'high' | 'medium' | 'low';
+// 内容分析Agent
+class ContentAnalyzerAgent extends BaseAgent {
+  async reason(perception: Perception, context: AgentContext): Promise<Decision> {
+    // 分析变更对营销内容的影响
+    const impactAnalysis = await this.llm.analyze(`
+      Changes: ${JSON.stringify(perception.data)}
+      Current content: ${context.currentContent}
+
+      Analyze:
+      1. Which content sections are affected?
+      2. What type of updates are needed?
+      3. What is the priority and urgency?
+      4. What resources are required?
+    `);
+
+    return {
+      type: 'content_impact_analysis',
+      data: impactAnalysis,
+      confidence: this.assessConfidence(impactAnalysis),
+      recommendations: this.generateRecommendations(impactAnalysis)
+    };
+  }
 }
 ```
 
-**2. 知识缓存系统**
+**3. Agent协调和通信系统**
 ```typescript
-interface KnowledgeCache {
-  // 存储内容
-  store(key: string, content: string, metadata: CacheMetadata): void;
-  
-  // 检索内容
-  retrieve(key: string): CachedContent | null;
-  
-  // 检查是否过期
-  isStale(key: string): boolean;
-  
-  // 批量更新
-  batchUpdate(updates: CacheUpdate[]): void;
+class AgentOrchestrator {
+  private agents: Map<string, BaseAgent>;
+  private eventBus: AgentEventBus;
+  private sharedMemory: AgentMemorySystem;
+
+  async coordinateAgents(trigger: AgentTrigger): Promise<CoordinationResult> {
+    // 1. 确定参与的Agent
+    const participatingAgents = await this.selectAgents(trigger);
+
+    // 2. 建立协作上下文
+    const collaborationContext = await this.buildContext(trigger, participatingAgents);
+
+    // 3. 执行多Agent协作
+    const results = await this.executeCollaboration(participatingAgents, collaborationContext);
+
+    // 4. 协调和整合结果
+    return this.integrateResults(results);
+  }
+
+  private async executeCollaboration(
+    agents: BaseAgent[],
+    context: CollaborationContext
+  ): Promise<AgentResult[]> {
+    const results: AgentResult[] = [];
+
+    // 并行执行Agent任务
+    for (const agent of agents) {
+      const perception = await agent.perceive(context.environment);
+      const decision = await agent.reason(perception, context);
+      const actionResult = await agent.act(decision);
+
+      results.push({
+        agentId: agent.id,
+        perception,
+        decision,
+        actionResult
+      });
+
+      // 实时共享结果给其他Agent
+      await this.shareResult(agent.id, actionResult, agents);
+    }
+
+    return results;
+  }
 }
 
 interface CacheMetadata {
@@ -395,12 +470,58 @@ class StratifiedContentModifier {
 }
 ```
 
+**4. Agent学习和记忆系统**
+```typescript
+class AgentMemorySystem {
+  private experienceDB: ExperienceDatabase;
+  private patternRecognition: PatternRecognitionEngine;
+  private strategyOptimizer: StrategyOptimizer;
+
+  async recordExperience(
+    agentId: string,
+    context: AgentContext,
+    action: AgentAction,
+    outcome: ActionOutcome,
+    feedback: UserFeedback
+  ): Promise<void> {
+    const experience: AgentExperience = {
+      agentId,
+      timestamp: new Date(),
+      context,
+      action,
+      outcome,
+      feedback,
+      success: this.evaluateSuccess(outcome, feedback)
+    };
+
+    await this.experienceDB.store(experience);
+
+    // 更新Agent行为模式
+    await this.patternRecognition.updatePatterns(agentId, experience);
+
+    // 优化未来策略
+    await this.strategyOptimizer.optimizeStrategy(agentId, experience);
+  }
+
+  async getOptimalStrategy(
+    agentId: string,
+    context: AgentContext
+  ): Promise<AgentStrategy> {
+    // 基于历史经验推荐最佳策略
+    const similarExperiences = await this.experienceDB.findSimilar(agentId, context);
+    const successPatterns = this.patternRecognition.extractSuccessPatterns(similarExperiences);
+
+    return this.strategyOptimizer.synthesizeStrategy(successPatterns, context);
+  }
+}
+```
+
 #### 实施计划
-1. **Week 1-2**: 实现DocumentChangeTracker和基础BlogGenerator
-2. **Week 3-4**: 开发KnowledgeCache和BlogOptimizer系统
-3. **Week 5-6**: 集成分层修改策略和增量内容生成
-4. **Week 7-8**: 实现SEO优化和时效性更新功能
-5. **Week 9-10**: 性能优化和全面测试
+1. **Week 1-2**: 实现BaseAgent框架和基础Agent通信
+2. **Week 3-4**: 开发ProjectWatcherAgent和ContentAnalyzerAgent
+3. **Week 5-6**: 构建AgentOrchestrator和协作机制
+4. **Week 7-8**: 实现Agent学习系统和记忆管理
+5. **Week 9-10**: 集成测试和Agentic能力验证
 
 ### 阶段2：轻量级向量存储（Phase 2）
 
@@ -789,25 +910,25 @@ class IntelligentCache {
 
 ## 🔧 实施路线图
 
-### Sprint 4-5：智能缓存架构 + 博客生成基础
-- **Week 1-2**: DocumentChangeTracker和基础BlogGenerator实现
-- **Week 3-4**: KnowledgeCache和BlogOptimizer系统开发
-- **Week 5-6**: 分层修改策略和增量内容生成集成
-- **Week 7-8**: SEO优化和时效性更新功能
-- **Week 9-10**: 性能优化和全面测试
+### Sprint 4-5：多Agent系统基础 + Agentic能力验证
+- **Week 1-2**: BaseAgent框架和Agent通信系统实现
+- **Week 3-4**: ProjectWatcherAgent和ContentAnalyzerAgent开发
+- **Week 5-6**: AgentOrchestrator和多Agent协作机制
+- **Week 7-8**: Agent学习系统和记忆管理
+- **Week 9-10**: Agentic能力验证和用户体验测试
 
-### Phase 2：轻量级向量存储 + 语义博客生成
-- **Month 1**: SQLite向量存储和BlogTemplateManager实现
-- **Month 2**: 语义检索和结构化博客生成功能开发
-- **Month 3**: 多语言支持和博客优化策略集成
-- **Month 4**: 自动化博客更新和性能调优
-- **Month 5**: 用户测试和反馈优化
+### Phase 2：智能Agent生态 + 高级协作能力
+- **Month 1**: UpdateDecisionAgent和ContentGeneratorAgent实现
+- **Month 2**: QualityAssuranceAgent和UserInteractionAgent开发
+- **Month 3**: 高级Agent协作模式和策略优化
+- **Month 4**: 自适应学习和个性化Agent行为
+- **Month 5**: 企业级Agent管理和监控
 
-### Phase 3：企业级RAG架构 + 智能博客生态
-- **Quarter 1**: Chroma/Pinecone集成和高级博客分析
-- **Quarter 2**: AI Agent智能化和自动化博客管理
-- **Quarter 3**: 企业级博客工作流和协作功能
-- **Quarter 4**: 开放API、博客生态和第三方集成
+### Phase 3：自主Agent生态 + 开放平台
+- **Quarter 1**: 完全自主Agent系统和高级决策引擎
+- **Quarter 2**: Agent生态平台和第三方Agent集成
+- **Quarter 3**: 企业级Agent工作流和治理框架
+- **Quarter 4**: Agent市场和开发者生态建设
 
 ## 📈 成功指标
 
