@@ -18,10 +18,15 @@ export async function activate(context: vscode.ExtensionContext) {
     outputChannel.appendLine('Creating LumosGen sidebar provider...');
     sidebarProvider = new SidebarProvider(context.extensionUri, outputChannel);
     outputChannel.appendLine(`Registering webview provider with viewType: ${SidebarProvider.viewType}`);
-    context.subscriptions.push(
-        vscode.window.registerWebviewViewProvider(SidebarProvider.viewType, sidebarProvider)
-    );
+
+    // Add more debugging
+    outputChannel.appendLine(`VS Code version: ${vscode.version}`);
+    outputChannel.appendLine(`Extension URI: ${context.extensionUri.toString()}`);
+
+    const disposable = vscode.window.registerWebviewViewProvider(SidebarProvider.viewType, sidebarProvider);
+    context.subscriptions.push(disposable);
     outputChannel.appendLine('LumosGen sidebar provider registered successfully');
+    outputChannel.appendLine(`Disposable created: ${disposable ? 'yes' : 'no'}`);
 
     // File watcher removed in MVP - using manual triggers via sidebar
     

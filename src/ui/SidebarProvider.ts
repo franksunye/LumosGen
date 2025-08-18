@@ -51,6 +51,8 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
         _token: vscode.CancellationToken,
     ) {
         this.outputChannel.appendLine('LumosGen: resolveWebviewView called');
+        this.outputChannel.appendLine(`LumosGen: webviewView.viewType = ${webviewView.viewType}`);
+        this.outputChannel.appendLine(`LumosGen: expected viewType = ${SidebarProvider.viewType}`);
         this._view = webviewView;
 
         webviewView.webview.options = {
@@ -81,9 +83,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
                     case 'openSettings':
                         vscode.commands.executeCommand('workbench.action.openSettings', 'lumosGen');
                         break;
-                    case 'saveContent':
-                        this.saveGeneratedContent();
-                        break;
+
 
                 }
             },
@@ -153,14 +153,11 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
             this.updateStatus('completed');
 
             vscode.window.showInformationMessage(
-                'Marketing content generated successfully',
-                'Preview Website',
-                'Save Content'
+                'Marketing content generated successfully! Ready to build website.',
+                'Build Website'
             ).then(selection => {
-                if (selection === 'Preview Website') {
+                if (selection === 'Build Website') {
                     this.previewWebsite();
-                } else if (selection === 'Save Content') {
-                    this.saveGeneratedContent();
                 }
             });
         } catch (error) {
@@ -373,59 +370,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
         }
     }
 
-    private async saveGeneratedContent() {
-        if (!this._generatedContent || !vscode.workspace.workspaceFolders) {
-            return;
-        }
 
-        try {
-            const workspaceRoot = vscode.workspace.workspaceFolders[0].uri.fsPath;
-            const fs = require('fs');
-            const path = require('path');
-
-            // Create marketing content directory
-            const marketingDir = path.join(workspaceRoot, 'marketing-content');
-            if (!fs.existsSync(marketingDir)) {
-                fs.mkdirSync(marketingDir, { recursive: true });
-            }
-
-            // Save individual files
-            const files = [
-                { name: 'homepage.md', content: this._generatedContent.homepage },
-                { name: 'about.md', content: this._generatedContent.aboutPage },
-                { name: 'faq.md', content: this._generatedContent.faq }
-            ];
-
-            if (this._generatedContent.blogPost) {
-                files.push({ name: 'blog-post.md', content: this._generatedContent.blogPost });
-            }
-
-            // Save metadata
-            files.push({
-                name: 'metadata.json',
-                content: JSON.stringify(this._generatedContent.metadata, null, 2)
-            });
-
-            for (const file of files) {
-                const filePath = path.join(marketingDir, file.name);
-                fs.writeFileSync(filePath, file.content, 'utf8');
-            }
-
-            this.outputChannel.appendLine(`Marketing content saved to: ${marketingDir}`);
-            vscode.window.showInformationMessage(
-                `Marketing content saved to marketing-content/ directory`,
-                'Open Folder'
-            ).then(selection => {
-                if (selection === 'Open Folder') {
-                    vscode.commands.executeCommand('revealFileInOS', vscode.Uri.file(marketingDir));
-                }
-            });
-
-        } catch (error) {
-            this.outputChannel.appendLine(`Failed to save content: ${error}`);
-            vscode.window.showErrorMessage(`Failed to save content: ${error}`);
-        }
-    }
 
     private _getHtmlForWebview(webview: vscode.Webview) {
         this.outputChannel.appendLine('LumosGen: _getHtmlForWebview called');
@@ -626,7 +571,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
     </button>
 
     <button class="action-button" onclick="previewWebsite()" id="previewBtn" disabled>
-        🎨 Preview Website
+        🏗️ Build Website
     </button>
 
     <button class="action-button" onclick="deployToGitHub()" id="deployBtn" disabled>
@@ -673,9 +618,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
             <div class="content-label">SEO Keywords:</div>
             <div id="contentKeywords" class="content-keywords"></div>
         </div>
-        <button class="action-button" onclick="saveContent()" id="saveBtn">
-            💾 Save Content
-        </button>
+
     </div>
 
     <script>
@@ -701,9 +644,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
             vscode.postMessage({ type: 'openSettings' });
         }
 
-        function saveContent() {
-            vscode.postMessage({ type: 'saveContent' });
-        }
+
         
         window.addEventListener('message', event => {
             const message = event.data;

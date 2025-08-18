@@ -48,7 +48,8 @@
       "lumosgen-sidebar": [
         {
           "id": "lumosgen.sidebar",
-          "name": "LumosGen Marketing AI"
+          "name": "LumosGen Marketing AI",
+          "type": "webview"
         }
       ]
     },
