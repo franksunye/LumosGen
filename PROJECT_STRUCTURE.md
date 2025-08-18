@@ -62,29 +62,17 @@ LumosGen/
   - Provide configuration access
   - Handle configuration updates
 
-#### `src/watcher.ts`
-- **Purpose**: File system monitoring
-- **Responsibilities**:
-  - Watch for file changes
-  - Debounce file events
-  - Trigger content generation
-  - Manage watcher lifecycle
+#### ~~`src/watcher.ts`~~ ❌ REMOVED (PoC Legacy)
+- **Was**: File system monitoring for automatic content generation
+- **Replaced by**: Manual triggers via sidebar interface (MVP approach)
 
-#### `src/aiClient.ts`
-- **Purpose**: AI service integration
-- **Responsibilities**:
-  - Interface with AI services (OpenAI, mock)
-  - Handle API requests and responses
-  - Manage different AI providers
-  - Process generation requests
+#### ~~`src/aiClient.ts`~~ ❌ REMOVED (PoC Legacy)
+- **Was**: Generic AI service integration for file-watching workflow
+- **Replaced by**: `src/ai/SimpleAI.ts` and `src/content/MarketingContentGenerator.ts`
 
-#### `src/writer.ts`
-- **Purpose**: Content writing and file operations
-- **Responsibilities**:
-  - Write generated content to files
-  - Handle file permissions
-  - Create backups
-  - Manage output formatting
+#### ~~`src/writer.ts`~~ ❌ REMOVED (PoC Legacy)
+- **Was**: Single-file content writing for PoC
+- **Replaced by**: `src/website/WebsiteBuilder.ts` for complete website generation
 
 ### Data Flow
 

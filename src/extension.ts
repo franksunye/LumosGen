@@ -1,9 +1,7 @@
 import * as vscode from 'vscode';
-import { FileWatcher } from './watcher';
 import { SidebarProvider } from './ui/SidebarProvider';
 // Removed i18n for MVP simplification
 
-let fileWatcher: FileWatcher | undefined;
 let outputChannel: vscode.OutputChannel;
 let sidebarProvider: SidebarProvider;
 
@@ -22,8 +20,7 @@ export async function activate(context: vscode.ExtensionContext) {
         vscode.window.registerWebviewViewProvider(SidebarProvider.viewType, sidebarProvider)
     );
 
-    // Create file watcher (legacy functionality)
-    fileWatcher = new FileWatcher(outputChannel);
+    // File watcher removed in MVP - using manual triggers via sidebar
     
     // Register new marketing AI commands
     const analyzeProjectCommand = vscode.commands.registerCommand('lumosGen.analyzeProject', async () => {
@@ -119,20 +116,24 @@ export async function activate(context: vscode.ExtensionContext) {
         }
     });
 
-    // Legacy commands (keep for backward compatibility)
+    // Legacy commands (deprecated in MVP - use sidebar instead)
     const generateCommand = vscode.commands.registerCommand('lumosGen.generateContent', async () => {
         try {
             outputChannel.show();
-            outputChannel.appendLine('Manual content generation triggered by user');
-            await fileWatcher?.manualGeneration();
+            outputChannel.appendLine('Legacy command - please use the LumosGen sidebar instead');
+            vscode.window.showInformationMessage('Please use the LumosGen sidebar for content generation', 'Open Sidebar').then(selection => {
+                if (selection === 'Open Sidebar') {
+                    vscode.commands.executeCommand('workbench.view.extension.lumosgen-sidebar');
+                }
+            });
         } catch (error) {
-            outputChannel.appendLine(`ERROR in manual generation: ${error}`);
+            outputChannel.appendLine(`ERROR: ${error}`);
             vscode.window.showErrorMessage(`LumosGen: ${error}`);
         }
     });
 
     const toggleWatcherCommand = vscode.commands.registerCommand('lumosGen.toggleWatcher', () => {
-        fileWatcher?.toggle();
+        vscode.window.showInformationMessage('File watcher is deprecated in MVP. Use the sidebar for manual content generation.');
     });
 
     const diagnoseCommand = vscode.commands.registerCommand('lumosGen.diagnose', async () => {
@@ -156,14 +157,8 @@ export async function activate(context: vscode.ExtensionContext) {
             const config = getConfig();
             outputChannel.appendLine(`Configuration: ${JSON.stringify(config, null, 2)}`);
 
-            // Check write permissions
-            if (fileWatcher) {
-                const writer = (fileWatcher as any).writer;
-                if (writer) {
-                    const hasPermissions = await writer.checkWritePermissions();
-                    outputChannel.appendLine(`Write permissions: ${hasPermissions ? 'OK' : 'FAILED'}`);
-                }
-            }
+            // Write permissions check simplified for MVP
+            outputChannel.appendLine('Write permissions: Checked via sidebar operations');
 
             outputChannel.appendLine('=== End Diagnostic ===');
             vscode.window.showInformationMessage('LumosGen: Diagnostic complete. Check output panel for details.');
@@ -176,11 +171,7 @@ export async function activate(context: vscode.ExtensionContext) {
     // Listen for configuration changes
     const configChangeListener = vscode.workspace.onDidChangeConfiguration(event => {
         if (event.affectsConfiguration('lumosGen')) {
-            outputChannel.appendLine('Configuration changed, reloading...');
-
-            // Restart file watcher with new configuration
-            fileWatcher?.stop();
-            fileWatcher?.start();
+            outputChannel.appendLine('Configuration changed - restart extension to apply changes');
         }
     });
     
@@ -199,11 +190,7 @@ export async function activate(context: vscode.ExtensionContext) {
         outputChannel
     );
     
-    // Start file watcher
-    fileWatcher.start().catch(error => {
-        outputChannel.appendLine(`Failed to start file watcher: ${error}`);
-        vscode.window.showErrorMessage(`LumosGen: Failed to start - ${error}`);
-    });
+    // MVP uses manual triggers via sidebar - no automatic file watching
     
     // Show welcome message
     vscode.window.showInformationMessage(
@@ -224,12 +211,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
 export function deactivate() {
     console.log('LumosGen extension is being deactivated');
-    
-    if (fileWatcher) {
-        fileWatcher.stop();
-        fileWatcher = undefined;
-    }
-    
+
     if (outputChannel) {
         outputChannel.appendLine('LumosGen extension deactivated');
         outputChannel.dispose();
