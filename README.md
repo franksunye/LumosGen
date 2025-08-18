@@ -1,19 +1,27 @@
-# LumosGen - AI-Powered Content Generation for VS Code
+# LumosGen - AI-Powered Marketing Website Generator for VS Code
 
-> *"Lumos!"* - Illuminate your content creation process with AI ✨
+> *"Lumos!"* - Illuminate your project's marketing potential with AI ✨
 
-**Status: MVP Development** 🚧
+**Status: Sprint 3 Completed - Website Builder Ready** 🎉
 
-LumosGen is a VS Code extension that automatically generates and updates content using AI when you save files in your workspace. Perfect for maintaining documentation, summaries, and overviews of your projects.
+LumosGen is a VS Code extension that transforms your GitHub projects into professional marketing websites using AI. Analyze your project, generate compelling marketing content, and build responsive websites - all from within VS Code.
 
 ## 🌟 Features
 
-- **🔮 Automatic File Watching**: Monitors your Markdown files for changes
-- **🤖 AI-Powered Generation**: Creates summaries, table of contents, and more
-- **⚙️ Flexible Configuration**: Customize patterns, output files, and AI services
-- **📋 Multiple Templates**: Choose from summary, TOC, or changelog generation
-- **📊 Real-time Feedback**: Progress notifications and detailed logging
-- **🛡️ Safe & Secure**: Local processing with optional cloud AI integration
+### ✅ Completed (Sprint 1-3)
+- **📊 Smart Project Analysis**: Automatically analyzes GitHub project structure, tech stack, and features
+- **🤖 AI Marketing Content**: Generates professional homepage, about page, blog posts, and FAQ
+- **🏗️ Website Builder**: Creates responsive marketing websites with modern design
+- **🎨 Responsive Templates**: Mobile-first design with Tailwind CSS and dark/light themes
+- **🔍 SEO Optimization**: Complete SEO with meta tags, structured data, and sitemaps
+- **📁 Simple Preview**: Shows generated website location for easy developer access
+- **🌍 Internationalization**: Multi-language support (English, Spanish, Japanese)
+- **⚙️ Flexible Configuration**: Multiple AI providers and customizable content options
+
+### 📋 Coming Soon (Sprint 4)
+- **🚀 GitHub Pages Deployment**: One-click deployment to GitHub Pages
+- **📊 Deployment Monitoring**: Real-time deployment status and health checks
+- **🛠️ Enhanced Commands**: Improved command palette integration
 
 ## 🚀 Development Setup
 
@@ -27,23 +35,36 @@ LumosGen is a VS Code extension that automatically generates and updates content
 3. Compile TypeScript: `npm run compile`
 4. Press `F5` in VS Code to launch Extension Development Host
 
+## 🚀 Quick Start
+
+1. **Install the Extension** (when published)
+2. **Open your GitHub project** in VS Code
+3. **Open LumosGen sidebar** (View → LumosGen)
+4. **Follow the workflow:**
+   - 📊 **Analyze Project** → AI analyzes your project structure
+   - 🤖 **Generate Content** → Creates professional marketing content
+   - 🎨 **Preview Website** → Builds responsive website and shows location
+   - 🚀 **Deploy** → (Coming in Sprint 4) Deploy to GitHub Pages
+
 ## ⚙️ Configuration
 
 Configure LumosGen through VS Code settings (`Ctrl+,` → search "lumosgen"):
 
 ```json
 {
-  "lumosGen.enabled": true,
-  "lumosGen.watchPatterns": ["**/*.md"],
-  "lumosGen.outputFile": "LumosGen-Summary.md",
+  "lumosGen.language": "en",
+  "lumosGen.marketingSettings": {
+    "tone": "professional",
+    "includeCodeExamples": true,
+    "targetMarkets": ["global"],
+    "seoOptimization": true
+  },
   "lumosGen.aiService": {
     "type": "mock",
-    "endpoint": "https://api.openai.com/v1/chat/completions",
+    "endpoint": "https://api.openai.com/v1",
     "apiKey": "",
-    "model": "gpt-3.5-turbo"
-  },
-  "lumosGen.triggerDelay": 2000,
-  "lumosGen.template": "summary"
+    "model": "gpt-4o-mini"
+  }
 }
 ```
 
