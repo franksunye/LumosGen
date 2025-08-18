@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import { marked } from 'marked';
 import { GeneratedContent } from '../content/MarketingContentGenerator';
 import { ProjectAnalysis } from '../analysis/ProjectAnalyzer';
 import { WebsiteConfig } from './WebsiteBuilder';
@@ -15,6 +16,14 @@ export interface PageData {
 
 export class TemplateEngine {
     private templateCache: Map<string, string> = new Map();
+
+    constructor() {
+        // Configure marked for better HTML output
+        marked.setOptions({
+            breaks: true,
+            gfm: true
+        });
+    }
 
     async renderPage(data: PageData): Promise<string> {
         const template = await this.getTemplate('main.html');
@@ -52,7 +61,14 @@ export class TemplateEngine {
 
     private processTemplate(template: string, data: any): string {
         return template.replace(/\{\{(\w+(?:\.\w+)*)\}\}/g, (match, path) => {
-            return this.getNestedValue(data, path) || match;
+            const value = this.getNestedValue(data, path);
+
+            // If this is content field, convert Markdown to HTML
+            if (path === 'content' && typeof value === 'string') {
+                return marked(value);
+            }
+
+            return value || match;
         });
     }
 
