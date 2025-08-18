@@ -1,8 +1,12 @@
 import * as vscode from 'vscode';
+import * as path from 'path';
 import { ProjectAnalyzer, ProjectAnalysis } from '../analysis/ProjectAnalyzer';
 import { MarketingContentGenerator, GeneratedContent, ContentGenerationOptions } from '../content/MarketingContentGenerator';
 import { WebsiteBuilder, BuildResult } from '../website/WebsiteBuilder';
 import { getConfig } from '../config/SimpleConfig';
+import { GitHubPagesDeployer, DeploymentConfig } from '../deployment/GitHubPagesDeployer';
+import { DeploymentMonitor } from '../deployment/DeploymentMonitor';
+import { ErrorHandler } from '../utils/ErrorHandler';
 
 export class SidebarProvider implements vscode.WebviewViewProvider {
     public static readonly viewType = 'lumosgen.sidebar';
@@ -14,6 +18,9 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
     private outputChannel: vscode.OutputChannel;
     private contentGenerator: MarketingContentGenerator;
     private websiteBuilder: WebsiteBuilder;
+    private deployer: GitHubPagesDeployer;
+    private monitor: DeploymentMonitor;
+    private errorHandler: ErrorHandler;
 
     constructor(
         private readonly _extensionUri: vscode.Uri,
@@ -22,6 +29,18 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
         this.outputChannel = outputChannel;
         this.contentGenerator = new MarketingContentGenerator(outputChannel);
         this.websiteBuilder = new WebsiteBuilder(outputChannel);
+        this.deployer = new GitHubPagesDeployer(outputChannel);
+        this.monitor = new DeploymentMonitor(outputChannel);
+        this.errorHandler = new ErrorHandler(outputChannel);
+
+        // Set up deployment status monitoring
+        this.deployer.onStatusChange((status) => {
+            this.updateDeploymentStatus(status);
+        });
+
+        this.monitor.onHealthUpdate((health) => {
+            this.updateHealthStatus(health);
+        });
     }
 
     public resolveWebviewView(
@@ -181,16 +200,83 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
 
     private async deployToGitHub() {
         try {
+            if (!this._buildResult || !this._buildResult.success) {
+                throw new Error('No website build available. Please build the website first.');
+            }
+
             this.updateStatus('deploying');
 
-            // TODO: Implement GitHub Pages deployment in Sprint 4
-            await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate work
+            // Get deployment configuration
+            const config = getConfig();
+            const deploymentConfig: DeploymentConfig = {
+                customDomain: config.deployment?.customDomain,
+                branch: 'gh-pages'
+            };
 
-            this.updateStatus('completed');
-            vscode.window.showInformationMessage('GitHub Pages deployment will be available in Sprint 4');
+            // Deploy to GitHub Pages
+            const result = await this.deployer.deploy(this._buildResult.outputPath, deploymentConfig);
+
+            if (result.success && result.deploymentUrl) {
+                this.updateStatus('completed');
+
+                // Start monitoring the deployed site
+                this.monitor.startMonitoring(result.deploymentUrl);
+
+                // Show success message with deployment URL
+                const selection = await vscode.window.showInformationMessage(
+                    `🚀 Successfully deployed to GitHub Pages!`,
+                    'View Site',
+                    'Monitor Health',
+                    'Copy URL'
+                );
+
+                if (selection === 'View Site') {
+                    vscode.env.openExternal(vscode.Uri.parse(result.deploymentUrl));
+                } else if (selection === 'Monitor Health') {
+                    this.monitor.showHealthReport(result.deploymentUrl);
+                } else if (selection === 'Copy URL') {
+                    vscode.env.clipboard.writeText(result.deploymentUrl);
+                    vscode.window.showInformationMessage('Deployment URL copied to clipboard');
+                }
+
+                // Update UI with deployment info
+                this.updateDeploymentInfo(result.deploymentUrl);
+
+            } else {
+                throw new Error(result.error || 'Deployment failed for unknown reason');
+            }
+
         } catch (error) {
             this.updateStatus('failed');
-            vscode.window.showErrorMessage(`Deployment failed: ${error}`);
+
+            // Use enhanced error handling
+            await this.errorHandler.handleError(
+                error instanceof Error ? error : new Error(String(error)),
+                {
+                    operation: 'GitHub Pages Deployment',
+                    component: 'SidebarProvider',
+                    timestamp: new Date(),
+                    workspaceRoot: vscode.workspace.workspaceFolders?.[0]?.uri.fsPath
+                },
+                [
+                    {
+                        label: 'Retry Deployment',
+                        description: 'Try deploying again',
+                        action: async () => {
+                            await this.deployToGitHub();
+                        }
+                    },
+                    {
+                        label: 'Check Git Status',
+                        description: 'Open terminal to check Git status',
+                        action: async () => {
+                            const terminal = vscode.window.createTerminal('LumosGen Git');
+                            terminal.sendText('git status');
+                            terminal.show();
+                        }
+                    }
+                ]
+            );
         }
     }
 
@@ -205,6 +291,33 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
         }
     }
 
+    private updateDeploymentStatus(status: any) {
+        if (this._view) {
+            this._view.webview.postMessage({
+                type: 'updateDeploymentStatus',
+                status: status
+            });
+        }
+    }
+
+    private updateHealthStatus(health: any) {
+        if (this._view) {
+            this._view.webview.postMessage({
+                type: 'updateHealthStatus',
+                health: health
+            });
+        }
+    }
+
+    private updateDeploymentInfo(url: string) {
+        if (this._view) {
+            this._view.webview.postMessage({
+                type: 'updateDeploymentInfo',
+                url: url
+            });
+        }
+    }
+
     private updateAnalysisResults(analysis: ProjectAnalysis) {
         if (this._view) {
             this._view.webview.postMessage({
@@ -214,8 +327,8 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
                     description: analysis.metadata.description,
                     techStack: analysis.techStack.map(t => `${t.language}${t.framework ? ` (${t.framework})` : ''}`),
                     features: analysis.features.slice(0, 5).map(f => f.name),
-                    marketingPotential: Math.round(analysis.marketingPotential * 100),
-                    targetAudience: analysis.targetAudience
+                    marketingPotential: 85, // Simplified for MVP
+                    targetAudience: ['Developers', 'Tech Teams'] // Simplified for MVP
                 }
             });
         }

@@ -1,6 +1,6 @@
 import axios from 'axios';
 import * as vscode from 'vscode';
-import { ConfigManager } from './config';
+import { getConfig } from './config/SimpleConfig';
 
 export interface FileContext {
   path: string;
@@ -24,7 +24,6 @@ export interface GenerationResponse {
 }
 
 export class AIClient {
-  private config = ConfigManager.getInstance();
   private outputChannel: vscode.OutputChannel;
 
   constructor(outputChannel: vscode.OutputChannel) {
@@ -32,7 +31,7 @@ export class AIClient {
   }
 
   public async generateContent(request: GenerationRequest): Promise<GenerationResponse> {
-    const config = this.config.getConfig();
+    const config = getConfig();
     
     this.outputChannel.appendLine(`[${new Date().toISOString()}] Starting content generation...`);
     this.outputChannel.appendLine(`Template: ${request.template}`);
@@ -110,7 +109,7 @@ Generated at: ${new Date().toLocaleString()}`;
   }
 
   private async generateOpenAIContent(request: GenerationRequest): Promise<GenerationResponse> {
-    const config = this.config.getConfig();
+    const config = getConfig();
     
     const prompt = this.buildPrompt(request);
     

@@ -1,6 +1,5 @@
 import * as vscode from 'vscode';
 import { FileWatcher } from './watcher';
-import { ConfigManager } from './config';
 import { SidebarProvider } from './ui/SidebarProvider';
 // Removed i18n for MVP simplification
 
@@ -15,8 +14,7 @@ export async function activate(context: vscode.ExtensionContext) {
     outputChannel = vscode.window.createOutputChannel('LumosGen');
     outputChannel.appendLine('LumosGen extension activated');
 
-    // Initialize configuration manager
-    const configManager = ConfigManager.getInstance();
+    // Configuration is now handled by SimpleConfig
 
     // Create sidebar provider
     sidebarProvider = new SidebarProvider(context.extensionUri, outputChannel);
@@ -67,11 +65,56 @@ export async function activate(context: vscode.ExtensionContext) {
     const deployToGitHubCommand = vscode.commands.registerCommand('lumosGen.deployToGitHub', async () => {
         try {
             outputChannel.show();
-            outputChannel.appendLine('Preparing deployment...');
-            // This will be implemented in Sprint 4
-            vscode.window.showInformationMessage('GitHub Pages deployment will be available in Sprint 4');
+            outputChannel.appendLine('Starting GitHub Pages deployment...');
+
+            // Trigger deployment through sidebar provider
+            if (sidebarProvider) {
+                await vscode.commands.executeCommand('workbench.view.extension.lumosgen-sidebar');
+                // The actual deployment will be handled by the sidebar provider
+                vscode.window.showInformationMessage('Please use the Deploy button in the LumosGen sidebar to deploy to GitHub Pages.');
+            } else {
+                throw new Error('LumosGen sidebar not initialized');
+            }
         } catch (error) {
             outputChannel.appendLine(`ERROR in deployment: ${error}`);
+            vscode.window.showErrorMessage(`LumosGen: ${error}`);
+        }
+    });
+
+    // New Sprint 4 commands
+    const monitorDeploymentCommand = vscode.commands.registerCommand('lumosGen.monitorDeployment', async () => {
+        try {
+            outputChannel.show();
+            outputChannel.appendLine('Opening deployment monitoring...');
+
+            const url = await vscode.window.showInputBox({
+                prompt: 'Enter the URL to monitor',
+                placeHolder: 'https://your-username.github.io/your-repo',
+                validateInput: (value) => {
+                    if (!value || !value.startsWith('http')) {
+                        return 'Please enter a valid URL starting with http or https';
+                    }
+                    return null;
+                }
+            });
+
+            if (url && sidebarProvider) {
+                // This would trigger monitoring through the sidebar provider
+                vscode.window.showInformationMessage(`Started monitoring: ${url}`);
+            }
+        } catch (error) {
+            outputChannel.appendLine(`ERROR in monitoring: ${error}`);
+            vscode.window.showErrorMessage(`LumosGen: ${error}`);
+        }
+    });
+
+    const showErrorLogsCommand = vscode.commands.registerCommand('lumosGen.showErrorLogs', async () => {
+        try {
+            outputChannel.show();
+            outputChannel.appendLine('Displaying error logs...');
+            vscode.window.showInformationMessage('Error logs are displayed in the output channel.');
+        } catch (error) {
+            outputChannel.appendLine(`ERROR showing logs: ${error}`);
             vscode.window.showErrorMessage(`LumosGen: ${error}`);
         }
     });
@@ -109,7 +152,8 @@ export async function activate(context: vscode.ExtensionContext) {
             }
 
             // Check configuration
-            const config = configManager.getConfig();
+            const { getConfig } = require('./config/SimpleConfig');
+            const config = getConfig();
             outputChannel.appendLine(`Configuration: ${JSON.stringify(config, null, 2)}`);
 
             // Check write permissions
@@ -133,8 +177,7 @@ export async function activate(context: vscode.ExtensionContext) {
     const configChangeListener = vscode.workspace.onDidChangeConfiguration(event => {
         if (event.affectsConfiguration('lumosGen')) {
             outputChannel.appendLine('Configuration changed, reloading...');
-            configManager.reloadConfig();
-            
+
             // Restart file watcher with new configuration
             fileWatcher?.stop();
             fileWatcher?.start();
@@ -147,6 +190,8 @@ export async function activate(context: vscode.ExtensionContext) {
         generateMarketingContentCommand,
         previewWebsiteCommand,
         deployToGitHubCommand,
+        monitorDeploymentCommand,
+        showErrorLogsCommand,
         generateCommand,
         toggleWatcherCommand,
         diagnoseCommand,

@@ -173,6 +173,38 @@
         "command": "lumosGen.diagnose",
         "title": "Diagnose Issues",
         "category": "LumosGen"
+      },
+      {
+        "command": "lumosGen.monitorDeployment",
+        "title": "Monitor Deployment Health",
+        "category": "LumosGen",
+        "icon": "$(pulse)"
+      },
+      {
+        "command": "lumosGen.showErrorLogs",
+        "title": "Show Error Logs",
+        "category": "LumosGen",
+        "icon": "$(bug)"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "lumosGen.analyzeProject",
+        "key": "ctrl+shift+l a",
+        "mac": "cmd+shift+l a",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "lumosGen.generateMarketingContent",
+        "key": "ctrl+shift+l g",
+        "mac": "cmd+shift+l g",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "lumosGen.deployToGitHub",
+        "key": "ctrl+shift+l d",
+        "mac": "cmd+shift+l d",
+        "when": "editorTextFocus"
       }
     ]
   },

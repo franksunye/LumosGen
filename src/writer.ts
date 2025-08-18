@@ -1,10 +1,9 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
-import { ConfigManager } from './config';
+import { getConfig } from './config/SimpleConfig';
 import { GenerationResponse } from './aiClient';
 
 export class ContentWriter {
-  private config = ConfigManager.getInstance();
   private outputChannel: vscode.OutputChannel;
 
   constructor(outputChannel: vscode.OutputChannel) {
@@ -12,7 +11,7 @@ export class ContentWriter {
   }
 
   public async writeContent(content: GenerationResponse): Promise<void> {
-    const config = this.config.getConfig();
+    const config = getConfig();
     const workspaceFolder = this.getWorkspaceFolder();
     
     if (!workspaceFolder) {
@@ -59,7 +58,7 @@ LumosGen Metadata:
 - Generated: ${response.metadata.timestamp}
 - Model: ${response.metadata.model}
 ${response.metadata.tokens ? `- Tokens: ${response.metadata.tokens}` : ''}
-- Template: ${this.config.getConfig().template}
+- Template: ${getConfig().template}
 -->
 
 `;
@@ -107,7 +106,7 @@ ${response.metadata.tokens ? `- Tokens: ${response.metadata.tokens}` : ''}
   }
 
   public async backupExistingFile(): Promise<void> {
-    const config = this.config.getConfig();
+    const config = getConfig();
     const workspaceFolder = this.getWorkspaceFolder();
     
     if (!workspaceFolder) {

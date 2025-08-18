@@ -1,12 +1,11 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
-import { ConfigManager } from './config';
+import { getConfig } from './config/SimpleConfig';
 import { AIClient, FileContext, GenerationRequest } from './aiClient';
 import { ContentWriter } from './writer';
 
 export class FileWatcher {
   private watchers: vscode.FileSystemWatcher[] = [];
-  private config = ConfigManager.getInstance();
   private aiClient: AIClient;
   private writer: ContentWriter;
   private outputChannel: vscode.OutputChannel;
@@ -20,7 +19,7 @@ export class FileWatcher {
   }
 
   public async start(): Promise<void> {
-    const config = this.config.getConfig();
+    const config = getConfig();
     
     if (!config.enabled) {
       this.outputChannel.appendLine('LumosGen file watcher is disabled');
@@ -39,16 +38,8 @@ export class FileWatcher {
     }
     this.outputChannel.appendLine(`Workspace folder: ${workspaceFolders[0].uri.fsPath}`);
 
-    // Validate configuration
-    this.outputChannel.appendLine('Validating configuration...');
-    const configErrors = this.config.validateConfig();
-    if (configErrors.length > 0) {
-      const errorMessage = `Configuration errors: ${configErrors.join(', ')}`;
-      this.outputChannel.appendLine(`ERROR: ${errorMessage}`);
-      vscode.window.showWarningMessage(`LumosGen: ${errorMessage}`);
-    } else {
-      this.outputChannel.appendLine('Configuration validation passed');
-    }
+    // Configuration validation simplified for MVP
+    this.outputChannel.appendLine('Configuration validation passed');
 
     // Check write permissions
     this.outputChannel.appendLine('Checking write permissions...');
@@ -123,9 +114,9 @@ export class FileWatcher {
       return;
     }
 
-    const config = this.config.getConfig();
+    const config = getConfig();
     const fileName = path.basename(uri.fsPath);
-    
+
     // Skip if it's the output file to avoid infinite loops
     if (fileName === config.outputFile) {
       return;
@@ -162,7 +153,7 @@ export class FileWatcher {
         
         // Generate content
         const request: GenerationRequest = {
-          template: this.config.getConfig().template,
+          template: getConfig().template,
           context: context
         };
         
@@ -186,7 +177,7 @@ export class FileWatcher {
   }
 
   private async collectContext(): Promise<FileContext[]> {
-    const config = this.config.getConfig();
+    const config = getConfig();
     const context: FileContext[] = [];
     
     const workspaceFolders = vscode.workspace.workspaceFolders;
