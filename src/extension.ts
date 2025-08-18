@@ -15,10 +15,13 @@ export async function activate(context: vscode.ExtensionContext) {
     // Configuration is now handled by SimpleConfig
 
     // Create sidebar provider
+    outputChannel.appendLine('Creating LumosGen sidebar provider...');
     sidebarProvider = new SidebarProvider(context.extensionUri, outputChannel);
+    outputChannel.appendLine(`Registering webview provider with viewType: ${SidebarProvider.viewType}`);
     context.subscriptions.push(
         vscode.window.registerWebviewViewProvider(SidebarProvider.viewType, sidebarProvider)
     );
+    outputChannel.appendLine('LumosGen sidebar provider registered successfully');
 
     // File watcher removed in MVP - using manual triggers via sidebar
     

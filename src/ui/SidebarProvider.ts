@@ -48,6 +48,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
         context: vscode.WebviewViewResolveContext,
         _token: vscode.CancellationToken,
     ) {
+        this.outputChannel.appendLine('LumosGen: resolveWebviewView called');
         this._view = webviewView;
 
         webviewView.webview.options = {
@@ -55,7 +56,9 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
             localResourceRoots: [this._extensionUri]
         };
 
+        this.outputChannel.appendLine('LumosGen: Setting webview HTML content');
         webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
+        this.outputChannel.appendLine('LumosGen: Webview HTML content set successfully');
 
         // Handle messages from the webview
         webviewView.webview.onDidReceiveMessage(
