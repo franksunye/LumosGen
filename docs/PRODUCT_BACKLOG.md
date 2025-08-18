@@ -82,7 +82,6 @@
 - [ ] Agent decision accuracy >85% (autonomous vs. rule-based)
 - [ ] Multi-Agent coordination success rate >95%
 - [ ] Learning improvement >5% per iteration
-- [ ] User preference for Agent collaboration >70% in A/B test
 - [ ] Autonomous operation acceptance >60%
 - [ ] Agentic experience satisfaction >4.5/5
 - [x] Complete project-to-website workflow ✅ (MVP 1.0)
