@@ -14,58 +14,75 @@
 - **VS Code Integration** - Intuitive sidebar interface with content management
 - **Simplified Architecture** - Removed 750+ lines of over-engineered code for MVP focus
 
-### 🎯 Current Sprint 4: Deployment & Final Integration
-**Goal:** Complete GitHub Pages deployment and final MVP polish
+### 🎯 Current Sprint 4.5: Core Technology Validation (STRATEGIC PIVOT)
+**Goal:** Implement and validate intelligent content update capabilities as core differentiator
 
-#### Active User Stories:
-- **US-009: GitHub Pages Auto-Deployment** (8 SP) - In Progress
-  - Automatic gh-pages branch creation and deployment
-  - Custom domain support and deployment status feedback
+#### 🔥 High Priority User Stories (Immediate Execution):
+- **US-017: Real AI Integration** (13 SP) - NEW, Highest Priority
+  - Replace Mock AI with OpenAI GPT-4o Mini API
+  - Implement content quality validation and cost optimization
+  - **Validation Target:** AI generation quality >4.0/5
 
-- **US-011: Enhanced Command Palette** (5 SP) - In Progress
-  - Keyboard shortcuts and improved command organization
+- **US-018: Document Change Detection MVP** (8 SP) - NEW, Core Technology
+  - Real-time document change monitoring and semantic analysis
+  - Change impact assessment and history tracking
+  - **Validation Target:** Change detection accuracy >90%
 
-- **US-015: Deployment Monitoring** (5 SP) - Planned
-  - Real-time deployment status and error detection
+- **US-019: Incremental Update Prototype** (8 SP) - NEW, Differentiation Core
+  - Basic incremental content update capability
+  - Context preservation and quality control
+  - **Validation Target:** Update content quality >4.0/5
 
-- **US-016: Error Handling** (3 SP) - Planned
-  - Comprehensive error logging and recovery mechanisms
+#### ⏸️ Deprioritized User Stories:
+- **US-009: GitHub Pages Deployment** (3 SP) - Simplified, Lower Priority
+  - Basic deployment only, removed complex monitoring
+- **US-011: Enhanced Command Palette** - Paused
+- **US-015: Deployment Monitoring** - Paused
 
-### 🚀 MVP Capabilities (Ready Now)
-LumosGen can currently:
+### 🚀 MVP Capabilities Evolution
+
+#### ✅ Current MVP 1.0 (Functional but Limited Value):
 1. 🔍 Analyze any GitHub project structure and tech stack
-2. 🤖 Generate professional English marketing content (4 content types)
+2. 🤖 Generate professional English marketing content (4 content types) - **Mock AI**
 3. 🏗️ Build complete responsive marketing websites
 4. 🎨 Apply modern design templates with Tailwind CSS
 5. 🔍 Optimize for SEO (meta tags, structured data, sitemaps)
 6. 📁 Provide simple file-based preview for developers
-7. 💾 Save all generated content to local filesystem
-8. ⚙️ Flexible configuration for AI services and content options
+
+#### 🎯 Target MVP 1.5 (Core Technology Validation):
+7. 🧠 **Real AI Integration** - OpenAI GPT-4o Mini for quality content
+8. 👁️ **Document Change Detection** - Smart monitoring of project evolution
+9. 🔄 **Incremental Content Updates** - Preserve context while updating content
+10. 📊 **Update Quality Control** - Ensure consistency and accuracy
+11. 💾 **Change History Tracking** - Remember what changed and why
 
 ## 📈 Sprint Progress Summary
 
-### Completed Sprints (75% MVP Complete)
+### Sprint Progress (Strategic Pivot to Core Technology)
 - **Sprint 1:** Core Architecture ✅ (29 SP)
-- **Sprint 2:** AI Content Generation ✅ (26 SP)
+- **Sprint 2:** AI Content Generation ✅ (26 SP) - Mock Implementation
 - **Sprint 3:** Website Builder ✅ (31 SP)
-- **Sprint 4:** Deployment Integration 🎯 (29 SP - In Progress)
+- **Sprint 4.5:** Core Technology Validation 🎯 (29 SP - Pivoted Focus)
 
-**Total Delivered:** 86/115 Story Points (75% Complete)
+**Total Delivered:** 86/115 Story Points (75% Functional, 0% Core Technology)
+**Strategic Insight:** Need to prioritize core technology over feature completeness
 
 ## 🎯 Next Steps & Success Metrics
 
-### Immediate Priorities (Sprint 4)
-1. **GitHub Pages Deployment** - One-click website publishing
-2. **Enhanced Command Palette** - Improved developer experience
-3. **Deployment Monitoring** - Real-time status and error handling
-4. **Final Testing & Documentation** - Production readiness
+### Immediate Priorities (Sprint 4.5 - Core Technology Focus)
+1. **Real AI Integration** - Replace Mock with OpenAI GPT-4o Mini
+2. **Document Change Detection** - Core differentiating technology
+3. **Incremental Update Capability** - Validate core value hypothesis
+4. **User Validation Experiment** - A/B test: static vs. dynamic updates
 
-### MVP Success Criteria
-- [ ] 500+ VS Code extension installs (post-release)
-- [x] Complete project-to-website workflow ✅
-- [ ] 4.0+ user rating (post-release)
-- [x] Professional marketing content generation ✅
-- [ ] 20+ user feedback collection (post-release)
+### MVP Success Criteria (Refocused on Core Technology)
+- [ ] AI generation quality >4.0/5 (real AI vs. mock)
+- [ ] Document change detection accuracy >90%
+- [ ] Update function usage rate >60%
+- [ ] 7-day user retention >40% (vs. current baseline)
+- [ ] User preference for update capability >80% in A/B test
+- [x] Complete project-to-website workflow ✅ (MVP 1.0)
+- [x] Professional marketing content generation ✅ (Mock)
 
 ### Post-MVP Roadmap (v1.0+)
 - **Real AI Integration** - OpenAI/Anthropic API integration
