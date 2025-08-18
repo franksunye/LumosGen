@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Technical Documentation Style - Comprehensive Test</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-white text-gray-900 p-8">
+    <div class="max-w-4xl mx-auto">
+        <div class="prose prose-lg max-w-none">
+            <h1>API Reference</h1>
+<h2>Authentication</h2>
+<p>All API requests require authentication using an API key:</p>
+<pre><code class="language-bash">curl -H &quot;Authorization: Bearer YOUR_API_KEY&quot; \
+     https://api.lumosgen.com/v1/generate
+</code></pre>
+<h2>Endpoints</h2>
+<h3>POST /v1/generate</h3>
+<p>Generate marketing content for a project.</p>
+<p><strong>Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>project_url</code></td>
+<td>string</td>
+<td>Yes</td>
+<td>GitHub repository URL</td>
+</tr>
+<tr>
+<td><code>language</code></td>
+<td>string</td>
+<td>No</td>
+<td>Target language (default: &#39;en&#39;)</td>
+</tr>
+<tr>
+<td><code>tone</code></td>
+<td>string</td>
+<td>No</td>
+<td>Content tone (default: &#39;professional&#39;)</td>
+</tr>
+</tbody></table>
+<p><strong>Response:</strong></p>
+<pre><code class="language-json">{
+  &quot;success&quot;: true,
+  &quot;data&quot;: {
+    &quot;homepage&quot;: &quot;# Your Project Title...&quot;,
+    &quot;about&quot;: &quot;## About Your Project...&quot;,
+    &quot;faq&quot;: &quot;# Frequently Asked Questions...&quot;
+  }
+}
+</code></pre>
+<h3>Error Handling</h3>
+<p>The API returns standard HTTP status codes:</p>
+<ul>
+<li><code>200</code> - Success</li>
+<li><code>400</code> - Bad Request</li>
+<li><code>401</code> - Unauthorized</li>
+<li><code>429</code> - Rate Limited</li>
+<li><code>500</code> - Internal Server Error</li>
+</ul>
+
+        </div>
+    </div>
+</body>
+</html>
