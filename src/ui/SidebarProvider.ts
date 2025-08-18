@@ -27,11 +27,13 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
         outputChannel: vscode.OutputChannel
     ) {
         this.outputChannel = outputChannel;
+        this.outputChannel.appendLine('LumosGen: SidebarProvider constructor called');
         this.contentGenerator = new MarketingContentGenerator(outputChannel);
         this.websiteBuilder = new WebsiteBuilder(outputChannel);
         this.deployer = new GitHubPagesDeployer(outputChannel);
         this.monitor = new DeploymentMonitor(outputChannel);
         this.errorHandler = new ErrorHandler(outputChannel);
+        this.outputChannel.appendLine('LumosGen: SidebarProvider constructor completed');
 
         // Set up deployment status monitoring
         this.deployer.onStatusChange((status) => {
@@ -426,7 +428,8 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
     }
 
     private _getHtmlForWebview(webview: vscode.Webview) {
-        return `<!DOCTYPE html>
+        this.outputChannel.appendLine('LumosGen: _getHtmlForWebview called');
+        const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -804,5 +807,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
     </script>
 </body>
 </html>`;
+        this.outputChannel.appendLine('LumosGen: HTML content generated successfully');
+        return html;
     }
 }

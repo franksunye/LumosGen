@@ -48,8 +48,7 @@
       "lumosgen-sidebar": [
         {
           "id": "lumosgen.sidebar",
-          "name": "LumosGen Marketing AI",
-          "when": "workspaceFolderCount != 0"
+          "name": "LumosGen Marketing AI"
         }
       ]
     },
