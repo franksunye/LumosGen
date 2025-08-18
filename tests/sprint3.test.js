@@ -264,39 +264,41 @@ runTest('SidebarProvider integrates website builder functionality', () => {
     }
 });
 
-// Test 8: i18n Website Translations
-runTest('i18n includes website-related translations', () => {
+// Test 8: Simplified MVP approach (no complex i18n)
+runTest('MVP simplification removes complex i18n system', () => {
     const i18nPath = path.join(process.cwd(), 'src', 'i18n', 'index.ts');
-    const i18nContent = fs.readFileSync(i18nPath, 'utf8');
-    
-    // Check for essential website translation keys
-    const websiteKeys = [
-        'website.building',
-        'website.buildComplete',
-        'website.buildFailed'
+
+    // Should not exist in simplified MVP
+    if (fs.existsSync(i18nPath)) {
+        throw new Error('i18n system should be removed for MVP simplification');
+    }
+
+    // Check that code uses direct English strings instead
+    const sidebarPath = path.join(process.cwd(), 'src', 'ui', 'SidebarProvider.ts');
+    const sidebarContent = fs.readFileSync(sidebarPath, 'utf8');
+
+    // Should use direct English strings
+    const directStrings = [
+        'Building responsive website',
+        'No content available to preview'
     ];
 
-    websiteKeys.forEach(key => {
-        const keyName = key.split('.')[1];
-        if (!i18nContent.includes(keyName)) {
-            throw new Error(`Missing translation key: ${key}`);
+    directStrings.forEach(str => {
+        if (!sidebarContent.includes(str)) {
+            throw new Error(`Missing direct English string: ${str}`);
         }
     });
 
-    // Should not have complex preview server translations
-    const removedKeys = [
-        'previewReady',
-        'previewStarted',
-        'previewStopped',
-        'openBrowser',
-        'stopPreview'
-    ];
+    // Should not use t() function calls for i18n
+    const i18nPattern = /\bt\(['"`]/;
+    if (i18nPattern.test(sidebarContent)) {
+        throw new Error('Should not use t() function calls in MVP');
+    }
 
-    removedKeys.forEach(key => {
-        if (i18nContent.includes(key)) {
-            throw new Error(`Should not include removed translation: ${key}`);
-        }
-    });
+    // Should not import from i18n
+    if (sidebarContent.includes('from \'../i18n\'') || sidebarContent.includes('from "../i18n"')) {
+        throw new Error('Should not import from i18n in MVP');
+    }
 });
 
 // Test 9: Template System Functionality

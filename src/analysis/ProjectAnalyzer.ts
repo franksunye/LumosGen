@@ -1,7 +1,6 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
-import { t } from '../i18n';
 
 export interface TechStack {
     language: string;
@@ -44,15 +43,13 @@ export interface FileStructure {
     documentationFiles: string[];
 }
 
+// Simplified project analysis for MVP
 export interface ProjectAnalysis {
     metadata: ProjectMetadata;
     structure: FileStructure;
     techStack: TechStack[];
     features: ProjectFeature[];
     documents: MarkdownDocument[];
-    marketingPotential: number;
-    targetAudience: string[];
-    valuePropositions: string[];
 }
 
 export class ProjectAnalyzer {
@@ -65,25 +62,17 @@ export class ProjectAnalyzer {
     }
 
     async analyzeProject(): Promise<ProjectAnalysis> {
-        this.outputChannel.appendLine(t('analysis.scanning'));
+        this.outputChannel.appendLine('Analyzing project structure...');
 
         const analysis: ProjectAnalysis = {
             metadata: await this.extractMetadata(),
             structure: await this.analyzeFileStructure(),
             techStack: await this.identifyTechStack(),
             features: await this.extractFeatures(),
-            documents: await this.parseDocuments(),
-            marketingPotential: 0,
-            targetAudience: [],
-            valuePropositions: []
+            documents: await this.parseDocuments()
         };
 
-        // Calculate marketing potential and extract insights
-        analysis.marketingPotential = this.calculateMarketingPotential(analysis);
-        analysis.targetAudience = this.identifyTargetAudience(analysis);
-        analysis.valuePropositions = this.extractValuePropositions(analysis);
-
-        this.outputChannel.appendLine(t('analysis.analysisComplete'));
+        this.outputChannel.appendLine('Project analysis completed');
         return analysis;
     }
 
@@ -234,9 +223,7 @@ export class ProjectAnalyzer {
             }
         }
 
-        this.outputChannel.appendLine(t('analysis.techStackDetected', { 
-            techStack: techStack.map(t => `${t.language}${t.framework ? ` (${t.framework})` : ''}`).join(', ')
-        }));
+        this.outputChannel.appendLine(`Tech stack detected: ${techStack.map(t => `${t.language}${t.framework ? ` (${t.framework})` : ''}`).join(', ')}`);
 
         return techStack;
     }
@@ -256,7 +243,7 @@ export class ProjectAnalyzer {
             }
         }
 
-        this.outputChannel.appendLine(t('analysis.featuresExtracted', { count: features.length }));
+        this.outputChannel.appendLine(`Features extracted: ${features.length} features found`);
         return features;
     }
 
@@ -269,12 +256,12 @@ export class ProjectAnalyzer {
                 const content = fs.readFileSync(readmePath, 'utf8');
                 const doc = this.parseMarkdownDocument(readmePath, content);
                 documents.push(doc);
-                this.outputChannel.appendLine(t('analysis.readmeFound'));
+                this.outputChannel.appendLine('README file found and parsed');
             } catch (error) {
                 this.outputChannel.appendLine(`Error parsing README: ${error}`);
             }
         } else {
-            this.outputChannel.appendLine(t('analysis.noReadme'));
+            this.outputChannel.appendLine('No README file found');
         }
 
         return documents;
@@ -343,60 +330,7 @@ export class ProjectAnalyzer {
         return features;
     }
 
-    private calculateMarketingPotential(analysis: ProjectAnalysis): number {
-        let score = 0.5; // Base score
-        
-        // Boost for good documentation
-        if (analysis.documents.length > 0) score += 0.2;
-        
-        // Boost for modern tech stack
-        const modernTech = ['TypeScript', 'React', 'Vue.js', 'Next.js', 'Rust', 'Go'];
-        const hasModernTech = analysis.techStack.some(tech => 
-            modernTech.includes(tech.language) || modernTech.includes(tech.framework || '')
-        );
-        if (hasModernTech) score += 0.2;
-        
-        // Boost for features
-        if (analysis.features.length > 3) score += 0.1;
-        
-        return Math.min(1.0, score);
-    }
-
-    private identifyTargetAudience(analysis: ProjectAnalysis): string[] {
-        const audiences: string[] = [];
-        
-        // Based on tech stack
-        const frontendTech = analysis.techStack.filter(t => t.category === 'frontend');
-        const backendTech = analysis.techStack.filter(t => t.category === 'backend');
-        
-        if (frontendTech.length > 0) audiences.push('Frontend Developers');
-        if (backendTech.length > 0) audiences.push('Backend Developers');
-        
-        // Based on project type
-        if (analysis.metadata.keywords.includes('library')) audiences.push('Library Users');
-        if (analysis.metadata.keywords.includes('tool')) audiences.push('Developer Tools Users');
-        
-        return audiences.length > 0 ? audiences : ['Developers'];
-    }
-
-    private extractValuePropositions(analysis: ProjectAnalysis): string[] {
-        const propositions: string[] = [];
-        
-        // From description
-        if (analysis.metadata.description) {
-            propositions.push(analysis.metadata.description);
-        }
-        
-        // From top features
-        const topFeatures = analysis.features
-            .sort((a, b) => b.importance - a.importance)
-            .slice(0, 3)
-            .map(f => f.description);
-        
-        propositions.push(...topFeatures);
-        
-        return propositions;
-    }
+    // Removed complex marketing analysis methods for MVP simplification
 
     private isMainFile(filename: string): boolean {
         const mainFiles = [

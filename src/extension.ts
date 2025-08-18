@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { FileWatcher } from './watcher';
 import { ConfigManager } from './config';
 import { SidebarProvider } from './ui/SidebarProvider';
-import { initI18n, t } from './i18n';
+// Removed i18n for MVP simplification
 
 let fileWatcher: FileWatcher | undefined;
 let outputChannel: vscode.OutputChannel;
@@ -11,12 +11,9 @@ let sidebarProvider: SidebarProvider;
 export async function activate(context: vscode.ExtensionContext) {
     console.log('LumosGen extension is now active!');
 
-    // Initialize internationalization
-    await initI18n('en'); // Default to English, can be made configurable later
-
     // Create output channel
     outputChannel = vscode.window.createOutputChannel('LumosGen');
-    outputChannel.appendLine(t('extension.activated'));
+    outputChannel.appendLine('LumosGen extension activated');
 
     // Initialize configuration manager
     const configManager = ConfigManager.getInstance();
@@ -34,7 +31,7 @@ export async function activate(context: vscode.ExtensionContext) {
     const analyzeProjectCommand = vscode.commands.registerCommand('lumosGen.analyzeProject', async () => {
         try {
             outputChannel.show();
-            outputChannel.appendLine(t('analysis.scanning'));
+            outputChannel.appendLine('Analyzing project...');
             // This will be handled by the sidebar provider
             vscode.commands.executeCommand('workbench.view.extension.lumosgen-sidebar');
         } catch (error) {
@@ -46,7 +43,7 @@ export async function activate(context: vscode.ExtensionContext) {
     const generateMarketingContentCommand = vscode.commands.registerCommand('lumosGen.generateMarketingContent', async () => {
         try {
             outputChannel.show();
-            outputChannel.appendLine(t('content.generatingHomepage'));
+            outputChannel.appendLine('Generating marketing content...');
             // This will be implemented in Sprint 2
             vscode.window.showInformationMessage('Marketing content generation will be available in Sprint 2');
         } catch (error) {
@@ -70,7 +67,7 @@ export async function activate(context: vscode.ExtensionContext) {
     const deployToGitHubCommand = vscode.commands.registerCommand('lumosGen.deployToGitHub', async () => {
         try {
             outputChannel.show();
-            outputChannel.appendLine(t('deployment.preparing'));
+            outputChannel.appendLine('Preparing deployment...');
             // This will be implemented in Sprint 4
             vscode.window.showInformationMessage('GitHub Pages deployment will be available in Sprint 4');
         } catch (error) {

@@ -5,7 +5,6 @@ import { GeneratedContent } from '../content/MarketingContentGenerator';
 import { ProjectAnalysis } from '../analysis/ProjectAnalyzer';
 import { TemplateEngine } from './TemplateEngine';
 import { SEOOptimizer } from './SEOOptimizer';
-import { t } from '../i18n';
 
 export interface WebsiteConfig {
     theme: 'light' | 'dark' | 'auto';
@@ -39,7 +38,7 @@ export class WebsiteBuilder {
         analysis: ProjectAnalysis,
         config?: WebsiteConfig
     ): Promise<BuildResult> {
-        this.outputChannel.appendLine(t('website.building'));
+        this.outputChannel.appendLine('Building responsive website...');
 
         try {
             const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
@@ -78,7 +77,7 @@ export class WebsiteBuilder {
             await this.generateSEOFiles(content, analysis, outputPath, buildResult);
             
             buildResult.success = true;
-            this.outputChannel.appendLine(t('website.buildComplete'));
+            this.outputChannel.appendLine('Website build completed successfully');
             
             return buildResult;
 

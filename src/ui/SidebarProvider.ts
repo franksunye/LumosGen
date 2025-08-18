@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { ProjectAnalyzer, ProjectAnalysis } from '../analysis/ProjectAnalyzer';
 import { MarketingContentGenerator, GeneratedContent, ContentGenerationOptions } from '../content/MarketingContentGenerator';
 import { WebsiteBuilder, BuildResult } from '../website/WebsiteBuilder';
-import { t } from '../i18n';
+import { getConfig } from '../config/SimpleConfig';
 
 export class SidebarProvider implements vscode.WebviewViewProvider {
     public static readonly viewType = 'lumosgen.sidebar';
@@ -70,7 +70,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
 
     private async analyzeProject() {
         if (!vscode.workspace.workspaceFolders) {
-            vscode.window.showErrorMessage(t('errors.noWorkspace'));
+            vscode.window.showErrorMessage('No workspace folder found');
             return;
         }
 
@@ -84,17 +84,17 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
             this.updateStatus('completed');
             
             vscode.window.showInformationMessage(
-                t('analysis.analysisComplete'),
-                t('commands.generateContent')
+                'Project analysis completed successfully',
+                'Generate Marketing Content'
             ).then(selection => {
-                if (selection === t('commands.generateContent')) {
+                if (selection === 'Generate Marketing Content') {
                     this.generateContent();
                 }
             });
         } catch (error) {
             this.updateStatus('failed');
             this.outputChannel.appendLine(`Analysis failed: ${error}`);
-            vscode.window.showErrorMessage(`${t('ui.status.failed')}: ${error}`);
+            vscode.window.showErrorMessage(`Analysis failed: ${error}`);
         }
     }
 
@@ -129,11 +129,11 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
             this.updateStatus('completed');
 
             vscode.window.showInformationMessage(
-                t('content.contentReady'),
-                t('commands.previewWebsite'),
+                'Marketing content generated successfully',
+                'Preview Website',
                 'Save Content'
             ).then(selection => {
-                if (selection === t('commands.previewWebsite')) {
+                if (selection === 'Preview Website') {
                     this.previewWebsite();
                 } else if (selection === 'Save Content') {
                     this.saveGeneratedContent();
@@ -142,19 +142,19 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
         } catch (error) {
             this.updateStatus('failed');
             this.outputChannel.appendLine(`Content generation failed: ${error}`);
-            vscode.window.showErrorMessage(t('content.contentFailed', { error }));
+            vscode.window.showErrorMessage(`Content generation failed: ${error}`);
         }
     }
 
     private async previewWebsite() {
         if (!this._generatedContent || !this._projectAnalysis) {
-            vscode.window.showErrorMessage(t('errors.noContentToPreview'));
+            vscode.window.showErrorMessage('No content available to preview. Please generate content first.');
             return;
         }
 
         try {
             this.updateStatus('building');
-            this.outputChannel.appendLine(t('website.building'));
+            this.outputChannel.appendLine('Building responsive website...');
 
             // Build the website
             this._buildResult = await this.websiteBuilder.buildWebsite(
@@ -175,7 +175,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
         } catch (error) {
             this.updateStatus('failed');
             this.outputChannel.appendLine(`Website build failed: ${error}`);
-            vscode.window.showErrorMessage(t('website.buildFailed', { error }));
+            vscode.window.showErrorMessage(`Website build failed: ${error}`);
         }
     }
 
@@ -190,7 +190,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
             vscode.window.showInformationMessage('GitHub Pages deployment will be available in Sprint 4');
         } catch (error) {
             this.updateStatus('failed');
-            vscode.window.showErrorMessage(t('deployment.deploymentFailed', { error }));
+            vscode.window.showErrorMessage(`Deployment failed: ${error}`);
         }
     }
 
@@ -493,29 +493,29 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
 <body>
     <div class="header">
         <div class="logo">🔮 LumosGen</div>
-        <div class="subtitle">${t('ui.sidebar.title')}</div>
+        <div class="subtitle">AI-Powered Marketing Website Generator</div>
     </div>
     
     <div id="status" class="status" style="display: none;"></div>
     
     <button class="action-button" onclick="analyzeProject()">
-        📊 ${t('ui.sidebar.analyzeProject')}
+        📊 Analyze Project
     </button>
-    
+
     <button class="action-button" onclick="generateContent()" id="generateBtn" disabled>
-        🤖 ${t('ui.sidebar.generateContent')}
+        🤖 Generate Marketing Content
     </button>
-    
+
     <button class="action-button" onclick="previewWebsite()" id="previewBtn" disabled>
-        🎨 ${t('ui.sidebar.previewWebsite')}
+        🎨 Preview Website
     </button>
-    
+
     <button class="action-button" onclick="deployToGitHub()" id="deployBtn" disabled>
-        🚀 ${t('ui.sidebar.deployToGitHub')}
+        🚀 Deploy to GitHub Pages
     </button>
-    
+
     <button class="action-button" onclick="openSettings()">
-        ⚙️ ${t('ui.sidebar.settings')}
+        ⚙️ Settings
     </button>
     
     <div id="analysisResults" class="analysis-results">
@@ -605,12 +605,12 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
         function updateStatus(status) {
             const statusEl = document.getElementById('status');
             const statusTexts = {
-                analyzing: '${t('ui.status.analyzing')}',
-                generating: '${t('ui.status.generating')}',
-                building: '${t('ui.status.building')}',
-                deploying: '${t('ui.status.deploying')}',
-                completed: '${t('ui.status.completed')}',
-                failed: '${t('ui.status.failed')}'
+                analyzing: 'Analyzing project...',
+                generating: 'Generating marketing content...',
+                building: 'Building website...',
+                deploying: 'Deploying to GitHub Pages...',
+                completed: 'Completed successfully!',
+                failed: 'Operation failed'
             };
             
             statusEl.textContent = statusTexts[status] || status;
