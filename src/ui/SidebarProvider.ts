@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { ProjectAnalyzer, ProjectAnalysis } from '../analysis/ProjectAnalyzer';
+import { MarketingContentGenerator, GeneratedContent, ContentGenerationOptions } from '../content/MarketingContentGenerator';
 import { t } from '../i18n';
 
 export class SidebarProvider implements vscode.WebviewViewProvider {
@@ -7,13 +8,16 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
     
     private _view?: vscode.WebviewView;
     private _projectAnalysis?: ProjectAnalysis;
+    private _generatedContent?: GeneratedContent;
     private outputChannel: vscode.OutputChannel;
+    private contentGenerator: MarketingContentGenerator;
 
     constructor(
         private readonly _extensionUri: vscode.Uri,
         outputChannel: vscode.OutputChannel
     ) {
         this.outputChannel = outputChannel;
+        this.contentGenerator = new MarketingContentGenerator(outputChannel);
     }
 
     public resolveWebviewView(
@@ -48,6 +52,9 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
                         break;
                     case 'openSettings':
                         vscode.commands.executeCommand('workbench.action.openSettings', 'lumosGen');
+                        break;
+                    case 'saveContent':
+                        this.saveGeneratedContent();
                         break;
                 }
             },
@@ -94,18 +101,37 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
 
         try {
             this.updateStatus('generating');
-            
-            // TODO: Implement content generation in Sprint 2
-            // For now, show a placeholder message
-            await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate work
-            
+
+            // Get content generation options from configuration
+            const config = vscode.workspace.getConfiguration('lumosGen');
+            const marketingSettings = config.get('marketingSettings') as any;
+
+            const options: ContentGenerationOptions = {
+                tone: marketingSettings?.tone || 'professional',
+                includeCodeExamples: marketingSettings?.includeCodeExamples !== false,
+                targetMarkets: marketingSettings?.targetMarkets || ['global'],
+                seoOptimization: marketingSettings?.seoOptimization !== false,
+                language: config.get('language') || 'en'
+            };
+
+            // Generate marketing content
+            this._generatedContent = await this.contentGenerator.generateMarketingContent(
+                this._projectAnalysis,
+                options
+            );
+
+            this.updateContentResults(this._generatedContent);
             this.updateStatus('completed');
+
             vscode.window.showInformationMessage(
                 t('content.contentReady'),
-                t('commands.previewWebsite')
+                t('commands.previewWebsite'),
+                'Save Content'
             ).then(selection => {
                 if (selection === t('commands.previewWebsite')) {
                     this.previewWebsite();
+                } else if (selection === 'Save Content') {
+                    this.saveGeneratedContent();
                 }
             });
         } catch (error) {
@@ -167,6 +193,79 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
                     targetAudience: analysis.targetAudience
                 }
             });
+        }
+    }
+
+    private updateContentResults(content: GeneratedContent) {
+        if (this._view) {
+            this._view.webview.postMessage({
+                type: 'updateContent',
+                content: {
+                    title: content.metadata.title,
+                    description: content.metadata.description,
+                    pages: {
+                        homepage: content.homepage.length,
+                        about: content.aboutPage.length,
+                        faq: content.faq.length,
+                        blog: content.blogPost?.length || 0
+                    },
+                    keywords: content.metadata.keywords.slice(0, 5)
+                }
+            });
+        }
+    }
+
+    private async saveGeneratedContent() {
+        if (!this._generatedContent || !vscode.workspace.workspaceFolders) {
+            return;
+        }
+
+        try {
+            const workspaceRoot = vscode.workspace.workspaceFolders[0].uri.fsPath;
+            const fs = require('fs');
+            const path = require('path');
+
+            // Create marketing content directory
+            const marketingDir = path.join(workspaceRoot, 'marketing-content');
+            if (!fs.existsSync(marketingDir)) {
+                fs.mkdirSync(marketingDir, { recursive: true });
+            }
+
+            // Save individual files
+            const files = [
+                { name: 'homepage.md', content: this._generatedContent.homepage },
+                { name: 'about.md', content: this._generatedContent.aboutPage },
+                { name: 'faq.md', content: this._generatedContent.faq }
+            ];
+
+            if (this._generatedContent.blogPost) {
+                files.push({ name: 'blog-post.md', content: this._generatedContent.blogPost });
+            }
+
+            // Save metadata
+            files.push({
+                name: 'metadata.json',
+                content: JSON.stringify(this._generatedContent.metadata, null, 2)
+            });
+
+            for (const file of files) {
+                const filePath = path.join(marketingDir, file.name);
+                fs.writeFileSync(filePath, file.content, 'utf8');
+            }
+
+            this.outputChannel.appendLine(`Marketing content saved to: ${marketingDir}`);
+            vscode.window.showInformationMessage(
+                `Marketing content saved to marketing-content/ directory`,
+                'Open Folder'
+            ).then(selection => {
+                if (selection === 'Open Folder') {
+                    vscode.commands.executeCommand('revealFileInOS', vscode.Uri.file(marketingDir));
+                }
+            });
+
+        } catch (error) {
+            this.outputChannel.appendLine(`Failed to save content: ${error}`);
+            vscode.window.showErrorMessage(`Failed to save content: ${error}`);
         }
     }
 
@@ -251,6 +350,64 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
         
         .analysis-results.visible {
             display: block;
+        }
+
+        .content-results {
+            margin-top: 16px;
+            padding: 12px;
+            background-color: var(--vscode-editor-inactiveSelectionBackground);
+            border-radius: 4px;
+            display: none;
+        }
+
+        .content-results.visible {
+            display: block;
+        }
+
+        .content-results h3 {
+            margin: 0 0 12px 0;
+            color: var(--vscode-textLink-foreground);
+            font-size: 14px;
+        }
+
+        .content-item {
+            margin: 8px 0;
+        }
+
+        .content-label {
+            font-weight: bold;
+            color: var(--vscode-textLink-foreground);
+            font-size: 12px;
+        }
+
+        .content-pages {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin-top: 4px;
+        }
+
+        .page-tag {
+            background-color: var(--vscode-button-background);
+            color: var(--vscode-button-foreground);
+            padding: 2px 6px;
+            border-radius: 12px;
+            font-size: 10px;
+        }
+
+        .content-keywords {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin-top: 4px;
+        }
+
+        .keyword-tag {
+            background-color: var(--vscode-badge-background);
+            color: var(--vscode-badge-foreground);
+            padding: 2px 6px;
+            border-radius: 8px;
+            font-size: 10px;
         }
         
         .analysis-item {
@@ -343,6 +500,25 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
         </div>
     </div>
 
+    <div id="contentResults" class="content-results">
+        <h3>📝 Generated Content</h3>
+        <div class="content-item">
+            <div class="content-label">Title:</div>
+            <div id="contentTitle">-</div>
+        </div>
+        <div class="content-item">
+            <div class="content-label">Pages Generated:</div>
+            <div id="contentPages" class="content-pages"></div>
+        </div>
+        <div class="content-item">
+            <div class="content-label">SEO Keywords:</div>
+            <div id="contentKeywords" class="content-keywords"></div>
+        </div>
+        <button class="action-button" onclick="saveContent()" id="saveBtn">
+            💾 Save Content
+        </button>
+    </div>
+
     <script>
         const vscode = acquireVsCodeApi();
         
@@ -365,6 +541,10 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
         function openSettings() {
             vscode.postMessage({ type: 'openSettings' });
         }
+
+        function saveContent() {
+            vscode.postMessage({ type: 'saveContent' });
+        }
         
         window.addEventListener('message', event => {
             const message = event.data;
@@ -375,6 +555,9 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
                     break;
                 case 'updateAnalysis':
                     updateAnalysisResults(message.analysis);
+                    break;
+                case 'updateContent':
+                    updateContentResults(message.content);
                     break;
             }
         });
@@ -422,6 +605,45 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
             
             // Enable next steps
             document.getElementById('generateBtn').disabled = false;
+        }
+
+        function updateContentResults(content) {
+            document.getElementById('contentTitle').textContent = content.title;
+
+            const pagesEl = document.getElementById('contentPages');
+            pagesEl.innerHTML = '';
+
+            const pages = [
+                { name: 'Homepage', size: content.pages.homepage },
+                { name: 'About', size: content.pages.about },
+                { name: 'FAQ', size: content.pages.faq }
+            ];
+
+            if (content.pages.blog > 0) {
+                pages.push({ name: 'Blog', size: content.pages.blog });
+            }
+
+            pages.forEach(page => {
+                const tag = document.createElement('span');
+                tag.className = 'page-tag';
+                tag.textContent = page.name + ' (' + Math.round(page.size / 100) + '00 chars)';
+                pagesEl.appendChild(tag);
+            });
+
+            const keywordsEl = document.getElementById('contentKeywords');
+            keywordsEl.innerHTML = '';
+            content.keywords.forEach(keyword => {
+                const tag = document.createElement('span');
+                tag.className = 'keyword-tag';
+                tag.textContent = keyword;
+                keywordsEl.appendChild(tag);
+            });
+
+            document.getElementById('contentResults').classList.add('visible');
+
+            // Enable preview and deploy buttons
+            document.getElementById('previewBtn').disabled = false;
+            document.getElementById('deployBtn').disabled = false;
         }
     </script>
 </body>
