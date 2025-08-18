@@ -77,7 +77,6 @@
 1. **Multi-Agent System Foundation** - Core Agent framework and communication
 2. **Intelligent Decision Engine** - LLM-driven autonomous decision making
 3. **Agent Learning System** - Experience-based optimization capability
-4. **Agentic vs. Workflow Validation** - A/B test: Agent vs. traditional automation
 
 ### MVP Success Criteria (Refocused on Agentic Capabilities)
 - [ ] Agent decision accuracy >85% (autonomous vs. rule-based)
