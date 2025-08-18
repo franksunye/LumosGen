@@ -17,6 +17,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
     private _buildResult?: BuildResult;
     private outputChannel: vscode.OutputChannel;
     private contentGenerator: MarketingContentGenerator;
+    private projectAnalyzer: ProjectAnalyzer;
     private websiteBuilder: WebsiteBuilder;
     private deployer: GitHubPagesDeployer;
     private monitor: DeploymentMonitor;
@@ -28,6 +29,10 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
     ) {
         this.outputChannel = outputChannel;
         this.outputChannel.appendLine('LumosGen: SidebarProvider constructor called');
+
+        // Initialize workspace-dependent components
+        const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || '';
+        this.projectAnalyzer = new ProjectAnalyzer(workspaceRoot, outputChannel);
         this.contentGenerator = new MarketingContentGenerator(outputChannel);
         this.websiteBuilder = new WebsiteBuilder(outputChannel);
         this.deployer = new GitHubPagesDeployer(outputChannel);
@@ -68,12 +73,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
         webviewView.webview.onDidReceiveMessage(
             message => {
                 switch (message.type) {
-                    case 'analyzeProject':
-                        this.analyzeProject();
-                        break;
-                    case 'generateContent':
-                        this.generateContent();
-                        break;
+
                     case 'previewWebsite':
                         this.previewWebsite();
                         break;
@@ -92,46 +92,23 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
         );
     }
 
-    private async analyzeProject() {
-        if (!vscode.workspace.workspaceFolders) {
-            vscode.window.showErrorMessage('No workspace folder found');
-            return;
-        }
 
-        const workspaceRoot = vscode.workspace.workspaceFolders[0].uri.fsPath;
-        const analyzer = new ProjectAnalyzer(workspaceRoot, this.outputChannel);
 
+
+
+    private async previewWebsite() {
         try {
-            this.updateStatus('analyzing');
-            this._projectAnalysis = await analyzer.analyzeProject();
-            this.updateAnalysisResults(this._projectAnalysis);
-            this.updateStatus('completed');
-            
-            vscode.window.showInformationMessage(
-                'Project analysis completed successfully',
-                'Generate Marketing Content'
-            ).then(selection => {
-                if (selection === 'Generate Marketing Content') {
-                    this.generateContent();
-                }
-            });
-        } catch (error) {
-            this.updateStatus('failed');
-            this.outputChannel.appendLine(`Analysis failed: ${error}`);
-            vscode.window.showErrorMessage(`Analysis failed: ${error}`);
-        }
-    }
+            this.updateStatus('building');
+            this.outputChannel.appendLine('Building marketing website...');
 
-    private async generateContent() {
-        if (!this._projectAnalysis) {
-            vscode.window.showWarningMessage('Please analyze the project first');
-            return;
-        }
+            // Step 1: Analyze project
+            this.outputChannel.appendLine('Analyzing project structure...');
+            this._projectAnalysis = await this.projectAnalyzer.analyzeProject();
+            this.outputChannel.appendLine('Project analysis completed');
 
-        try {
-            this.updateStatus('generating');
+            // Step 2: Generate content
+            this.outputChannel.appendLine('Generating marketing content...');
 
-            // Get content generation options from configuration
             const config = vscode.workspace.getConfiguration('lumosGen');
             const marketingSettings = config.get('marketingSettings') as any;
 
@@ -143,51 +120,24 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
                 language: config.get('language') || 'en'
             };
 
-            // Generate marketing content
             this._generatedContent = await this.contentGenerator.generateMarketingContent(
-                this._projectAnalysis,
+                this._projectAnalysis!,
                 options
             );
+            this.outputChannel.appendLine('Marketing content generated');
 
-            this.updateContentResults(this._generatedContent);
-            this.updateStatus('completed');
-
-            vscode.window.showInformationMessage(
-                'Marketing content generated successfully! Ready to build website.',
-                'Build Website'
-            ).then(selection => {
-                if (selection === 'Build Website') {
-                    this.previewWebsite();
-                }
-            });
-        } catch (error) {
-            this.updateStatus('failed');
-            this.outputChannel.appendLine(`Content generation failed: ${error}`);
-            vscode.window.showErrorMessage(`Content generation failed: ${error}`);
-        }
-    }
-
-    private async previewWebsite() {
-        if (!this._generatedContent || !this._projectAnalysis) {
-            vscode.window.showErrorMessage('No content available to preview. Please generate content first.');
-            return;
-        }
-
-        try {
-            this.updateStatus('building');
+            // Step 3: Build the website
             this.outputChannel.appendLine('Building responsive website...');
-
-            // Build the website
             this._buildResult = await this.websiteBuilder.buildWebsite(
                 this._generatedContent,
-                this._projectAnalysis
+                this._projectAnalysis!
             );
 
             if (!this._buildResult.success) {
                 throw new Error(this._buildResult.errors?.join(', ') || 'Build failed');
             }
 
-            // Simply show where the website was generated
+            // Show website location
             this.websiteBuilder.showWebsiteLocation(this._buildResult);
 
             this.updateWebsiteResults(this._buildResult);
@@ -202,8 +152,14 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
 
     private async deployToGitHub() {
         try {
+            // If no build result, build the website first
             if (!this._buildResult || !this._buildResult.success) {
-                throw new Error('No website build available. Please build the website first.');
+                this.outputChannel.appendLine('No website build found. Building website first...');
+                await this.previewWebsite();
+
+                if (!this._buildResult || !this._buildResult.success) {
+                    throw new Error('Failed to build website for deployment.');
+                }
             }
 
             this.updateStatus('deploying');
@@ -562,19 +518,11 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
     
     <div id="status" class="status" style="display: none;"></div>
     
-    <button class="action-button" onclick="analyzeProject()">
-        📊 Analyze Project
+    <button class="action-button" onclick="previewWebsite()" id="previewBtn">
+        🏗️ Build Marketing Website
     </button>
 
-    <button class="action-button" onclick="generateContent()" id="generateBtn" disabled>
-        🤖 Generate Marketing Content
-    </button>
-
-    <button class="action-button" onclick="previewWebsite()" id="previewBtn" disabled>
-        🏗️ Build Website
-    </button>
-
-    <button class="action-button" onclick="deployToGitHub()" id="deployBtn" disabled>
+    <button class="action-button" onclick="deployToGitHub()" id="deployBtn">
         🚀 Deploy to GitHub Pages
     </button>
 
@@ -624,13 +572,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
     <script>
         const vscode = acquireVsCodeApi();
         
-        function analyzeProject() {
-            vscode.postMessage({ type: 'analyzeProject' });
-        }
-        
-        function generateContent() {
-            vscode.postMessage({ type: 'generateContent' });
-        }
+
         
         function previewWebsite() {
             vscode.postMessage({ type: 'previewWebsite' });

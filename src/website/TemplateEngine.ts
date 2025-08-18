@@ -1,6 +1,5 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { marked } from 'marked';
 import { GeneratedContent } from '../content/MarketingContentGenerator';
 import { ProjectAnalysis } from '../analysis/ProjectAnalyzer';
 import { WebsiteConfig } from './WebsiteBuilder';
@@ -18,11 +17,7 @@ export class TemplateEngine {
     private templateCache: Map<string, string> = new Map();
 
     constructor() {
-        // Configure marked for better HTML output
-        marked.setOptions({
-            breaks: true,
-            gfm: true
-        });
+        // Template engine initialized
     }
 
     async renderPage(data: PageData): Promise<string> {
@@ -63,9 +58,9 @@ export class TemplateEngine {
         return template.replace(/\{\{(\w+(?:\.\w+)*)\}\}/g, (match, path) => {
             const value = this.getNestedValue(data, path);
 
-            // If this is content field, convert Markdown to HTML
+            // If this is content field, apply basic HTML formatting
             if (path === 'content' && typeof value === 'string') {
-                return marked(value);
+                return this.convertToHTML(value);
             }
 
             return value || match;
@@ -74,6 +69,17 @@ export class TemplateEngine {
 
     private getNestedValue(obj: any, path: string): any {
         return path.split('.').reduce((current, key) => current?.[key], obj);
+    }
+
+    private convertToHTML(content: string): string {
+        // Simple markdown-like conversion
+        return content
+            .replace(/\n\n/g, '</p><p>')
+            .replace(/\n/g, '<br>')
+            .replace(/^/, '<p>')
+            .replace(/$/, '</p>')
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\*(.*?)\*/g, '<em>$1</em>');
     }
 
     private getBuiltInTemplate(templateName: string): string {
