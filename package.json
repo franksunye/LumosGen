@@ -35,21 +35,21 @@
   ],
   "main": "./out/extension.js",
   "contributes": {
-    "views": {
-      "explorer": [
-        {
-          "id": "lumosgen.sidebar",
-          "name": "LumosGen Marketing AI",
-          "when": "workspaceFolderCount != 0"
-        }
-      ]
-    },
     "viewsContainers": {
       "activitybar": [
         {
           "id": "lumosgen-sidebar",
           "title": "LumosGen",
           "icon": "$(sparkle)"
+        }
+      ]
+    },
+    "views": {
+      "lumosgen-sidebar": [
+        {
+          "id": "lumosgen.sidebar",
+          "name": "LumosGen Marketing AI",
+          "when": "workspaceFolderCount != 0"
         }
       ]
     },
