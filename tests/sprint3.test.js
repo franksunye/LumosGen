@@ -52,8 +52,7 @@ runTest('WebsiteBuilder module exists and exports', () => {
     // Check for required methods
     const requiredMethods = [
         'buildWebsite',
-        'previewWebsite',
-        'stopPreview'
+        'showWebsiteLocation'
     ];
     
     requiredMethods.forEach(method => {
@@ -139,39 +138,32 @@ runTest('SEOOptimizer module exists and exports', () => {
     });
 });
 
-// Test 4: PreviewServer Module Structure
-runTest('PreviewServer module exists and exports', () => {
-    const serverPath = path.join(process.cwd(), 'src', 'website', 'PreviewServer.ts');
-    if (!fs.existsSync(serverPath)) {
-        throw new Error('PreviewServer.ts not found');
-    }
-    
-    const serverContent = fs.readFileSync(serverPath, 'utf8');
-    
-    // Check for required exports
-    const requiredExports = [
-        'export class PreviewServer',
-        'export interface ServerConfig'
+// Test 4: Simplified Website Location Display
+runTest('Website builder shows location to user', () => {
+    const builderPath = path.join(process.cwd(), 'src', 'website', 'WebsiteBuilder.ts');
+    const builderContent = fs.readFileSync(builderPath, 'utf8');
+
+    // Check for simplified preview functionality
+    const requiredMethods = [
+        'showWebsiteLocation'
     ];
-    
-    requiredExports.forEach(exportItem => {
-        if (!serverContent.includes(exportItem)) {
-            throw new Error(`Missing export: ${exportItem}`);
+
+    requiredMethods.forEach(method => {
+        if (!builderContent.includes(method)) {
+            throw new Error(`Missing method: ${method}`);
         }
     });
-    
-    // Check for server functionality
-    const serverFeatures = [
-        'start',
-        'stop',
-        'handleRequest',
-        'serveFile',
+
+    // Should not have complex server logic
+    const complexFeatures = [
+        'PreviewServer',
+        'http.createServer',
         'liveReload'
     ];
-    
-    serverFeatures.forEach(feature => {
-        if (!serverContent.includes(feature)) {
-            throw new Error(`Missing server feature: ${feature}`);
+
+    complexFeatures.forEach(feature => {
+        if (builderContent.includes(feature)) {
+            throw new Error(`Should not include complex feature: ${feature}`);
         }
     });
 });
@@ -254,18 +246,22 @@ runTest('SidebarProvider integrates website builder functionality', () => {
         throw new Error('BuildResult interface not imported');
     }
     
-    // Check for preview functionality
+    // Check for simplified preview functionality
     const previewFeatures = [
         'previewWebsite',
-        'stopPreview',
         'updateWebsiteResults'
     ];
-    
+
     previewFeatures.forEach(feature => {
         if (!sidebarContent.includes(feature)) {
             throw new Error(`Missing preview feature: ${feature}`);
         }
     });
+
+    // Should not have complex server management
+    if (sidebarContent.includes('stopPreview')) {
+        throw new Error('Should not include complex stopPreview functionality');
+    }
 });
 
 // Test 8: i18n Website Translations
@@ -273,32 +269,32 @@ runTest('i18n includes website-related translations', () => {
     const i18nPath = path.join(process.cwd(), 'src', 'i18n', 'index.ts');
     const i18nContent = fs.readFileSync(i18nPath, 'utf8');
     
-    // Check for website translation keys
+    // Check for essential website translation keys
     const websiteKeys = [
         'website.building',
         'website.buildComplete',
-        'website.buildFailed',
-        'website.previewReady',
-        'website.previewStarted',
-        'website.previewStopped'
+        'website.buildFailed'
     ];
-    
+
     websiteKeys.forEach(key => {
         const keyName = key.split('.')[1];
         if (!i18nContent.includes(keyName)) {
             throw new Error(`Missing translation key: ${key}`);
         }
     });
-    
-    // Check for command translations
-    const commandKeys = [
+
+    // Should not have complex preview server translations
+    const removedKeys = [
+        'previewReady',
+        'previewStarted',
+        'previewStopped',
         'openBrowser',
         'stopPreview'
     ];
-    
-    commandKeys.forEach(key => {
-        if (!i18nContent.includes(key)) {
-            throw new Error(`Missing command translation: ${key}`);
+
+    removedKeys.forEach(key => {
+        if (i18nContent.includes(key)) {
+            throw new Error(`Should not include removed translation: ${key}`);
         }
     });
 });

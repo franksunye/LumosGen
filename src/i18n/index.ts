@@ -26,9 +26,7 @@ const resources: TranslationResources = {
                 previewWebsite: 'Preview Website',
                 deployToGitHub: 'Deploy to GitHub Pages',
                 toggleWatcher: 'Toggle File Watcher',
-                diagnose: 'Diagnose Issues',
-                openBrowser: 'Open in Browser',
-                stopPreview: 'Stop Preview'
+                diagnose: 'Diagnose Issues'
             },
             // UI elements
             ui: {
@@ -44,7 +42,6 @@ const resources: TranslationResources = {
                     analyzing: 'Analyzing project...',
                     generating: 'Generating marketing content...',
                     building: 'Building website...',
-                    previewing: 'Starting preview server...',
                     deploying: 'Deploying to GitHub Pages...',
                     completed: 'Completed successfully!',
                     failed: 'Operation failed'
@@ -73,10 +70,6 @@ const resources: TranslationResources = {
                 building: 'Building responsive website...',
                 buildComplete: 'Website build completed successfully',
                 buildFailed: 'Website build failed: {{error}}',
-                startingPreview: 'Starting local preview server...',
-                previewReady: 'Website preview is ready!',
-                previewStarted: 'Preview server started at {{url}}',
-                previewStopped: 'Preview server stopped',
                 optimizingSEO: 'Optimizing for search engines...',
                 generatingAssets: 'Generating website assets...'
             },

@@ -58,21 +58,19 @@
 - `WebsiteBuilder.generateSEOFiles()` - SEO文件生成
 - 完整的文件系统集成
 
-### US-014: 本地预览功能 (5 SP) - ✅ COMPLETED
+### US-014: 本地预览功能 (5 SP) - ✅ COMPLETED (简化实现)
 **实现内容：**
-- ✅ Local development server with HTTP support
-- ✅ Live reload functionality (基础实现)
-- ✅ Mobile-responsive preview
-- ✅ Performance metrics collection
-- ✅ Error handling and graceful degradation
-- ✅ Auto-port selection and browser opening
+- ✅ 简单直接的文件位置显示
+- ✅ 一键打开生成的网站文件夹
+- ✅ 符合MVP原则的最简实现
+- ✅ 开发者友好的文件访问方式
+- ✅ 无需复杂服务器的轻量级方案
 
 **技术实现：**
-- `PreviewServer.start()` - 本地服务器启动
-- `PreviewServer.handleRequest()` - HTTP请求处理
-- `PreviewServer.serveFile()` - 静态文件服务
-- `PreviewServer.setupLiveReload()` - 实时重载功能
-- `PreviewServer.getPerformanceMetrics()` - 性能指标收集
+- `WebsiteBuilder.showWebsiteLocation()` - 显示网站生成位置
+- VS Code内置文件夹打开功能
+- 简洁的用户提示和引导
+- 移除了复杂的HTTP服务器逻辑
 
 ## 🏗️ 新增核心模块
 
@@ -121,20 +119,16 @@
 - `generateMetaTags()` - SEO元标签
 - `optimizeContent()` - 内容优化
 
-### 4. PreviewServer (`src/website/PreviewServer.ts`)
+### 4. 简化的预览功能 (集成在WebsiteBuilder中)
 **功能特性：**
-- 🌐 本地HTTP服务器
-- 🔄 实时重载支持
-- 📊 性能监控
-- 🛡️ 错误处理和安全
-- 🚀 自动浏览器打开
+- 📁 直接显示生成文件位置
+- 🚀 一键打开文件夹
+- 💡 开发者友好的简单方式
+- 🎯 符合MVP原则
+- ⚡ 无需额外服务器开销
 
 **核心方法：**
-- `start()` - 服务器启动
-- `stop()` - 服务器停止
-- `handleRequest()` - 请求处理
-- `serveFile()` - 文件服务
-- `getPerformanceMetrics()` - 性能指标
+- `showWebsiteLocation()` - 显示网站位置并提供打开选项
 
 ## 📊 测试结果
 

@@ -5,7 +5,6 @@ import { GeneratedContent } from '../content/MarketingContentGenerator';
 import { ProjectAnalysis } from '../analysis/ProjectAnalyzer';
 import { TemplateEngine } from './TemplateEngine';
 import { SEOOptimizer } from './SEOOptimizer';
-import { PreviewServer } from './PreviewServer';
 import { t } from '../i18n';
 
 export interface WebsiteConfig {
@@ -27,14 +26,12 @@ export interface BuildResult {
 export class WebsiteBuilder {
     private templateEngine: TemplateEngine;
     private seoOptimizer: SEOOptimizer;
-    private previewServer: PreviewServer;
     private outputChannel: vscode.OutputChannel;
 
     constructor(outputChannel: vscode.OutputChannel) {
         this.outputChannel = outputChannel;
         this.templateEngine = new TemplateEngine();
         this.seoOptimizer = new SEOOptimizer();
-        this.previewServer = new PreviewServer(outputChannel);
     }
 
     async buildWebsite(
@@ -97,20 +94,23 @@ export class WebsiteBuilder {
         }
     }
 
-    async previewWebsite(buildResult: BuildResult): Promise<string> {
+    showWebsiteLocation(buildResult: BuildResult): void {
         if (!buildResult.success) {
-            throw new Error('Cannot preview failed build');
+            vscode.window.showErrorMessage('网站构建失败，无法预览');
+            return;
         }
 
-        const serverUrl = await this.previewServer.start(buildResult.outputPath);
-        this.outputChannel.appendLine(t('website.previewStarted', serverUrl));
-        
-        return serverUrl;
-    }
+        this.outputChannel.appendLine(`网站已生成到: ${buildResult.outputPath}`);
 
-    async stopPreview(): Promise<void> {
-        await this.previewServer.stop();
-        this.outputChannel.appendLine(t('website.previewStopped'));
+        vscode.window.showInformationMessage(
+            `网站已生成到: ${buildResult.outputPath}`,
+            '打开文件夹'
+        ).then(selection => {
+            if (selection === '打开文件夹') {
+                const folderUri = vscode.Uri.file(buildResult.outputPath);
+                vscode.commands.executeCommand('vscode.openFolder', folderUri, true);
+            }
+        });
     }
 
     private async generatePages(

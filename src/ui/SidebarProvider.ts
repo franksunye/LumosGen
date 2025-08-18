@@ -60,9 +60,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
                     case 'saveContent':
                         this.saveGeneratedContent();
                         break;
-                    case 'stopPreview':
-                        this.stopPreview();
-                        break;
+
                 }
             },
             undefined,
@@ -168,26 +166,11 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
                 throw new Error(this._buildResult.errors?.join(', ') || 'Build failed');
             }
 
-            this.updateStatus('previewing');
-            this.outputChannel.appendLine(t('website.startingPreview'));
+            // Simply show where the website was generated
+            this.websiteBuilder.showWebsiteLocation(this._buildResult);
 
-            // Start preview server
-            const serverUrl = await this.websiteBuilder.previewWebsite(this._buildResult);
-
-            this.updateWebsiteResults(this._buildResult, serverUrl);
+            this.updateWebsiteResults(this._buildResult);
             this.updateStatus('completed');
-
-            vscode.window.showInformationMessage(
-                t('website.previewReady'),
-                t('commands.openBrowser'),
-                t('commands.stopPreview')
-            ).then(selection => {
-                if (selection === t('commands.openBrowser')) {
-                    vscode.env.openExternal(vscode.Uri.parse(serverUrl));
-                } else if (selection === t('commands.stopPreview')) {
-                    this.stopPreview();
-                }
-            });
 
         } catch (error) {
             this.updateStatus('failed');
@@ -211,16 +194,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
         }
     }
 
-    private async stopPreview() {
-        try {
-            await this.websiteBuilder.stopPreview();
-            this.updateStatus('completed');
-            vscode.window.showInformationMessage(t('website.previewStopped'));
-        } catch (error) {
-            this.outputChannel.appendLine(`Stop preview failed: ${error}`);
-            vscode.window.showErrorMessage(`Stop preview failed: ${error}`);
-        }
-    }
+
 
     private updateStatus(status: string) {
         if (this._view) {
@@ -266,7 +240,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
         }
     }
 
-    private updateWebsiteResults(buildResult: BuildResult, serverUrl: string) {
+    private updateWebsiteResults(buildResult: BuildResult) {
         if (this._view) {
             this._view.webview.postMessage({
                 type: 'updateWebsite',
@@ -275,7 +249,6 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
                     outputPath: buildResult.outputPath,
                     pages: buildResult.pages,
                     assets: buildResult.assets,
-                    serverUrl: serverUrl,
                     errors: buildResult.errors
                 }
             });
