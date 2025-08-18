@@ -1,16 +1,19 @@
 import * as vscode from 'vscode';
 import { ProjectAnalyzer, ProjectAnalysis } from '../analysis/ProjectAnalyzer';
 import { MarketingContentGenerator, GeneratedContent, ContentGenerationOptions } from '../content/MarketingContentGenerator';
+import { WebsiteBuilder, BuildResult } from '../website/WebsiteBuilder';
 import { t } from '../i18n';
 
 export class SidebarProvider implements vscode.WebviewViewProvider {
     public static readonly viewType = 'lumosgen.sidebar';
-    
+
     private _view?: vscode.WebviewView;
     private _projectAnalysis?: ProjectAnalysis;
     private _generatedContent?: GeneratedContent;
+    private _buildResult?: BuildResult;
     private outputChannel: vscode.OutputChannel;
     private contentGenerator: MarketingContentGenerator;
+    private websiteBuilder: WebsiteBuilder;
 
     constructor(
         private readonly _extensionUri: vscode.Uri,
@@ -18,6 +21,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
     ) {
         this.outputChannel = outputChannel;
         this.contentGenerator = new MarketingContentGenerator(outputChannel);
+        this.websiteBuilder = new WebsiteBuilder(outputChannel);
     }
 
     public resolveWebviewView(
@@ -55,6 +59,9 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
                         break;
                     case 'saveContent':
                         this.saveGeneratedContent();
+                        break;
+                    case 'stopPreview':
+                        this.stopPreview();
                         break;
                 }
             },
@@ -142,32 +149,76 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
     }
 
     private async previewWebsite() {
+        if (!this._generatedContent || !this._projectAnalysis) {
+            vscode.window.showErrorMessage(t('errors.noContentToPreview'));
+            return;
+        }
+
         try {
             this.updateStatus('building');
-            
-            // TODO: Implement website preview in Sprint 3
-            await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate work
-            
+            this.outputChannel.appendLine(t('website.building'));
+
+            // Build the website
+            this._buildResult = await this.websiteBuilder.buildWebsite(
+                this._generatedContent,
+                this._projectAnalysis
+            );
+
+            if (!this._buildResult.success) {
+                throw new Error(this._buildResult.errors?.join(', ') || 'Build failed');
+            }
+
+            this.updateStatus('previewing');
+            this.outputChannel.appendLine(t('website.startingPreview'));
+
+            // Start preview server
+            const serverUrl = await this.websiteBuilder.previewWebsite(this._buildResult);
+
+            this.updateWebsiteResults(this._buildResult, serverUrl);
             this.updateStatus('completed');
-            vscode.window.showInformationMessage('Website preview will be available in Sprint 3');
+
+            vscode.window.showInformationMessage(
+                t('website.previewReady'),
+                t('commands.openBrowser'),
+                t('commands.stopPreview')
+            ).then(selection => {
+                if (selection === t('commands.openBrowser')) {
+                    vscode.env.openExternal(vscode.Uri.parse(serverUrl));
+                } else if (selection === t('commands.stopPreview')) {
+                    this.stopPreview();
+                }
+            });
+
         } catch (error) {
             this.updateStatus('failed');
-            vscode.window.showErrorMessage(`Preview failed: ${error}`);
+            this.outputChannel.appendLine(`Website build failed: ${error}`);
+            vscode.window.showErrorMessage(t('website.buildFailed', { error }));
         }
     }
 
     private async deployToGitHub() {
         try {
             this.updateStatus('deploying');
-            
+
             // TODO: Implement GitHub Pages deployment in Sprint 4
             await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate work
-            
+
             this.updateStatus('completed');
             vscode.window.showInformationMessage('GitHub Pages deployment will be available in Sprint 4');
         } catch (error) {
             this.updateStatus('failed');
             vscode.window.showErrorMessage(t('deployment.deploymentFailed', { error }));
+        }
+    }
+
+    private async stopPreview() {
+        try {
+            await this.websiteBuilder.stopPreview();
+            this.updateStatus('completed');
+            vscode.window.showInformationMessage(t('website.previewStopped'));
+        } catch (error) {
+            this.outputChannel.appendLine(`Stop preview failed: ${error}`);
+            vscode.window.showErrorMessage(`Stop preview failed: ${error}`);
         }
     }
 
@@ -210,6 +261,22 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
                         blog: content.blogPost?.length || 0
                     },
                     keywords: content.metadata.keywords.slice(0, 5)
+                }
+            });
+        }
+    }
+
+    private updateWebsiteResults(buildResult: BuildResult, serverUrl: string) {
+        if (this._view) {
+            this._view.webview.postMessage({
+                type: 'updateWebsite',
+                website: {
+                    success: buildResult.success,
+                    outputPath: buildResult.outputPath,
+                    pages: buildResult.pages,
+                    assets: buildResult.assets,
+                    serverUrl: serverUrl,
+                    errors: buildResult.errors
                 }
             });
         }

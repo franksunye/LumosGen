@@ -26,7 +26,9 @@ const resources: TranslationResources = {
                 previewWebsite: 'Preview Website',
                 deployToGitHub: 'Deploy to GitHub Pages',
                 toggleWatcher: 'Toggle File Watcher',
-                diagnose: 'Diagnose Issues'
+                diagnose: 'Diagnose Issues',
+                openBrowser: 'Open in Browser',
+                stopPreview: 'Stop Preview'
             },
             // UI elements
             ui: {
@@ -42,6 +44,7 @@ const resources: TranslationResources = {
                     analyzing: 'Analyzing project...',
                     generating: 'Generating marketing content...',
                     building: 'Building website...',
+                    previewing: 'Starting preview server...',
                     deploying: 'Deploying to GitHub Pages...',
                     completed: 'Completed successfully!',
                     failed: 'Operation failed'
@@ -65,6 +68,18 @@ const resources: TranslationResources = {
                 contentReady: 'Marketing content generated successfully',
                 contentFailed: 'Failed to generate content: {{error}}'
             },
+            // Website building
+            website: {
+                building: 'Building responsive website...',
+                buildComplete: 'Website build completed successfully',
+                buildFailed: 'Website build failed: {{error}}',
+                startingPreview: 'Starting local preview server...',
+                previewReady: 'Website preview is ready!',
+                previewStarted: 'Preview server started at {{url}}',
+                previewStopped: 'Preview server stopped',
+                optimizingSEO: 'Optimizing for search engines...',
+                generatingAssets: 'Generating website assets...'
+            },
             // Deployment
             deployment: {
                 preparing: 'Preparing deployment...',
@@ -82,7 +97,8 @@ const resources: TranslationResources = {
                 permissionDenied: 'Permission denied',
                 networkError: 'Network error occurred',
                 apiError: 'AI service error: {{error}}',
-                configError: 'Configuration error: {{error}}'
+                configError: 'Configuration error: {{error}}',
+                noContentToPreview: 'No content available to preview. Please generate content first.'
             }
         }
     },
