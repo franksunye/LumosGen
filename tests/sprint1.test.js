@@ -63,46 +63,55 @@ async function testProjectAnalysis() {
     console.log('✅ Project Analysis tests completed!\n');
 }
 
-// Test internationalization functionality
+// Test MVP simplification - i18n removed for simplicity
 async function testI18n() {
-    console.log('🌍 Testing Internationalization...');
-    
+    console.log('🌍 Testing MVP Simplification (i18n removed)...');
+
     try {
-        // Test i18n module loading
-        const i18nPath = path.join(process.cwd(), 'out', 'i18n', 'index.js');
+        // Check that i18n system was removed for MVP
+        const i18nPath = path.join(process.cwd(), 'src', 'i18n', 'index.ts');
         if (fs.existsSync(i18nPath)) {
-            console.log('✅ i18n module compiled successfully');
-            
-            // We can't actually import the module here due to VS Code dependencies,
-            // but we can verify the structure
-            const i18nSource = fs.readFileSync(path.join(process.cwd(), 'src', 'i18n', 'index.ts'), 'utf8');
-            
-            // Check for key functions
-            if (i18nSource.includes('export const t =')) {
-                console.log('✅ Translation function (t) found');
-            }
-            if (i18nSource.includes('export const initI18n =')) {
-                console.log('✅ Initialization function (initI18n) found');
-            }
-            if (i18nSource.includes('export const changeLanguage =')) {
-                console.log('✅ Language change function found');
-            }
-            
-            // Check for supported languages
-            const languages = ['en', 'es', 'ja'];
-            languages.forEach(lang => {
-                if (i18nSource.includes(`${lang}:`)) {
-                    console.log(`✅ Language ${lang} resources found`);
-                }
-            });
+            console.log('❌ i18n system should be removed for MVP simplification');
         } else {
-            console.log('❌ i18n module not found in compiled output');
+            console.log('✅ i18n system successfully removed for MVP');
         }
+
+        // Check that SimpleConfig exists instead
+        const configPath = path.join(process.cwd(), 'src', 'config', 'SimpleConfig.ts');
+        if (fs.existsSync(configPath)) {
+            console.log('✅ SimpleConfig module exists');
+
+            const configSource = fs.readFileSync(configPath, 'utf8');
+            if (configSource.includes('getConfig()')) {
+                console.log('✅ getConfig function found');
+            }
+            if (configSource.includes('getLanguage()')) {
+                console.log('✅ getLanguage function found');
+            }
+            if (configSource.includes('validateConfig()')) {
+                console.log('✅ validateConfig function found');
+            }
+        } else {
+            console.log('❌ SimpleConfig module not found');
+        }
+
+        // Check that code uses direct English strings
+        const sidebarPath = path.join(process.cwd(), 'src', 'ui', 'SidebarProvider.ts');
+        if (fs.existsSync(sidebarPath)) {
+            const sidebarSource = fs.readFileSync(sidebarPath, 'utf8');
+            if (sidebarSource.includes('Building responsive website')) {
+                console.log('✅ Direct English strings found in SidebarProvider');
+            }
+            if (!sidebarSource.includes('from \'../i18n\'')) {
+                console.log('✅ No i18n imports found in SidebarProvider');
+            }
+        }
+
     } catch (error) {
-        console.log(`❌ i18n test failed: ${error.message}`);
+        console.log(`❌ MVP simplification test failed: ${error.message}`);
     }
-    
-    console.log('✅ Internationalization tests completed!\n');
+
+    console.log('✅ MVP simplification tests completed!\n');
 }
 
 // Test UI components compilation

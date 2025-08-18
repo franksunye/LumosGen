@@ -56,60 +56,61 @@ async function testMarketingContentGeneration() {
 
 // Test AI service provider functionality
 async function testAIServiceProvider() {
-    console.log('🧠 Testing AI Service Provider...');
-    
+    console.log('🧠 Testing Simplified AI Service (MVP)...');
+
     try {
-        // Test AIServiceProvider compilation
-        const aiServicePath = path.join(process.cwd(), 'out', 'ai', 'AIServiceProvider.js');
-        if (fs.existsSync(aiServicePath)) {
-            console.log('✅ AIServiceProvider compiled successfully');
-            
-            // Check source for key classes
-            const aiServiceSource = fs.readFileSync(path.join(process.cwd(), 'src', 'ai', 'AIServiceProvider.ts'), 'utf8');
-            
-            const classes = [
-                'AIServiceProvider',
-                'OpenAIProvider',
-                'AnthropicProvider',
-                'MockAIProvider'
-            ];
-            
-            classes.forEach(className => {
-                if (aiServiceSource.includes(`class ${className}`)) {
-                    console.log(`✅ Class ${className} found`);
-                } else {
-                    console.log(`❌ Class ${className} missing`);
-                }
-            });
-            
-            // Test interfaces
-            const interfaces = [
-                'AIServiceConfig',
-                'AIPrompt',
-                'AIResponse'
-            ];
-            
-            interfaces.forEach(interfaceName => {
-                if (aiServiceSource.includes(`interface ${interfaceName}`)) {
-                    console.log(`✅ Interface ${interfaceName} found`);
-                } else {
-                    console.log(`❌ Interface ${interfaceName} missing`);
-                }
-            });
-            
-            // Test factory method
-            if (aiServiceSource.includes('static create')) {
-                console.log('✅ Factory method found');
-            }
-            
+        // Check that complex AIServiceProvider was removed
+        const oldAiServicePath = path.join(process.cwd(), 'src', 'ai', 'AIServiceProvider.ts');
+        if (fs.existsSync(oldAiServicePath)) {
+            console.log('❌ Complex AIServiceProvider should be removed for MVP');
         } else {
-            console.log('❌ AIServiceProvider not found in compiled output');
+            console.log('✅ Complex AIServiceProvider successfully removed');
+        }
+
+        // Test SimpleAI compilation
+        const simpleAiPath = path.join(process.cwd(), 'src', 'ai', 'SimpleAI.ts');
+        if (fs.existsSync(simpleAiPath)) {
+            console.log('✅ SimpleAI module exists');
+
+            // Check source for key methods
+            const simpleAiSource = fs.readFileSync(simpleAiPath, 'utf8');
+
+            const methods = [
+                'generateContent',
+                'generateMockContent',
+                'generateHomepageContent',
+                'generateAboutContent',
+                'generateBlogContent',
+                'generateFAQContent'
+            ];
+
+            methods.forEach(method => {
+                if (simpleAiSource.includes(method)) {
+                    console.log(`✅ Method ${method} found`);
+                } else {
+                    console.log(`❌ Method ${method} missing`);
+                }
+            });
+
+            // Test that it's simplified (no complex abstractions)
+            if (!simpleAiSource.includes('abstract class')) {
+                console.log('✅ No abstract classes (simplified)');
+            }
+            if (!simpleAiSource.includes('factory')) {
+                console.log('✅ No factory pattern (simplified)');
+            }
+            if (simpleAiSource.includes('class SimpleAI')) {
+                console.log('✅ SimpleAI class found');
+            }
+
+        } else {
+            console.log('❌ SimpleAI not found');
         }
     } catch (error) {
-        console.log(`❌ AI service provider test failed: ${error.message}`);
+        console.log(`❌ Simplified AI service test failed: ${error.message}`);
     }
-    
-    console.log('✅ AI Service Provider tests completed!\n');
+
+    console.log('✅ Simplified AI Service tests completed!\n');
 }
 
 // Test enhanced UI functionality
@@ -266,44 +267,50 @@ async function testContentGenerationWorkflow() {
     console.log('✅ Content Generation Workflow tests completed!\n');
 }
 
-// Test internationalization enhancements
+// Test MVP simplification - i18n removed
 async function testI18nEnhancements() {
-    console.log('🌍 Testing i18n Enhancements...');
-    
+    console.log('🌍 Testing MVP Simplification (i18n removed)...');
+
     try {
-        // Test new translation keys for content generation
-        const i18nSource = fs.readFileSync(path.join(process.cwd(), 'src', 'i18n', 'index.ts'), 'utf8');
-        
-        const contentKeys = [
-            'content.generatingHomepage',
-            'content.generatingAbout',
-            'content.generatingBlog',
-            'content.generatingFaq',
-            'content.contentReady',
-            'content.contentFailed'
-        ];
-        
-        contentKeys.forEach(key => {
-            if (i18nSource.includes(key.split('.')[1])) {
-                console.log(`✅ Translation key ${key} found`);
-            } else {
-                console.log(`❌ Translation key ${key} missing`);
+        // Check that i18n system was removed for MVP
+        const i18nPath = path.join(process.cwd(), 'src', 'i18n', 'index.ts');
+        if (fs.existsSync(i18nPath)) {
+            console.log('❌ i18n system should be removed for MVP simplification');
+        } else {
+            console.log('✅ i18n system successfully removed for MVP');
+        }
+
+        // Check that MarketingContentGenerator uses direct strings
+        const generatorPath = path.join(process.cwd(), 'src', 'content', 'MarketingContentGenerator.ts');
+        if (fs.existsSync(generatorPath)) {
+            const generatorSource = fs.readFileSync(generatorPath, 'utf8');
+
+            // Should use direct English strings
+            const directStrings = [
+                'Generating marketing content',
+                'Marketing content generated successfully',
+                'Content generation failed'
+            ];
+
+            directStrings.forEach(str => {
+                if (generatorSource.includes(str)) {
+                    console.log(`✅ Direct English string found: "${str}"`);
+                } else {
+                    console.log(`❌ Direct English string missing: "${str}"`);
+                }
+            });
+
+            // Should not use t() function calls
+            if (!generatorSource.includes('from \'../i18n\'')) {
+                console.log('✅ No i18n imports found in MarketingContentGenerator');
             }
-        });
-        
-        // Test multi-language support for content generation
-        const languages = ['en', 'es', 'ja'];
-        languages.forEach(lang => {
-            if (i18nSource.includes(`${lang}:`)) {
-                console.log(`✅ Language ${lang} content generation support ready`);
-            }
-        });
-        
+        }
+
     } catch (error) {
-        console.log(`❌ i18n enhancements test failed: ${error.message}`);
+        console.log(`❌ MVP simplification test failed: ${error.message}`);
     }
-    
-    console.log('✅ i18n Enhancements tests completed!\n');
+
+    console.log('✅ MVP Simplification tests completed!\n');
 }
 
 // Run all Sprint 2 tests
