@@ -35,17 +35,50 @@
   ],
   "main": "./out/extension.js",
   "contributes": {
+    "views": {
+      "explorer": [
+        {
+          "id": "lumosgen.sidebar",
+          "name": "LumosGen Marketing AI",
+          "when": "workspaceFolderCount != 0"
+        }
+      ]
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "lumosgen-sidebar",
+          "title": "LumosGen",
+          "icon": "$(sparkle)"
+        }
+      ]
+    },
     "configuration": {
       "title": "LumosGen",
       "properties": {
         "lumosGen.enabled": {
           "type": "boolean",
           "default": true,
-          "description": "Enable LumosGen file watching and content generation"
+          "description": "Enable LumosGen marketing AI features"
+        },
+        "lumosGen.language": {
+          "type": "string",
+          "default": "en",
+          "enum": [
+            "en",
+            "es",
+            "ja",
+            "de",
+            "fr",
+            "pt"
+          ],
+          "description": "Interface language"
         },
         "lumosGen.watchPatterns": {
           "type": "array",
-          "default": ["**/*.md"],
+          "default": [
+            "**/*.md"
+          ],
           "description": "File patterns to watch for changes"
         },
         "lumosGen.outputFile": {
@@ -56,12 +89,33 @@
         "lumosGen.aiService": {
           "type": "object",
           "default": {
-            "type": "mock",
-            "endpoint": "",
+            "type": "openai",
+            "endpoint": "https://api.openai.com/v1",
             "apiKey": "",
-            "model": "gpt-3.5-turbo"
+            "model": "gpt-4o-mini"
           },
-          "description": "AI service configuration"
+          "description": "AI service configuration for content generation"
+        },
+        "lumosGen.marketingSettings": {
+          "type": "object",
+          "default": {
+            "tone": "professional",
+            "includeCodeExamples": true,
+            "targetMarkets": [
+              "global"
+            ],
+            "seoOptimization": true
+          },
+          "description": "Marketing content generation settings"
+        },
+        "lumosGen.deployment": {
+          "type": "object",
+          "default": {
+            "platform": "github-pages",
+            "customDomain": "",
+            "autoDeployOnGeneration": false
+          },
+          "description": "Deployment configuration"
         },
         "lumosGen.triggerDelay": {
           "type": "number",
@@ -71,20 +125,48 @@
         "lumosGen.template": {
           "type": "string",
           "default": "summary",
-          "enum": ["summary", "toc", "changelog"],
+          "enum": [
+            "summary",
+            "toc",
+            "changelog"
+          ],
           "description": "Content generation template"
         }
       }
     },
     "commands": [
       {
+        "command": "lumosGen.analyzeProject",
+        "title": "Analyze Project for Marketing",
+        "category": "LumosGen",
+        "icon": "$(search)"
+      },
+      {
+        "command": "lumosGen.generateMarketingContent",
+        "title": "Generate Marketing Content",
+        "category": "LumosGen",
+        "icon": "$(sparkle)"
+      },
+      {
+        "command": "lumosGen.previewWebsite",
+        "title": "Preview Marketing Website",
+        "category": "LumosGen",
+        "icon": "$(preview)"
+      },
+      {
+        "command": "lumosGen.deployToGitHub",
+        "title": "Deploy to GitHub Pages",
+        "category": "LumosGen",
+        "icon": "$(rocket)"
+      },
+      {
         "command": "lumosGen.generateContent",
-        "title": "Generate Content",
+        "title": "Generate Content (Legacy)",
         "category": "LumosGen"
       },
       {
         "command": "lumosGen.toggleWatcher",
-        "title": "Toggle File Watcher",
+        "title": "Toggle File Watcher (Legacy)",
         "category": "LumosGen"
       },
       {
@@ -106,8 +188,8 @@
     "demo": "node ./scripts/demo-test.js"
   },
   "devDependencies": {
-    "@types/vscode": "^1.74.0",
     "@types/node": "16.x",
+    "@types/vscode": "^1.74.0",
     "typescript": "^4.9.4"
   },
   "dependencies": {

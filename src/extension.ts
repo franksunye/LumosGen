@@ -1,24 +1,85 @@
 import * as vscode from 'vscode';
 import { FileWatcher } from './watcher';
 import { ConfigManager } from './config';
+import { SidebarProvider } from './ui/SidebarProvider';
+import { initI18n, t } from './i18n';
 
 let fileWatcher: FileWatcher | undefined;
 let outputChannel: vscode.OutputChannel;
+let sidebarProvider: SidebarProvider;
 
-export function activate(context: vscode.ExtensionContext) {
+export async function activate(context: vscode.ExtensionContext) {
     console.log('LumosGen extension is now active!');
-    
+
+    // Initialize internationalization
+    await initI18n('en'); // Default to English, can be made configurable later
+
     // Create output channel
     outputChannel = vscode.window.createOutputChannel('LumosGen');
-    outputChannel.appendLine('LumosGen extension activated');
-    
+    outputChannel.appendLine(t('extension.activated'));
+
     // Initialize configuration manager
     const configManager = ConfigManager.getInstance();
-    
-    // Create file watcher
+
+    // Create sidebar provider
+    sidebarProvider = new SidebarProvider(context.extensionUri, outputChannel);
+    context.subscriptions.push(
+        vscode.window.registerWebviewViewProvider(SidebarProvider.viewType, sidebarProvider)
+    );
+
+    // Create file watcher (legacy functionality)
     fileWatcher = new FileWatcher(outputChannel);
     
-    // Register commands
+    // Register new marketing AI commands
+    const analyzeProjectCommand = vscode.commands.registerCommand('lumosGen.analyzeProject', async () => {
+        try {
+            outputChannel.show();
+            outputChannel.appendLine(t('analysis.scanning'));
+            // This will be handled by the sidebar provider
+            vscode.commands.executeCommand('workbench.view.extension.lumosgen-sidebar');
+        } catch (error) {
+            outputChannel.appendLine(`ERROR in project analysis: ${error}`);
+            vscode.window.showErrorMessage(`LumosGen: ${error}`);
+        }
+    });
+
+    const generateMarketingContentCommand = vscode.commands.registerCommand('lumosGen.generateMarketingContent', async () => {
+        try {
+            outputChannel.show();
+            outputChannel.appendLine(t('content.generatingHomepage'));
+            // This will be implemented in Sprint 2
+            vscode.window.showInformationMessage('Marketing content generation will be available in Sprint 2');
+        } catch (error) {
+            outputChannel.appendLine(`ERROR in content generation: ${error}`);
+            vscode.window.showErrorMessage(`LumosGen: ${error}`);
+        }
+    });
+
+    const previewWebsiteCommand = vscode.commands.registerCommand('lumosGen.previewWebsite', async () => {
+        try {
+            outputChannel.show();
+            outputChannel.appendLine('Website preview requested');
+            // This will be implemented in Sprint 3
+            vscode.window.showInformationMessage('Website preview will be available in Sprint 3');
+        } catch (error) {
+            outputChannel.appendLine(`ERROR in website preview: ${error}`);
+            vscode.window.showErrorMessage(`LumosGen: ${error}`);
+        }
+    });
+
+    const deployToGitHubCommand = vscode.commands.registerCommand('lumosGen.deployToGitHub', async () => {
+        try {
+            outputChannel.show();
+            outputChannel.appendLine(t('deployment.preparing'));
+            // This will be implemented in Sprint 4
+            vscode.window.showInformationMessage('GitHub Pages deployment will be available in Sprint 4');
+        } catch (error) {
+            outputChannel.appendLine(`ERROR in deployment: ${error}`);
+            vscode.window.showErrorMessage(`LumosGen: ${error}`);
+        }
+    });
+
+    // Legacy commands (keep for backward compatibility)
     const generateCommand = vscode.commands.registerCommand('lumosGen.generateContent', async () => {
         try {
             outputChannel.show();
@@ -29,7 +90,7 @@ export function activate(context: vscode.ExtensionContext) {
             vscode.window.showErrorMessage(`LumosGen: ${error}`);
         }
     });
-    
+
     const toggleWatcherCommand = vscode.commands.registerCommand('lumosGen.toggleWatcher', () => {
         fileWatcher?.toggle();
     });
@@ -85,6 +146,10 @@ export function activate(context: vscode.ExtensionContext) {
     
     // Add to subscriptions for proper cleanup
     context.subscriptions.push(
+        analyzeProjectCommand,
+        generateMarketingContentCommand,
+        previewWebsiteCommand,
+        deployToGitHubCommand,
         generateCommand,
         toggleWatcherCommand,
         diagnoseCommand,
