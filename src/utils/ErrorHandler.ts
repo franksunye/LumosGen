@@ -32,15 +32,16 @@ export class ErrorHandler {
 
     constructor(outputChannel: vscode.OutputChannel) {
         this.outputChannel = outputChannel;
-        this.initializeLogFile();
+        // Defer log file initialization to avoid blocking extension startup
+        this.initializeLogFileAsync();
     }
 
-    private initializeLogFile(): void {
+    private async initializeLogFileAsync(): Promise<void> {
         try {
             const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
             if (workspaceRoot) {
                 const logsDir = path.join(workspaceRoot, '.lumosgen', 'logs');
-                fs.mkdirSync(logsDir, { recursive: true });
+                await fs.promises.mkdir(logsDir, { recursive: true });
                 this.logFilePath = path.join(logsDir, 'error.log');
             }
         } catch (error) {
