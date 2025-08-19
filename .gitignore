@@ -120,3 +120,12 @@ Thumbs.db
 LumosGen-Summary.md
 *.backup.*
 .lumosgen-test
+
+# Test outputs and reports
+tests/outputs/*
+tests/reports/*
+test-results.json
+
+# Keep directory structure but ignore contents
+!tests/outputs/.gitkeep
+!tests/reports/.gitkeep

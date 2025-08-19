@@ -95,7 +95,11 @@
             "openaiApiKey": "",
             "openaiEndpoint": "https://api.openai.com/v1",
             "openaiModel": "gpt-4o-mini",
-            "degradationStrategy": ["deepseek", "openai", "mock"],
+            "degradationStrategy": [
+              "deepseek",
+              "openai",
+              "mock"
+            ],
             "monitoringEnabled": true,
             "trackCosts": true,
             "trackUsage": true,
@@ -116,7 +120,10 @@
             "deepseekModel": {
               "type": "string",
               "default": "deepseek-chat",
-              "enum": ["deepseek-chat", "deepseek-reasoner"],
+              "enum": [
+                "deepseek-chat",
+                "deepseek-reasoner"
+              ],
               "description": "DeepSeek model to use"
             },
             "openaiApiKey": {
@@ -131,15 +138,27 @@
             "openaiModel": {
               "type": "string",
               "default": "gpt-4o-mini",
-              "enum": ["gpt-4o-mini", "gpt-3.5-turbo", "gpt-4"],
+              "enum": [
+                "gpt-4o-mini",
+                "gpt-3.5-turbo",
+                "gpt-4"
+              ],
               "description": "OpenAI model to use"
             },
             "degradationStrategy": {
               "type": "array",
-              "default": ["deepseek", "openai", "mock"],
+              "default": [
+                "deepseek",
+                "openai",
+                "mock"
+              ],
               "items": {
                 "type": "string",
-                "enum": ["deepseek", "openai", "mock"]
+                "enum": [
+                  "deepseek",
+                  "openai",
+                  "mock"
+                ]
               },
               "description": "Provider fallback order"
             },
@@ -301,9 +320,19 @@
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "pretest": "npm run compile",
-    "test": "node ./scripts/demo-test.js",
+    "test": "node tests/new-test-runner.js",
+    "test:new": "node tests/new-test-runner.js",
+    "test:old": "node ./scripts/demo-test.js",
+    "test:e2e": "node tests/new-test-runner.js suite end-to-end",
+    "test:ai": "node tests/new-test-runner.js suite ai-service",
+    "test:content": "node tests/new-test-runner.js suite content-generator",
+    "test:website": "node tests/new-test-runner.js suite website-builder",
+    "test:demo": "node tests/new-test-runner.js suite demo",
+    "test:validate": "node tests/quick-validation.js",
+    "test:manual-prep": "node tests/manual-test-helper.js",
+    "test:list": "node tests/test-runner.js list",
     "lint": "echo 'Linting not configured yet'",
-    "clean": "rimraf out",
+    "clean": "rimraf out tests/outputs/* tests/reports/*",
     "package": "vsce package",
     "demo": "node ./scripts/demo-test.js"
   },
@@ -312,6 +341,7 @@
     "@types/node": "16.x",
     "@types/vscode": "^1.74.0",
     "marked": "^16.2.0",
+    "rimraf": "^3.0.2",
     "typescript": "^4.9.4"
   },
   "dependencies": {
