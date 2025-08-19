@@ -120,3 +120,5 @@ Thumbs.db
 LumosGen-Summary.md
 *.backup.*
 .lumosgen-test
+
+.kaiban
