@@ -133,18 +133,43 @@ export async function activate(context: vscode.ExtensionContext) {
     const generateMarketingContentCommand = vscode.commands.registerCommand('lumosGen.generateMarketingContent', async () => {
         try {
             outputChannel.show();
-            outputChannel.appendLine('🤖 Generating marketing content with AI agents...');
+            outputChannel.appendLine('🤖 Generating marketing content with enhanced template system...');
 
             if (!agentManager) {
-                throw new Error('Agent Manager not initialized. Please configure OpenAI API key.');
+                throw new Error('Agent Manager not initialized. Please configure AI service.');
             }
 
-            // Trigger agent-based content generation
-            const result = await agentManager.generateContent('homepage');
+            // Show template selection dialog
+            const { MarketingContentGenerator } = await import('./content/MarketingContentGenerator');
+            const contentGenerator = new MarketingContentGenerator(outputChannel, aiServiceProvider);
+
+            // Get available templates
+            const templates = contentGenerator.getAvailableTemplates();
+            const templateOptions = templates.map(t => ({
+                label: t.name,
+                description: t.description,
+                detail: `Structure: ${t.structure.join(', ')}`
+            }));
+
+            const selectedTemplate = await vscode.window.showQuickPick(templateOptions, {
+                placeHolder: 'Select content template to generate',
+                ignoreFocusOut: true
+            });
+
+            if (!selectedTemplate) {
+                outputChannel.appendLine('Content generation cancelled by user');
+                return;
+            }
+
+            outputChannel.appendLine(`📋 Selected template: ${selectedTemplate.label}`);
+            outputChannel.appendLine(`📝 Template structure: ${selectedTemplate.detail}`);
+
+            // Trigger template-aware content generation
+            const result = await agentManager.generateContent(selectedTemplate.label.toLowerCase());
 
             if (result?.success) {
-                outputChannel.appendLine('✅ Marketing content generated successfully');
-                vscode.window.showInformationMessage('Marketing content generated! Check the LumosGen sidebar for results.');
+                outputChannel.appendLine('✅ Marketing content generated successfully with structured templates');
+                vscode.window.showInformationMessage(`${selectedTemplate.label} content generated! Check the LumosGen sidebar for results.`);
 
                 // Update sidebar with results
                 if (sidebarProvider) {
@@ -154,7 +179,7 @@ export async function activate(context: vscode.ExtensionContext) {
                 throw new Error(result?.error || 'Content generation failed');
             }
         } catch (error) {
-            outputChannel.appendLine(`❌ ERROR in agent content generation: ${error}`);
+            outputChannel.appendLine(`❌ ERROR in template-aware content generation: ${error}`);
             vscode.window.showErrorMessage(`LumosGen: ${error}`);
         }
     });
@@ -186,6 +211,90 @@ export async function activate(context: vscode.ExtensionContext) {
             }
         } catch (error) {
             outputChannel.appendLine(`ERROR in deployment: ${error}`);
+            vscode.window.showErrorMessage(`LumosGen: ${error}`);
+        }
+    });
+
+    // Template validation command
+    const validateContentCommand = vscode.commands.registerCommand('lumosGen.validateContent', async () => {
+        try {
+            outputChannel.show();
+            outputChannel.appendLine('🔍 Validating content against template requirements...');
+
+            // Get the active editor
+            const editor = vscode.window.activeTextEditor;
+            if (!editor) {
+                vscode.window.showErrorMessage('Please open a markdown file to validate');
+                return;
+            }
+
+            const content = editor.document.getText();
+            if (!content.trim()) {
+                vscode.window.showErrorMessage('No content to validate');
+                return;
+            }
+
+            // Import content generator for validation
+            const { MarketingContentGenerator } = await import('./content/MarketingContentGenerator');
+            const contentGenerator = new MarketingContentGenerator(outputChannel, aiServiceProvider);
+
+            // Get available templates for selection
+            const templates = contentGenerator.getAvailableTemplates();
+            const templateOptions = templates.map(t => ({
+                label: t.name,
+                description: `Validate as ${t.name} content`
+            }));
+
+            const selectedTemplate = await vscode.window.showQuickPick(templateOptions, {
+                placeHolder: 'Select template type for validation',
+                ignoreFocusOut: true
+            });
+
+            if (!selectedTemplate) {
+                outputChannel.appendLine('Content validation cancelled by user');
+                return;
+            }
+
+            // Validate content
+            const templateName = selectedTemplate.label.toLowerCase();
+            const validationResult = contentGenerator.validateExistingContent(content, templateName);
+
+            // Show validation results
+            const score = validationResult.score;
+            const status = validationResult.isValid ? '✅ Valid' : '❌ Invalid';
+
+            outputChannel.appendLine(`\n📊 Validation Results for ${selectedTemplate.label}:`);
+            outputChannel.appendLine(`   Score: ${score}/100`);
+            outputChannel.appendLine(`   Status: ${status}`);
+
+            if (validationResult.errors.length > 0) {
+                outputChannel.appendLine(`   Errors: ${validationResult.errors.length}`);
+            }
+
+            if (validationResult.warnings.length > 0) {
+                outputChannel.appendLine(`   Warnings: ${validationResult.warnings.length}`);
+            }
+
+            // Generate improvement suggestions
+            const suggestions = contentGenerator.generateContentImprovements(content, templateName);
+            if (suggestions.length > 0) {
+                outputChannel.appendLine('\n💡 Improvement Suggestions:');
+                suggestions.forEach(suggestion => {
+                    outputChannel.appendLine(`   - ${suggestion}`);
+                });
+            }
+
+            // Show summary message
+            if (score >= 90) {
+                vscode.window.showInformationMessage(`Excellent! Content scored ${score}/100 and meets all template requirements.`);
+            } else if (score >= 70) {
+                vscode.window.showWarningMessage(`Good content (${score}/100) with room for improvement. Check output for suggestions.`);
+            } else {
+                vscode.window.showErrorMessage(`Content needs improvement (${score}/100). Check output for detailed feedback.`);
+            }
+
+        } catch (error) {
+            outputChannel.appendLine(`❌ ERROR in content validation: ${error}`);
             vscode.window.showErrorMessage(`LumosGen: ${error}`);
         }
     });
@@ -292,6 +401,7 @@ export async function activate(context: vscode.ExtensionContext) {
         showMonitoringCommand,
         analyzeProjectCommand,
         generateMarketingContentCommand,
+        validateContentCommand,
         previewWebsiteCommand,
         deployToGitHubCommand,
         monitorDeploymentCommand,
