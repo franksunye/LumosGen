@@ -128,11 +128,19 @@ LumosGen automatically falls back through providers:
 2. **OpenAI** (reliable fallback)
 3. **Mock** (always available)
 
-#### 💰 Cost Monitoring
-- Real-time cost tracking and usage statistics
-- Daily/monthly spending alerts
-- Cost comparison between providers
-- Off-peak pricing optimization for DeepSeek
+#### 💰 Cost Monitoring & Real-time Dashboard
+- **Status Bar**: Live cost and usage display in VS Code status bar
+- **Monitoring Panel**: Comprehensive dashboard with real-time metrics
+- **Cost Tracking**: Daily/monthly spending with visual charts
+- **Usage Statistics**: Token usage, request counts, success rates
+- **Provider Comparison**: Cost analysis across DeepSeek, OpenAI, Mock
+- **Export Data**: Download monitoring data for analysis
+- **Alerts**: Automatic warnings for spending thresholds
+
+**How to Access Monitoring:**
+1. **Status Bar**: Click the AI status in bottom-right corner
+2. **Command Palette**: `Ctrl+Shift+P` → "LumosGen: Show AI Monitoring"
+3. **Sidebar**: Click monitoring button in LumosGen panel
 
 ## 📋 Templates
 

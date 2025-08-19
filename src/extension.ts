@@ -1,11 +1,15 @@
 import * as vscode from 'vscode';
 import { SidebarProvider } from './ui/SidebarProvider';
 import { MarketingWorkflowManager } from './agents/lumosgen-workflow';
+import { MonitoringPanel } from './ui/MonitoringPanel';
+import { AIServiceProvider } from './ai/AIServiceProvider';
 // Removed i18n for MVP simplification
 
 let outputChannel: vscode.OutputChannel;
 let sidebarProvider: SidebarProvider;
 let agentManager: MarketingWorkflowManager;
+let aiServiceProvider: AIServiceProvider | undefined;
+let statusBarItem: vscode.StatusBarItem;
 
 export async function activate(context: vscode.ExtensionContext) {
     console.log('LumosGen extension is now active!');
@@ -26,22 +30,22 @@ export async function activate(context: vscode.ExtensionContext) {
 
         // Initialize AI service provider
         const { AIServiceProvider } = await import('./ai/AIServiceProvider');
-        const aiService = new AIServiceProvider(aiServiceConfig);
-        await aiService.initialize();
+        aiServiceProvider = new AIServiceProvider(aiServiceConfig);
+        await aiServiceProvider.initialize();
 
         // Always initialize agent manager with AI service
-        agentManager = new MarketingWorkflowManager(undefined, aiService);
+        agentManager = new MarketingWorkflowManager(undefined, aiServiceProvider);
         await agentManager.initialize();
 
         // Report initialization status
-        const currentProvider = aiService.getCurrentProvider();
+        const currentProvider = aiServiceProvider.getCurrentProvider();
         if (currentProvider && currentProvider.type !== 'mock') {
             outputChannel.appendLine(`✅ Agent Manager initialized with ${currentProvider.type.toUpperCase()} AI service`);
             outputChannel.appendLine(`🔄 Fallback strategy: ${aiServiceConfig.degradationStrategy.join(' → ')}`);
 
             // Show cost information for DeepSeek
             if (currentProvider.type === 'deepseek') {
-                const deepseekProvider = aiService.getDeepSeekProvider();
+                const deepseekProvider = aiServiceProvider.getDeepSeekProvider();
                 if (deepseekProvider) {
                     const pricing = deepseekProvider.getCurrentPricing();
                     const discount = deepseekProvider.getDiscountInfo();
@@ -75,6 +79,13 @@ export async function activate(context: vscode.ExtensionContext) {
     outputChannel.appendLine('LumosGen sidebar provider registered successfully');
     outputChannel.appendLine(`Disposable created: ${disposable ? 'yes' : 'no'}`);
 
+    // Create status bar item for AI monitoring
+    statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
+    statusBarItem.command = 'lumosGen.showMonitoring';
+    updateStatusBar();
+    statusBarItem.show();
+    context.subscriptions.push(statusBarItem);
+
     // Add file change monitoring for agent workflow
     const fileWatcher = vscode.workspace.onDidSaveTextDocument(async (document) => {
         if (agentManager && vscode.workspace.workspaceFolders) {
@@ -101,6 +112,11 @@ export async function activate(context: vscode.ExtensionContext) {
 
     context.subscriptions.push(fileWatcher);
     
+    // Register AI monitoring command
+    const showMonitoringCommand = vscode.commands.registerCommand('lumosGen.showMonitoring', () => {
+        MonitoringPanel.createOrShow(context.extensionUri, aiServiceProvider);
+    });
+
     // Register new marketing AI commands
     const analyzeProjectCommand = vscode.commands.registerCommand('lumosGen.analyzeProject', async () => {
         try {
@@ -273,6 +289,7 @@ export async function activate(context: vscode.ExtensionContext) {
     
     // Add to subscriptions for proper cleanup
     context.subscriptions.push(
+        showMonitoringCommand,
         analyzeProjectCommand,
         generateMarketingContentCommand,
         previewWebsiteCommand,
@@ -305,8 +322,36 @@ export async function activate(context: vscode.ExtensionContext) {
     });
 }
 
+function updateStatusBar() {
+    if (!statusBarItem || !aiServiceProvider) {
+        return;
+    }
+
+    try {
+        const currentProvider = aiServiceProvider.getCurrentProvider();
+        const totalCost = aiServiceProvider.getTotalCost();
+        const stats = aiServiceProvider.getUsageStats();
+        const totalRequests = Object.values(stats).reduce((sum, stat) => sum + stat.requests, 0);
+
+        if (currentProvider) {
+            statusBarItem.text = `$(pulse) ${currentProvider.name} | $${totalCost.toFixed(3)} | ${totalRequests} reqs`;
+            statusBarItem.tooltip = `LumosGen AI Monitoring\nProvider: ${currentProvider.name}\nTotal Cost: $${totalCost.toFixed(4)}\nTotal Requests: ${totalRequests}\nClick to view detailed monitoring`;
+        } else {
+            statusBarItem.text = `$(warning) No AI Provider`;
+            statusBarItem.tooltip = 'LumosGen AI Monitoring - No active provider';
+        }
+    } catch (error) {
+        statusBarItem.text = `$(error) AI Error`;
+        statusBarItem.tooltip = `LumosGen AI Monitoring - Error: ${error}`;
+    }
+}
+
 export function deactivate() {
     console.log('LumosGen extension is being deactivated');
+
+    if (statusBarItem) {
+        statusBarItem.dispose();
+    }
 
     if (outputChannel) {
         outputChannel.appendLine('LumosGen extension deactivated');

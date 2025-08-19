@@ -218,6 +218,12 @@
     },
     "commands": [
       {
+        "command": "lumosGen.showMonitoring",
+        "title": "Show AI Monitoring",
+        "category": "LumosGen",
+        "icon": "$(pulse)"
+      },
+      {
         "command": "lumosGen.analyzeProject",
         "title": "Analyze Project for Marketing",
         "category": "LumosGen",
