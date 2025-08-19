@@ -6,7 +6,7 @@
  */
 
 import { BaseAgent, AgentResult, AgentContext } from './AgentSystem';
-import { EnhancedProjectAnalysis } from '../analysis/EnhancedProjectAnalyzer';
+import { ProjectAnalysis } from '../analysis/ProjectAnalyzer';
 import { ContextSelector, AITaskType, SelectedContext } from '../analysis/ContextSelector';
 
 // 📊 内容分析Agent
@@ -61,7 +61,7 @@ export class ContentAnalyzerAgent extends BaseAgent {
     }
 
     private generateContentStrategyPrompt(
-        projectAnalysis: EnhancedProjectAnalysis,
+        projectAnalysis: ProjectAnalysis,
         selectedContext: SelectedContext,
         existingContent: string,
         targetAudience: string
@@ -74,9 +74,9 @@ export class ContentAnalyzerAgent extends BaseAgent {
 # 内容策略分析
 
 ## 项目概览
-**名称**: ${projectAnalysis.structured.metadata.name}
-**描述**: ${projectAnalysis.structured.metadata.description}
-**技术栈**: ${projectAnalysis.structured.techStack.map(t => t.language).join(', ')}
+**名称**: ${projectAnalysis.metadata.name}
+**描述**: ${projectAnalysis.metadata.description}
+**技术栈**: ${projectAnalysis.techStack.map(t => t.language).join(', ')}
 **目标受众**: ${targetAudience}
 
 ## 现有内容分析

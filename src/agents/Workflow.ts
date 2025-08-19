@@ -9,7 +9,7 @@ import { AgentWorkflow, AgentTask } from './AgentSystem';
 import { ContentAnalyzerAgent } from './ContentAnalyzerAgent';
 import { ContentGeneratorAgent } from './ContentGeneratorAgent';
 import { WebsiteBuilderAgent } from './WebsiteBuilderAgent';
-import { EnhancedProjectAnalyzer, EnhancedProjectAnalysis } from '../analysis/EnhancedProjectAnalyzer';
+import { ProjectAnalyzer, ProjectAnalysis } from '../analysis/ProjectAnalyzer';
 import { ContextSelector, AITaskType } from '../analysis/ContextSelector';
 import { AIServiceProvider } from '../ai/AIServiceProvider';
 import * as vscode from 'vscode';
@@ -24,7 +24,7 @@ export interface WorkflowConfig {
 }
 
 export interface WorkflowResult {
-    projectAnalysis: EnhancedProjectAnalysis;
+    projectAnalysis: ProjectAnalysis;
     contentStrategy: any;
     generatedContent: any;
     websiteResult?: any;
@@ -43,7 +43,7 @@ export interface WorkflowResult {
 
 export class LumosGenWorkflow {
     private workflow: AgentWorkflow;
-    private analyzer: EnhancedProjectAnalyzer;
+    private analyzer: ProjectAnalyzer;
     private contextSelector: ContextSelector;
     private config: WorkflowConfig;
     private outputChannel: vscode.OutputChannel;
@@ -56,7 +56,7 @@ export class LumosGenWorkflow {
         config?: Partial<WorkflowConfig>
     ) {
         this.outputChannel = outputChannel;
-        this.analyzer = new EnhancedProjectAnalyzer(workspaceRoot, outputChannel);
+        this.analyzer = new ProjectAnalyzer(workspaceRoot, outputChannel);
         this.contextSelector = new ContextSelector();
 
         // 默认配置
@@ -217,17 +217,17 @@ export class LumosGenWorkflow {
 
     async updateWithChanges(
         changedFiles: string[],
-        previousAnalysis?: EnhancedProjectAnalysis
+        previousAnalysis?: ProjectAnalysis
     ): Promise<WorkflowResult> {
         this.outputChannel.appendLine(`🔄 Updating analysis for ${changedFiles.length} changed files`);
 
         if (previousAnalysis && this.config.enableCaching) {
-            // 使用增量更新
-            const updatedAnalysis = await this.analyzer.updateAnalysis(changedFiles, previousAnalysis);
+            // 重新分析（简化版本不支持增量更新）
+            const updatedAnalysis = await this.analyzer.analyzeProject();
 
             // 重新执行内容生成流程
             return this.executeWorkflow(
-                previousAnalysis.structured.metadata.name,
+                previousAnalysis.metadata.name,
                 'marketing-content',
                 { changedFiles }
             );

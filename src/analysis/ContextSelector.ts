@@ -1,4 +1,16 @@
-import { EnhancedProjectAnalysis, MarkdownFile, DocumentCategory } from './EnhancedProjectAnalyzer';
+import { ProjectAnalysis, MarkdownDocument } from './ProjectAnalyzer';
+
+export type DocumentCategory = 'readme' | 'docs' | 'changelog' | 'guide' | 'api' | 'example' | 'test' | 'config' | 'other';
+
+export interface MarkdownFile {
+    path: string;
+    content: string;
+    tokenCount: number;
+    priority: number;
+    category: DocumentCategory;
+    lastModified: Date;
+    size: number;
+}
 
 export type AITaskType = 
     | 'marketing-content'     // 营销内容生成
@@ -22,8 +34,18 @@ export interface ContextSelectionStrategy {
 }
 
 export interface SelectedContext {
-    structured?: EnhancedProjectAnalysis['structured'];
-    semiStructured?: EnhancedProjectAnalysis['semiStructured'];
+    structured?: {
+        metadata: any;
+        techStack: any[];
+        dependencies: any[];
+        scripts: any[];
+    };
+    semiStructured?: {
+        readme?: any;
+        changelog?: any;
+        userGuide?: any;
+        primaryDocs: any[];
+    };
     selectedFiles: MarkdownFile[];
     totalTokens: number;
     strategy: ContextSelectionStrategy;
@@ -124,11 +146,14 @@ export class ContextSelector {
         }
     };
     
-    selectContext(analysis: EnhancedProjectAnalysis, taskType: AITaskType): SelectedContext {
+    selectContext(analysis: ProjectAnalysis, taskType: AITaskType): SelectedContext {
         const strategy = this.strategies[taskType];
-        
+
+        // Convert MarkdownDocument to MarkdownFile format
+        const markdownFiles = analysis.documents.map(doc => this.convertToMarkdownFile(doc));
+
         // 1. 筛选相关文档
-        const relevantFiles = this.filterRelevantFiles(analysis.fullText.allMarkdownFiles, strategy);
+        const relevantFiles = this.filterRelevantFiles(markdownFiles, strategy);
         
         // 2. 应用优先级权重
         const weightedFiles = this.applyPriorityWeights(relevantFiles, strategy);
@@ -143,15 +168,53 @@ export class ContextSelector {
         const selectionReason = this.generateSelectionReason(selectedFiles, strategy, analysis);
         
         return {
-            structured: strategy.includeStructured ? analysis.structured : undefined,
-            semiStructured: strategy.includeSemiStructured ? analysis.semiStructured : undefined,
+            structured: strategy.includeStructured ? {
+                metadata: analysis.metadata,
+                techStack: analysis.techStack,
+                dependencies: analysis.dependencies,
+                scripts: analysis.scripts
+            } : undefined,
+            semiStructured: strategy.includeSemiStructured ? {
+                readme: undefined,
+                changelog: undefined,
+                userGuide: undefined,
+                primaryDocs: []
+            } : undefined,
             selectedFiles,
             totalTokens,
             strategy,
             selectionReason
         };
     }
-    
+
+    private convertToMarkdownFile(doc: MarkdownDocument): MarkdownFile {
+        return {
+            path: doc.path,
+            content: doc.content,
+            tokenCount: doc.tokenCount || 0,
+            priority: 50, // Default priority
+            category: this.categorizeDocument(doc.path),
+            lastModified: new Date(),
+            size: doc.content.length
+        };
+    }
+
+    private categorizeDocument(filePath: string): DocumentCategory {
+        const fileName = require('path').basename(filePath).toLowerCase();
+        const dirPath = require('path').dirname(filePath).toLowerCase();
+
+        if (fileName.includes('readme')) return 'readme';
+        if (fileName.includes('changelog')) return 'changelog';
+        if (fileName.includes('guide') || fileName.includes('tutorial')) return 'guide';
+        if (fileName.includes('api') || fileName.includes('reference')) return 'api';
+        if (fileName.includes('example') || dirPath.includes('example')) return 'example';
+        if (fileName.includes('test') || dirPath.includes('test')) return 'test';
+        if (dirPath.includes('docs') || dirPath.includes('doc')) return 'docs';
+        if (fileName.includes('config')) return 'config';
+
+        return 'other';
+    }
+
     private filterRelevantFiles(allFiles: MarkdownFile[], strategy: ContextSelectionStrategy): MarkdownFile[] {
         const requiredFiles = allFiles.filter(file => 
             strategy.requiredCategories.includes(file.category)
@@ -230,20 +293,20 @@ export class ContextSelector {
         };
     }
     
-    private generateSelectionReason(files: MarkdownFile[], strategy: ContextSelectionStrategy, analysis: EnhancedProjectAnalysis): string {
+    private generateSelectionReason(files: MarkdownFile[], strategy: ContextSelectionStrategy, analysis: ProjectAnalysis): string {
         const categories = files.reduce((acc, file) => {
             acc[file.category] = (acc[file.category] || 0) + 1;
             return acc;
         }, {} as Record<DocumentCategory, number>);
-        
+
         const categoryList = Object.entries(categories)
             .map(([cat, count]) => `${cat}(${count})`)
             .join(', ');
-        
-        const totalFiles = analysis.fullText.allMarkdownFiles.length;
+
+        const totalFiles = analysis.documents.length;
         const selectedCount = files.length;
         const selectionRate = ((selectedCount / totalFiles) * 100).toFixed(1);
-        
+
         return `为${strategy.taskType}任务选择了${selectedCount}/${totalFiles}个文档(${selectionRate}%)，包含: ${categoryList}`;
     }
     

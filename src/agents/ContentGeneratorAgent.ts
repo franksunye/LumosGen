@@ -6,7 +6,7 @@
  */
 
 import { BaseAgent, AgentResult, AgentContext } from './AgentSystem';
-import { EnhancedProjectAnalysis } from '../analysis/EnhancedProjectAnalyzer';
+import { ProjectAnalysis } from '../analysis/ProjectAnalyzer';
 import { ContextSelector, AITaskType, SelectedContext } from '../analysis/ContextSelector';
 
 // 📝 内容生成Agent
@@ -76,7 +76,7 @@ export class ContentGeneratorAgent extends BaseAgent {
     }
 
     private generateContentPrompt(
-        projectAnalysis: EnhancedProjectAnalysis,
+        projectAnalysis: ProjectAnalysis,
         contentStrategy: any,
         selectedContext: SelectedContext,
         contentType: string,

@@ -5,7 +5,7 @@
  * 简化集成和使用过程。
  */
 
-import { EnhancedProjectAnalyzer, EnhancedProjectAnalysis } from './EnhancedProjectAnalyzer';
+import { ProjectAnalyzer, ProjectAnalysis } from './ProjectAnalyzer';
 import { ContextSelector, AITaskType, SelectedContext } from './ContextSelector';
 import { LumosGenWorkflow, WorkflowConfig } from '../agents/Workflow';
 import * as vscode from 'vscode';
@@ -29,7 +29,7 @@ export interface ContextEngineConfig {
 }
 
 export interface ContextEngineResult {
-    analysis: EnhancedProjectAnalysis;
+    analysis: ProjectAnalysis;
     selectedContext: SelectedContext;
     recommendations: {
         contentOpportunities: string[];
@@ -50,7 +50,7 @@ export interface ContextEngineResult {
  * 提供简化的API来使用完整的上下文工程系统
  */
 export class ContextEngine {
-    private analyzer: EnhancedProjectAnalyzer;
+    private analyzer: ProjectAnalyzer;
     private selector: ContextSelector;
     private workflow?: LumosGenWorkflow;
     private config: ContextEngineConfig;
@@ -62,7 +62,7 @@ export class ContextEngine {
         config?: Partial<ContextEngineConfig>
     ) {
         this.outputChannel = outputChannel;
-        this.analyzer = new EnhancedProjectAnalyzer(workspaceRoot, outputChannel);
+        this.analyzer = new ProjectAnalyzer(workspaceRoot, outputChannel);
         this.selector = new ContextSelector();
         
         // 默认配置
@@ -89,8 +89,8 @@ export class ContextEngine {
         this.outputChannel.appendLine(`🔍 Starting context analysis with ${analysisStrategy} strategy`);
 
         try {
-            // 执行增强项目分析
-            const analysis = await this.analyzer.analyzeProjectEnhanced(analysisStrategy);
+            // 执行项目分析
+            const analysis = await this.analyzer.analyzeProject();
             
             // 为默认内容类型选择上下文
             const selectedContext = this.selector.selectContext(analysis, this.config.defaultContentType);
@@ -101,7 +101,7 @@ export class ContextEngine {
             // 计算性能指标
             const performance = {
                 analysisTime: Date.now() - startTime,
-                documentsProcessed: analysis.fullText.allMarkdownFiles.length,
+                documentsProcessed: analysis.documents.length,
                 tokensUsed: selectedContext.totalTokens,
                 cacheHitRate: this.calculateCacheHitRate()
             };
@@ -127,12 +127,12 @@ export class ContextEngine {
      */
     async selectContextForTask(
         taskType: AITaskType,
-        analysis?: EnhancedProjectAnalysis
+        analysis?: ProjectAnalysis
     ): Promise<SelectedContext> {
         let projectAnalysis = analysis;
-        
+
         if (!projectAnalysis) {
-            projectAnalysis = await this.analyzer.analyzeProjectEnhanced(this.config.analysisStrategy);
+            projectAnalysis = await this.analyzer.analyzeProject();
         }
         
         return this.selector.selectContext(projectAnalysis, taskType);
@@ -146,7 +146,7 @@ export class ContextEngine {
         options?: {
             audience?: string;
             tone?: string;
-            analysis?: EnhancedProjectAnalysis;
+            analysis?: ProjectAnalysis;
         }
     ): Promise<any> {
         if (!this.workflow) {
@@ -211,7 +211,7 @@ export class ContextEngine {
         weaknesses: string[];
         recommendations: string[];
     }> {
-        const analysis = await this.analyzer.analyzeProjectEnhanced('comprehensive');
+        const analysis = await this.analyzer.analyzeProject();
         
         let score = 0;
         const strengths: string[] = [];
@@ -219,7 +219,7 @@ export class ContextEngine {
         const recommendations: string[] = [];
 
         // 评估基础信息
-        if (analysis.structured.metadata.description) {
+        if (analysis.metadata.description) {
             score += 20;
             strengths.push('项目有清晰的描述');
         } else {
@@ -228,7 +228,8 @@ export class ContextEngine {
         }
 
         // 评估文档完整性
-        if (analysis.semiStructured.readme) {
+        const hasReadme = analysis.documents.some((doc: any) => doc.path.toLowerCase().includes('readme'));
+        if (hasReadme) {
             score += 25;
             strengths.push('有README文档');
         } else {
@@ -236,7 +237,8 @@ export class ContextEngine {
             recommendations.push('创建详细的README文档');
         }
 
-        if (analysis.semiStructured.changelog) {
+        const hasChangelog = analysis.documents.some((doc: any) => doc.path.toLowerCase().includes('changelog'));
+        if (hasChangelog) {
             score += 10;
             strengths.push('有变更日志');
         } else {
@@ -244,7 +246,7 @@ export class ContextEngine {
         }
 
         // 评估技术栈清晰度
-        if (analysis.structured.techStack.length > 0) {
+        if (analysis.techStack.length > 0) {
             score += 15;
             strengths.push('技术栈信息清晰');
         } else {
@@ -253,20 +255,20 @@ export class ContextEngine {
         }
 
         // 评估文档质量
-        const docQuality = analysis.fullText.averagePriority;
-        if (docQuality > 70) {
+        const avgTokens = analysis.documents.reduce((sum: number, doc: any) => sum + (doc.tokenCount || 0), 0) / analysis.documents.length;
+        if (avgTokens > 500) {
             score += 20;
-            strengths.push('文档质量较高');
-        } else if (docQuality > 50) {
+            strengths.push('文档内容丰富');
+        } else if (avgTokens > 200) {
             score += 10;
-            recommendations.push('提升文档质量');
+            recommendations.push('增加文档内容');
         } else {
-            weaknesses.push('文档质量需要改进');
-            recommendations.push('重写和改进现有文档');
+            weaknesses.push('文档内容过少');
+            recommendations.push('扩充和改进现有文档');
         }
 
         // 评估营销素材
-        if (analysis.structured.metadata.keywords.length > 0) {
+        if (analysis.metadata.keywords.length > 0) {
             score += 10;
             strengths.push('有关键词标签');
         } else {
@@ -315,7 +317,7 @@ export class ContextEngine {
 
     // 私有方法
     private generateRecommendations(
-        analysis: EnhancedProjectAnalysis,
+        analysis: ProjectAnalysis,
         context: SelectedContext
     ): ContextEngineResult['recommendations'] {
         const contentOpportunities: string[] = [];
@@ -323,22 +325,28 @@ export class ContextEngine {
         const nextSteps: string[] = [];
 
         // 基于分析结果生成建议
-        if (!analysis.semiStructured.readme) {
+        const hasReadme = analysis.documents.some(doc =>
+            doc.path.toLowerCase().includes('readme')
+        );
+        if (!hasReadme) {
             contentOpportunities.push('创建详细的README文档');
             nextSteps.push('编写项目介绍和使用指南');
         }
 
-        if (!analysis.semiStructured.changelog) {
+        const hasChangelog = analysis.documents.some(doc =>
+            doc.path.toLowerCase().includes('changelog')
+        );
+        if (!hasChangelog) {
             contentOpportunities.push('维护变更日志');
             nextSteps.push('记录版本更新和功能变化');
         }
 
-        if (analysis.fullText.averagePriority < 60) {
-            improvementSuggestions.push('提升文档质量和结构');
-            nextSteps.push('重新组织和改进现有文档');
+        if (analysis.documents.length < 3) {
+            improvementSuggestions.push('增加项目文档数量');
+            nextSteps.push('创建更多技术文档和指南');
         }
 
-        if (analysis.structured.metadata.keywords.length === 0) {
+        if (analysis.metadata.keywords.length === 0) {
             improvementSuggestions.push('添加项目关键词标签');
             nextSteps.push('研究和添加相关技术关键词');
         }
