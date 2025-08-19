@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { SidebarProvider } from './ui/SidebarProvider';
-import { MarketingWorkflowManager } from './agents/lumosgen-workflow';
+import { MarketingWorkflowManager } from './agents/EnhancedWorkflow';
 import { MonitoringPanel } from './ui/MonitoringPanel';
 import { AIServiceProvider } from './ai/AIServiceProvider';
 // Removed i18n for MVP simplification

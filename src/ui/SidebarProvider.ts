@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
-import { MarketingWorkflowManager } from '../agents/lumosgen-workflow';
+import { MarketingWorkflowManager } from '../agents/EnhancedWorkflow';
 import { AgentResult } from '../agents/simple-agent-system';
 import { GitHubPagesDeployer, DeploymentStatus } from '../deployment/GitHubPagesDeployer';
 import { DeploymentMonitor } from '../deployment/DeploymentMonitor';

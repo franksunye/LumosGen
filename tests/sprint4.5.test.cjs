@@ -22,11 +22,12 @@ async function testAgentSystemIntegration() {
     console.log('\n📋 Test 1: Agent System Integration');
     
     try {
-        // Test if agent files exist
+        // Test if enhanced agent files exist
         const agentFiles = [
             '../src/agents/simple-agent-system.ts',
-            '../src/agents/lumosgen-agents.ts',
-            '../src/agents/lumosgen-workflow.ts'
+            '../src/agents/EnhancedLumosGenAgents.ts',
+            '../src/agents/EnhancedWorkflow.ts',
+            '../src/agents/WebsiteBuilderAgent.ts'
         ];
         
         for (const file of agentFiles) {
@@ -61,13 +62,13 @@ async function testAgentWorkflowExecution() {
     console.log('\n📋 Test 2: Agent Workflow Structure');
     
     try {
-        const workflowPath = path.join(__dirname, '../src/agents/lumosgen-workflow.ts');
+        const workflowPath = path.join(__dirname, '../src/agents/EnhancedWorkflow.ts');
         const workflowContent = fs.readFileSync(workflowPath, 'utf8');
-        
-        // Check for key workflow components
+
+        // Check for enhanced workflow components
         const requiredComponents = [
             'MarketingWorkflowManager',
-            'createMarketingWorkflow',
+            'EnhancedLumosGenWorkflow',
             'onFileChanged',
             'generateContent'
         ];
@@ -168,14 +169,14 @@ async function testAgentSpecializations() {
     console.log('\n📋 Test 5: Agent Specializations');
     
     try {
-        const agentsPath = path.join(__dirname, '../src/agents/lumosgen-agents.ts');
+        const agentsPath = path.join(__dirname, '../src/agents/EnhancedLumosGenAgents.ts');
         const agentsContent = fs.readFileSync(agentsPath, 'utf8');
-        
-        // Check for specialized agents
+
+        // Check for enhanced specialized agents
         const requiredAgents = [
-            'ProjectWatcherAgent',
-            'ContentAnalyzerAgent', 
-            'ContentGeneratorAgent'
+            'EnhancedProjectWatcherAgent',
+            'EnhancedContentAnalyzerAgent',
+            'EnhancedContentGeneratorAgent'
         ];
         
         for (const agent of requiredAgents) {

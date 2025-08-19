@@ -7,7 +7,7 @@
 
 import { SimpleAgentWorkflow, AgentTask } from './simple-agent-system';
 import { EnhancedProjectWatcherAgent, EnhancedContentAnalyzerAgent, EnhancedContentGeneratorAgent } from './EnhancedLumosGenAgents';
-import { WebsiteBuilderAgent } from './lumosgen-agents';
+import { WebsiteBuilderAgent } from './WebsiteBuilderAgent';
 import { EnhancedProjectAnalyzer, EnhancedProjectAnalysis } from '../analysis/EnhancedProjectAnalyzer';
 import { ContextSelector, AITaskType } from '../analysis/ContextSelector';
 import { AIServiceProvider } from '../ai/AIServiceProvider';
@@ -329,5 +329,123 @@ export class EnhancedLumosGenWorkflow {
             this.isRunning = false;
             this.outputChannel.appendLine(`⏹️ Enhanced workflow stopped`);
         }
+    }
+}
+
+// 兼容接口：Enhanced版本的 MarketingWorkflowManager
+export class MarketingWorkflowManager {
+    private enhancedWorkflow: EnhancedLumosGenWorkflow;
+    private workspaceRoot: string;
+    private outputChannel: vscode.OutputChannel;
+    private isRunning = false;
+
+    constructor(apiKey?: string, aiService?: AIServiceProvider) {
+        // 获取工作区根目录
+        this.workspaceRoot = this.getCurrentProjectPath();
+
+        // 创建输出通道
+        this.outputChannel = vscode.window.createOutputChannel('LumosGen Enhanced');
+
+        // 创建增强工作流
+        this.enhancedWorkflow = new EnhancedLumosGenWorkflow(
+            this.workspaceRoot,
+            this.outputChannel,
+            aiService
+        );
+    }
+
+    async initialize(): Promise<void> {
+        this.outputChannel.appendLine('🚀 Enhanced MarketingWorkflowManager initialized');
+    }
+
+    async onFileChanged(changedFiles: string[], projectPath: string): Promise<void> {
+        if (this.isRunning) {
+            this.outputChannel.appendLine('⏳ Enhanced workflow already running, skipping...');
+            return;
+        }
+
+        try {
+            this.isRunning = true;
+            this.outputChannel.appendLine(`📁 Processing ${changedFiles.length} changed files`);
+
+            const result = await this.enhancedWorkflow.executeEnhancedWorkflow(
+                projectPath,
+                'marketing-content',
+                { changedFiles }
+            );
+
+            this.outputChannel.appendLine('✅ Enhanced workflow completed successfully');
+
+        } catch (error) {
+            this.outputChannel.appendLine(`❌ Enhanced workflow failed: ${error}`);
+            throw error;
+        } finally {
+            this.isRunning = false;
+        }
+    }
+
+    async generateContent(contentType: string = 'homepage'): Promise<any> {
+        if (this.isRunning) {
+            throw new Error('Enhanced workflow already running');
+        }
+
+        try {
+            this.isRunning = true;
+            this.outputChannel.appendLine(`🎯 Generating ${contentType} content with enhanced workflow`);
+
+            const result = await this.enhancedWorkflow.executeEnhancedWorkflow(
+                this.workspaceRoot,
+                'marketing-content',
+                { buildWebsite: contentType === 'website' }
+            );
+
+            this.outputChannel.appendLine('✅ Enhanced content generation completed');
+
+            return {
+                success: true,
+                data: result.generatedContent,
+                metadata: {
+                    performance: result.performance,
+                    quality: result.quality,
+                    enhanced: true
+                }
+            };
+
+        } catch (error) {
+            this.outputChannel.appendLine(`❌ Enhanced content generation failed: ${error}`);
+            return {
+                success: false,
+                error: error instanceof Error ? error.message : 'Enhanced content generation failed'
+            };
+        } finally {
+            this.isRunning = false;
+        }
+    }
+
+    async generateContentWithPath(contentType: string = 'homepage', projectPath?: string): Promise<any> {
+        const targetPath = projectPath || this.workspaceRoot;
+        return this.generateContent(contentType);
+    }
+
+    getStatus(): { isRunning: boolean; lastResults?: Map<string, any> } {
+        return {
+            isRunning: this.isRunning
+        };
+    }
+
+    stop(): void {
+        this.isRunning = false;
+        this.outputChannel.appendLine('🛑 Enhanced workflow stopped');
+    }
+
+    private getCurrentProjectPath(): string {
+        try {
+            if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
+                return vscode.workspace.workspaceFolders[0].uri.fsPath;
+            }
+        } catch (error) {
+            console.log('VS Code API not available');
+        }
+        return process.cwd();
     }
 }

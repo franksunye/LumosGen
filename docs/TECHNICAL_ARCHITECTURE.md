@@ -32,10 +32,11 @@
 ```
 LumosGen/
 ├── src/
-│   ├── agents/                    # 轻量级Agent系统 (核心)
-│   │   ├── simple-agent-system.ts    # 核心框架 (~100行)
-│   │   ├── lumosgen-agents.ts         # 专用Agent实现 (~150行)
-│   │   └── lumosgen-workflow.ts       # VS Code集成 (~50行)
+│   ├── agents/                    # 增强Agent系统 (核心)
+│   │   ├── simple-agent-system.ts        # 核心框架 (~100行)
+│   │   ├── EnhancedLumosGenAgents.ts     # 增强Agent实现 (~900行)
+│   │   ├── EnhancedWorkflow.ts           # 增强工作流 (~450行)
+│   │   └── WebsiteBuilderAgent.ts        # 网站构建Agent (~500行)
 │   ├── analysis/                  # 项目分析引擎
 │   │   └── ProjectAnalyzer.ts
 │   ├── content/                   # 内容生成引擎
@@ -115,31 +116,34 @@ class SimpleWorkflow {
   }
 }
 
-#### 2. 专用Agent实现 (lumosgen-agents.ts)
+#### 2. 增强Agent实现 (EnhancedLumosGenAgents.ts)
 
-**ProjectWatcherAgent - 项目监控器**
+**EnhancedProjectWatcherAgent - 增强项目监控器**
 ```typescript
-class ProjectWatcherAgent extends BaseAgent {
+class EnhancedProjectWatcherAgent extends BaseAgent {
   async execute(context: AgentContext): Promise<AgentResult> {
-    const { projectPath, changedFiles } = context;
+    const { projectPath, changedFiles, strategy = 'balanced' } = context;
 
-    // 分析项目变化
-    const analysis = await this.ai.analyze(`
-      Analyze project changes:
-      Files changed: ${changedFiles.join(', ')}
-      Project path: ${projectPath}
+    // 执行增强项目分析
+    const analysis = await this.analyzer.analyzeProjectEnhanced(strategy);
 
-      Determine:
-      1. Marketing impact level (1-10)
-      2. Affected content areas
-      3. Update recommendations
-    `);
+    // 为项目分析任务选择最佳上下文
+    const selectedContext = this.contextSelector.selectContext(analysis, 'project-analysis');
+
+    // 生成增强的分析提示
+    const prompt = this.generateEnhancedAnalysisPrompt(analysis, selectedContext, changedFiles);
+
+    const response = await this.callLLM(prompt, context);
+    const enhancedAnalysis = this.parseEnhancedAnalysis(response, analysis, selectedContext);
 
     return {
-      agentId: this.id,
-      data: analysis,
-      confidence: this.calculateConfidence(analysis),
-      timestamp: new Date()
+      success: true,
+      data: enhancedAnalysis,
+      metadata: {
+        contextStrategy: strategy,
+        documentsAnalyzed: selectedContext.selectedFiles.length,
+        totalTokens: selectedContext.totalTokens
+      }
     };
   }
 }
@@ -169,35 +173,39 @@ class ContentAnalyzerAgent extends BaseAgent {
   }
 }
 
-**ContentGeneratorAgent - 营销文案创作者**
-class ContentGeneratorAgent extends BaseAgent {
+**EnhancedContentGeneratorAgent - 增强营销内容创作者**
+```typescript
+class EnhancedContentGeneratorAgent extends BaseAgent {
   async execute(context: AgentContext): Promise<AgentResult> {
-    const { contentStrategy, projectAnalysis } = context;
+    const { projectAnalysis, contentStrategy, contentType, targetAudience, tone } = context;
 
-    // 生成营销内容
-    const content = await this.ai.generate(`
-      Generate marketing content based on:
-      Strategy: ${JSON.stringify(contentStrategy)}
-      Project: ${JSON.stringify(projectAnalysis)}
+    // 为特定内容类型选择最佳上下文
+    const selectedContext = this.contextSelector.selectContext(projectAnalysis, contentType);
 
-      Create:
-      1. Compelling headlines
-      2. Feature descriptions
-      3. Call-to-action text
-      4. Meta descriptions
-    `);
+    // 生成增强的内容生成提示
+    const prompt = this.generateEnhancedContentPrompt(
+        projectAnalysis, contentStrategy, selectedContext, contentType, targetAudience, tone
+    );
+
+    const response = await this.callLLM(prompt, context);
+    const content = this.parseEnhancedContent(response, selectedContext, contentType);
 
     return {
-      agentId: this.id,
+      success: true,
       data: content,
-      confidence: this.calculateConfidence(content),
-      timestamp: new Date()
+      metadata: {
+        confidence: this.calculateContentQuality(content),
+        contextDocuments: selectedContext.selectedFiles.length,
+        totalTokens: selectedContext.totalTokens,
+        contentType, targetAudience, tone
+      }
     };
   }
 }
 ```
+```
 
-#### 3. VS Code集成接口 (lumosgen-workflow.ts)
+#### 3. 增强工作流集成 (EnhancedWorkflow.ts)
 
 **LumosGenAgentManager - 主要集成接口**
 ```typescript
@@ -265,21 +273,22 @@ export async function initializeLumosGen(apiKey: string): Promise<LumosGenAgentM
 
 ### 使用示例
 
-#### 基础集成
+#### 增强集成
 ```typescript
-import { initializeLumosGen } from './agents/lumosgen-workflow';
+import { MarketingWorkflowManager } from './agents/EnhancedWorkflow';
 
-// 1. 初始化Agent管理器
-const agentManager = await initializeLumosGen(apiKey);
+// 1. 初始化增强Agent管理器
+const agentManager = new MarketingWorkflowManager(apiKey, aiService);
+await agentManager.initialize();
 
-// 2. 监听文件变化
+// 2. 监听文件变化 - 自动触发增强分析
 vscode.workspace.onDidSaveTextDocument(async (document) => {
   if (document.fileName.endsWith('.md') || document.fileName.includes('package.json')) {
     await agentManager.onFileChanged([document.fileName], workspace.rootPath);
   }
 });
 
-// 3. 手动生成内容
+// 3. 手动生成增强内容
 const content = await agentManager.generateContent('homepage');
 ```
 
