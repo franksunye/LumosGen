@@ -14,27 +14,27 @@
 - **VS Code Integration** - Intuitive sidebar interface with content management
 - **Simplified Architecture** - Removed 750+ lines of over-engineered code for MVP focus
 
-### 🎯 Current Sprint 4.5: Agentic Architecture Foundation (STRATEGIC TRANSFORMATION)
-**Goal:** Implement and validate core Agentic capabilities as fundamental differentiator
+### 🎯 Current Sprint 4.5: Lightweight Agent System Integration (SIMPLIFIED APPROACH)
+**Goal:** Integrate and validate simplified Agent system for immediate value delivery
 
 #### 🔥 High Priority User Stories (Immediate Execution):
-- **US-020: Multi-Agent System Foundation** (21 SP) - NEW, Highest Priority
-  - Implement core Agent base classes and communication framework
-  - Build ProjectWatcherAgent and ContentAnalyzerAgent prototypes
-  - Establish Agent orchestration and event-driven messaging
-  - **Validation Target:** Agent communication success rate >95%
+- **US-020: Lightweight Agent Framework Integration** (8 SP) - NEW, Highest Priority
+  - Integrate simple-agent-system.ts into VS Code extension
+  - Connect Agent workflow to file change monitoring
+  - Implement basic Agent communication via EventEmitter
+  - **Validation Target:** Agent workflow success rate >95%
 
-- **US-021: Intelligent Decision Engine** (13 SP) - NEW, Core Agentic Capability
-  - Implement UpdateDecisionAgent with LLM-driven reasoning
-  - Build multi-dimensional decision analysis framework
-  - Create strategy selection and confidence scoring
-  - **Validation Target:** Decision accuracy >85%
+- **US-021: Agent-Driven Content Generation** (5 SP) - NEW, Core Value
+  - Replace direct LLM calls with Agent-based workflow
+  - Implement ProjectWatcher → ContentAnalyzer → ContentGenerator flow
+  - Add task dependency management and result passing
+  - **Validation Target:** Content quality maintained, workflow <5s
 
-- **US-022: Agent Learning System MVP** (8 SP) - NEW, Differentiation Core
-  - Implement basic experience recording and pattern recognition
-  - Build Agent memory system and strategy optimization
-  - Create feedback loop for continuous improvement
-  - **Validation Target:** Learning improvement >5% per iteration
+- **US-022: VS Code Agent UI Integration** (3 SP) - NEW, User Experience
+  - Add Agent status display in sidebar
+  - Show Agent workflow progress and results
+  - Implement basic Agent configuration options
+  - **Validation Target:** User experience satisfaction >4.0/5
 
 #### ⏸️ Deprioritized User Stories:
 - **US-009: GitHub Pages Deployment** (3 SP) - Simplified, Lower Priority
@@ -52,13 +52,13 @@
 5. 🔍 Optimize for SEO (meta tags, structured data, sitemaps)
 6. 📁 Provide simple file-based preview for developers
 
-#### 🎯 Target MVP 1.5 (Agentic Architecture Validation):
-7. 🤖 **Multi-Agent System** - Specialized Agent collaboration framework
-8. 🧠 **Intelligent Decision Engine** - LLM-driven autonomous decision making
-9. 👁️ **Autonomous Perception** - Self-directed environment monitoring
-10. 📚 **Agent Learning System** - Experience-based strategy optimization
-11. 🔄 **Adaptive Coordination** - Dynamic Agent orchestration and communication
-12. ⚙️ **Configurable Autonomy** - User-controlled intelligence levels
+#### 🎯 Target MVP 1.5 (Lightweight Agent System):
+7. 🤖 **Multi-Agent Workflow** - Simple 3-Agent collaboration system
+8. 🔄 **Event-Driven Communication** - EventEmitter-based Agent messaging
+9. 📋 **Task Dependency Management** - Automatic workflow execution ordering
+10. ⚡ **High Performance** - <100ms startup, <10MB memory usage
+11. 🔧 **Zero Dependencies** - Node.js + OpenAI API only
+12. 🎯 **VS Code Optimized** - Perfect extension integration
 
 ## 📈 Sprint Progress Summary
 
@@ -73,17 +73,17 @@
 
 ## 🎯 Next Steps & Success Metrics
 
-### Immediate Priorities (Sprint 4.5 - Agentic Architecture Focus)
-1. **Multi-Agent System Foundation** - Core Agent framework and communication
-2. **Intelligent Decision Engine** - LLM-driven autonomous decision making
-3. **Agent Learning System** - Experience-based optimization capability
+### Immediate Priorities (Sprint 4.5 - Lightweight Agent Integration)
+1. **Agent Framework Integration** - Integrate 3-file Agent system into extension
+2. **Workflow Automation** - Replace manual triggers with Agent-driven automation
+3. **Performance Optimization** - Ensure zero impact on VS Code performance
 
-### MVP Success Criteria (Refocused on Agentic Capabilities)
-- [ ] Agent decision accuracy >85% (autonomous vs. rule-based)
-- [ ] Multi-Agent coordination success rate >95%
-- [ ] Learning improvement >5% per iteration
-- [ ] Autonomous operation acceptance >60%
-- [ ] Agentic experience satisfaction >4.5/5
+### MVP Success Criteria (Simplified Agent System)
+- [ ] Agent workflow success rate >95%
+- [ ] Agent execution time <5 seconds per task
+- [ ] System startup time <100ms
+- [ ] Memory usage <10MB
+- [ ] User experience satisfaction >4.0/5
 - [x] Complete project-to-website workflow ✅ (MVP 1.0)
 - [x] Professional marketing content generation ✅ (Mock)
 
@@ -96,10 +96,11 @@
 ## 📚 Development Notes
 
 ### Key Architectural Decisions
-- **KISS Principle Applied**: Removed 750+ lines of over-engineered code
-- **MVP-First Approach**: Focus on core value delivery before complexity
-- **Developer-Friendly**: Simple file-based operations over complex servers
-- **Simplified AI**: Mock implementation for MVP, real AI services in v1.0
+- **Lightweight Agent System**: 3-file, ~300-line Agent framework
+- **Zero External Dependencies**: Node.js + OpenAI API only
+- **Event-Driven Architecture**: Simple EventEmitter-based communication
+- **VS Code Optimized**: Perfect extension integration, no servers
+- **KISS Principle**: Extreme simplification over complex frameworks
 
 ### Technical Achievements
 - **Performance**: Full content generation < 3 seconds

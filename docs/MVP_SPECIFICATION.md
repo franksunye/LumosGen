@@ -57,20 +57,18 @@
 └── manifest.json      # PWA清单 ✅
 ```
 
-### 4. Agentic智能系统 🎯 NEW CORE ARCHITECTURE
-**功能描述：** 多Agent协作的智能营销管理系统
-- **ProjectWatcherAgent**：自主监控项目环境变化
-- **ContentAnalyzerAgent**：智能分析变更影响和需求
-- **UpdateDecisionAgent**：基于多维度信息做出更新决策
-- **ContentGeneratorAgent**：执行智能内容生成和优化
-- **QualityAssuranceAgent**：确保内容质量和一致性
-- **UserInteractionAgent**：智能用户交互和协作
+### 4. 轻量级Agent系统 🎯 SIMPLIFIED ARCHITECTURE
+**功能描述：** 简洁高效的多Agent协作系统
+- **ProjectWatcherAgent**：项目变化监控和分析
+- **ContentAnalyzerAgent**：内容策略分析和建议
+- **ContentGeneratorAgent**：营销内容生成和优化
 
-**核心Agentic能力：**
-- **自主感知**：主动监控而非被动响应
-- **智能决策**：基于LLM推理而非固定规则
-- **持续学习**：从经验中学习和优化策略
-- **协作智能**：多Agent专业化分工和协调
+**核心特性：**
+- **事件驱动**：基于EventEmitter的简单通信
+- **任务依赖**：自动拓扑排序执行
+- **零外部依赖**：仅需Node.js + OpenAI API
+- **完美嵌入**：专为VS Code扩展设计
+- **立即可用**：无需复杂配置
 
 ### 5. GitHub Pages部署
 **功能描述：** 简化的自动部署到GitHub Pages
@@ -133,43 +131,34 @@ LumosGen
 
 ### 核心模块
 
-**1. 知识库分析器 (KnowledgeBaseAnalyzer)**
+**1. 轻量级Agent系统** ✅ NEW
 ```typescript
-interface KnowledgeBaseAnalysis {
-  structure: FileStructure;
-  techStack: TechStack[];
-  features: Feature[];
-  documents: MarkdownDocument[];
-  contentAssets: ContentAsset[];
-  metadata: ProjectMetadata;
+// 核心Agent框架 (simple-agent-system.ts)
+abstract class BaseAgent {
+  abstract execute(context: AgentContext): Promise<AgentResult>;
+}
+
+class SimpleWorkflow {
+  async execute(tasks: WorkflowTask[]): Promise<WorkflowResult>;
+}
+
+// 专用Agent实现 (lumosgen-agents.ts)
+class ProjectWatcherAgent extends BaseAgent { }
+class ContentAnalyzerAgent extends BaseAgent { }
+class ContentGeneratorAgent extends BaseAgent { }
+
+// VS Code集成 (lumosgen-workflow.ts)
+class LumosGenAgentManager {
+  async onFileChanged(files: string[], path: string): Promise<WorkflowResult>;
+  async generateContent(type: string): Promise<AgentResult>;
 }
 ```
 
-**2. 营销内容生成器 (MarketingContentGenerator)**
-```typescript
-interface MarketingContentGenerator {
-  generateMarketingHomepage(analysis: KnowledgeBaseAnalysis): string;
-  generateMarketingBlogPost(topic: string, analysis: KnowledgeBaseAnalysis): string;
-  generateUserFAQ(analysis: KnowledgeBaseAnalysis): string;
-  transformTechnicalToMarketing(content: string): string;
-}
-```
-
-**3. 网站构建器 (WebsiteBuilder)** ✅ IMPLEMENTED
-```typescript
-interface WebsiteBuilder {
-  buildWebsite(content: GeneratedContent, analysis: ProjectAnalysis): BuildResult;
-  showWebsiteLocation(buildResult: BuildResult): void; // 简化的预览功能
-}
-```
-
-**4. 部署管理器 (DeployManager)**
-```typescript
-interface DeployManager {
-  deployToGitHubPages(site: StaticSite): Promise<DeployResult>;
-  updateDeployment(site: StaticSite): Promise<UpdateResult>;
-}
-```
+**2. 现有模块 (保留)**
+- **ProjectAnalyzer**: 项目分析引擎 ✅
+- **MarketingContentGenerator**: 内容生成引擎 ✅
+- **WebsiteBuilder**: 网站构建器 ✅
+- **SEOOptimizer**: SEO优化器 ✅
 
 ### AI 模型集成
 
@@ -187,23 +176,23 @@ interface DeployManager {
 
 ### 核心指标
 
-**核心Agentic指标（重点验证智能化价值）：**
-- Agent决策准确率：目标 >85%
-- 自主操作成功率：目标 >80%
-- 多Agent协作效率：目标比单一流程快 >3x
-- 学习改进效果：目标每周性能提升 >5%
+**核心Agent系统指标：**
+- Agent工作流成功率：目标 >95%
+- Agent执行效率：目标 <5秒/任务
+- 多Agent协作稳定性：目标 >98%
+- 系统资源占用：目标 <10MB内存
 
 **用户体验指标：**
-- 智能化体验满意度：目标 >4.5/5
-- Agent协作认知度：目标 >70%用户感知到Agent协作
-- 自主性接受度：目标 >60%用户愿意使用自主模式
-- 智能助手体验：目标 >80%用户认为是助手而非工具
+- 内容生成质量满意度：目标 >4.5/5
+- 系统响应速度：目标 <3秒完整流程
+- 错误恢复能力：目标自动恢复 >90%
+- 易用性评分：目标 >4.0/5
 
-**商业价值指标：**
-- Agentic功能付费意愿：目标 >40%
-- 用户依赖度：目标 >50%用户每周主动使用
-- 推荐意愿：目标 NPS >40
-- 技术领先认知：目标 >90%用户认为技术领先竞品
+**技术性能指标：**
+- 启动时间：目标 <100ms
+- 内存占用：目标 <10MB
+- 错误率：目标 <5%
+- VS Code集成稳定性：目标 >99%
 
 ### 成功标准
 
