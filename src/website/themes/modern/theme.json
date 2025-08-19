@@ -1,0 +1,68 @@
+{
+  "metadata": {
+    "name": "Modern",
+    "description": "Clean and minimalist design with smooth transitions and modern aesthetics",
+    "version": "1.0.0",
+    "author": "LumosGen",
+    "category": "modern"
+  },
+  "defaultConfig": {
+    "primaryColor": "#3b82f6",
+    "secondaryColor": "#64748b",
+    "fontFamily": "Inter, system-ui, sans-serif",
+    "headingFont": "Inter, system-ui, sans-serif",
+    "borderRadius": "0.5rem",
+    "customProperties": {
+      "shadow": "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+      "transition": "all 0.3s ease"
+    }
+  },
+  "customization": {
+    "colors": {
+      "primary": {
+        "default": "#3b82f6",
+        "options": ["#3b82f6", "#8b5cf6", "#10b981", "#f59e0b", "#ef4444", "#ec4899"]
+      },
+      "secondary": {
+        "default": "#64748b",
+        "options": ["#64748b", "#6b7280", "#9ca3af", "#d1d5db"]
+      }
+    },
+    "fonts": {
+      "body": {
+        "default": "Inter, system-ui, sans-serif",
+        "options": [
+          "Inter, system-ui, sans-serif",
+          "Roboto, sans-serif",
+          "Open Sans, sans-serif",
+          "Lato, sans-serif",
+          "Poppins, sans-serif"
+        ]
+      },
+      "heading": {
+        "default": "Inter, system-ui, sans-serif",
+        "options": [
+          "Inter, system-ui, sans-serif",
+          "Playfair Display, serif",
+          "Montserrat, sans-serif",
+          "Source Sans Pro, sans-serif"
+        ]
+      }
+    },
+    "styles": {
+      "borderRadius": {
+        "default": "0.5rem",
+        "options": ["0", "0.25rem", "0.5rem", "0.75rem", "1rem"]
+      },
+      "spacing": {
+        "default": "1rem",
+        "options": ["0.5rem", "1rem", "1.5rem", "2rem"]
+      }
+    }
+  },
+  "templateFiles": [
+    "main.html",
+    "styles.css",
+    "main.js"
+  ]
+}

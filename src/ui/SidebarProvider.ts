@@ -4,6 +4,7 @@ import { MarketingWorkflowManager } from '../agents/lumosgen-workflow';
 import { AgentResult } from '../agents/simple-agent-system';
 import { GitHubPagesDeployer, DeploymentStatus } from '../deployment/GitHubPagesDeployer';
 import { DeploymentMonitor } from '../deployment/DeploymentMonitor';
+import { WebsiteBuilder, WebsiteConfig } from '../website/WebsiteBuilder';
 
 export class SidebarProvider implements vscode.WebviewViewProvider {
     public static readonly viewType = 'lumosgen.sidebar';
@@ -14,6 +15,8 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
     private agentStatus: { isRunning: boolean; currentTask?: string; progress?: number } = { isRunning: false };
     private deployer: GitHubPagesDeployer;
     private deploymentMonitor: DeploymentMonitor;
+    private websiteBuilder: WebsiteBuilder;
+    private currentTheme: string = 'modern'; // 默认主题
 
     constructor(
         private readonly _extensionUri: vscode.Uri,
@@ -24,6 +27,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
         this.agentManager = agentManager;
         this.deployer = new GitHubPagesDeployer(outputChannel);
         this.deploymentMonitor = new DeploymentMonitor(outputChannel);
+        this.websiteBuilder = new WebsiteBuilder(outputChannel);
         this.outputChannel.appendLine('LumosGen: SidebarProvider constructor called');
 
         // Agent system handles all functionality
@@ -77,6 +81,12 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
                         break;
                     case 'stopAgentWorkflow':
                         this.stopAgentWorkflow();
+                        break;
+                    case 'changeTheme':
+                        this.changeTheme(message.theme);
+                        break;
+                    case 'getThemes':
+                        this.sendThemeList();
                         break;
                 }
             },
@@ -134,6 +144,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
 
         try {
             this.outputChannel.appendLine('🤖 Starting AI Agent workflow...');
+            this.outputChannel.appendLine(`🎨 Using theme: ${this.currentTheme}`);
             this.outputChannel.appendLine('📊 Phase 1: Project Analysis');
             this.outputChannel.appendLine('🎯 Phase 2: Content Strategy');
             this.outputChannel.appendLine('✍️ Phase 3: Content Generation');
@@ -142,7 +153,11 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
             // Get workspace path
             const workspacePath = this.getWorkspacePath();
 
-            // Use agent workflow for complete website generation
+            // Create theme configuration
+            const themeMetadata = this.websiteBuilder.getThemeMetadata(this.currentTheme);
+            const themeConfig = this.websiteBuilder.getThemeCustomization(this.currentTheme);
+
+            // Use agent workflow for complete website generation with theme
             const result = await this.agentManager.generateContentWithPath('homepage', workspacePath);
 
             if (result?.success) {
@@ -202,6 +217,53 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
                     message: status,
                     timestamp: new Date().toISOString()
                 }
+            });
+        }
+    }
+
+    // 主题管理方法
+    private changeTheme(themeName: string): void {
+        this.currentTheme = themeName;
+        this.outputChannel.appendLine(`🎨 Theme changed to: ${themeName}`);
+
+        // 获取主题信息
+        const themeMetadata = this.websiteBuilder.getThemeMetadata(themeName);
+
+        // 发送主题更新消息到前端
+        if (this._view) {
+            this._view.webview.postMessage({
+                type: 'themeChanged',
+                theme: {
+                    name: themeName,
+                    metadata: themeMetadata
+                }
+            });
+        }
+
+        // 显示主题切换成功消息
+        vscode.window.showInformationMessage(
+            `🎨 主题已切换为: ${themeMetadata?.name || themeName}`,
+            '生成网站'
+        ).then(selection => {
+            if (selection === '生成网站') {
+                this.generateContentWithAgents();
+            }
+        });
+    }
+
+    private sendThemeList(): void {
+        const availableThemes = this.websiteBuilder.getAvailableThemes();
+        const themesWithMetadata = availableThemes.map(themeName => ({
+            name: themeName,
+            metadata: this.websiteBuilder.getThemeMetadata(themeName),
+            isActive: themeName === this.currentTheme
+        }));
+
+        if (this._view) {
+            this._view.webview.postMessage({
+                type: 'themeList',
+                themes: themesWithMetadata,
+                currentTheme: this.currentTheme
             });
         }
     }
@@ -616,6 +678,86 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
         .stop-button:hover {
             opacity: 0.8;
         }
+
+        /* Theme Selection Styles */
+        .theme-section {
+            background-color: var(--vscode-editor-background);
+            border: 1px solid var(--vscode-panel-border);
+            border-radius: 6px;
+            padding: 12px;
+            margin: 12px 0;
+        }
+
+        .theme-section h3 {
+            margin: 0 0 12px 0;
+            color: var(--vscode-textLink-foreground);
+            font-size: 14px;
+        }
+
+        .theme-selector {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .theme-option {
+            display: flex;
+            align-items: center;
+            padding: 8px;
+            border: 1px solid var(--vscode-panel-border);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .theme-option:hover {
+            background-color: var(--vscode-list-hoverBackground);
+            border-color: var(--vscode-textLink-foreground);
+        }
+
+        .theme-option.selected {
+            background-color: var(--vscode-list-activeSelectionBackground);
+            border-color: var(--vscode-textLink-foreground);
+        }
+
+        .theme-preview {
+            width: 32px;
+            height: 24px;
+            border-radius: 3px;
+            margin-right: 8px;
+            border: 1px solid var(--vscode-panel-border);
+        }
+
+        .modern-preview {
+            background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
+        }
+
+        .technical-preview {
+            background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+        }
+
+        .theme-info {
+            flex: 1;
+        }
+
+        .theme-name {
+            font-weight: 600;
+            font-size: 12px;
+            color: var(--vscode-foreground);
+            margin-bottom: 2px;
+        }
+
+        .theme-description {
+            font-size: 10px;
+            color: var(--vscode-descriptionForeground);
+        }
+
+        .theme-check {
+            color: var(--vscode-testing-passedForeground);
+            font-weight: bold;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
@@ -648,6 +790,29 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
         <h3>🎉 Generation Results</h3>
         <div class="agent-results-content">
             <!-- Results will be populated by JavaScript -->
+        </div>
+    </div>
+
+    <!-- Theme Selection Section -->
+    <div class="theme-section">
+        <h3>🎨 Website Theme</h3>
+        <div class="theme-selector">
+            <div class="theme-option" id="theme-modern" onclick="selectTheme('modern')">
+                <div class="theme-preview modern-preview"></div>
+                <div class="theme-info">
+                    <div class="theme-name">Modern</div>
+                    <div class="theme-description">Clean & minimalist design</div>
+                </div>
+                <div class="theme-check" id="check-modern">✓</div>
+            </div>
+            <div class="theme-option" id="theme-technical" onclick="selectTheme('technical')">
+                <div class="theme-preview technical-preview"></div>
+                <div class="theme-info">
+                    <div class="theme-name">Technical</div>
+                    <div class="theme-description">Code-focused & professional</div>
+                </div>
+                <div class="theme-check" id="check-technical" style="display: none;">✓</div>
+            </div>
         </div>
     </div>
 
@@ -725,7 +890,37 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
             vscode.postMessage({ type: 'stopAgentWorkflow' });
         }
 
+        // Theme selection functions
+        let currentTheme = 'modern'; // Default theme
 
+        function selectTheme(themeName) {
+            currentTheme = themeName;
+
+            // Update UI
+            document.querySelectorAll('.theme-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            document.querySelectorAll('.theme-check').forEach(check => {
+                check.style.display = 'none';
+            });
+
+            document.getElementById('theme-' + themeName).classList.add('selected');
+            document.getElementById('check-' + themeName).style.display = 'block';
+
+            // Notify backend
+            vscode.postMessage({
+                type: 'changeTheme',
+                theme: themeName
+            });
+        }
+
+        // Initialize theme selection on load
+        document.addEventListener('DOMContentLoaded', function() {
+            selectTheme('modern'); // Set default theme
+
+            // Request theme list from backend
+            vscode.postMessage({ type: 'getThemes' });
+        });
 
         window.addEventListener('message', event => {
             const message = event.data;
@@ -740,6 +935,12 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
                     break;
                 case 'updateAgentResults':
                     updateAgentResults(message.result);
+                    break;
+                case 'themeChanged':
+                    handleThemeChanged(message.theme);
+                    break;
+                case 'themeList':
+                    handleThemeList(message.themes, message.currentTheme);
                     break;
             }
         });
@@ -865,6 +1066,41 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
                 // Show success message
                 updateStatus('completed');
             }
+        }
+
+        // Theme handling functions
+        function handleThemeChanged(themeInfo) {
+            console.log('Theme changed to:', themeInfo.name);
+
+            // Update current theme
+            currentTheme = themeInfo.name;
+
+            // Update UI to reflect the change
+            selectTheme(themeInfo.name);
+
+            // Show theme change notification
+            const statusEl = document.getElementById('status');
+            if (statusEl) {
+                statusEl.textContent = '🎨 Theme changed to ' + (themeInfo.metadata ? themeInfo.metadata.name : themeInfo.name);
+                statusEl.style.display = 'block';
+                statusEl.style.backgroundColor = 'var(--vscode-testing-passedForeground)';
+
+                // Hide after 3 seconds
+                setTimeout(() => {
+                    statusEl.style.display = 'none';
+                }, 3000);
+            }
+        }
+
+        function handleThemeList(themes, activeTheme) {
+            console.log('Available themes:', themes);
+
+            // Update current theme
+            currentTheme = activeTheme;
+
+            // Update theme selector UI if needed
+            // For now, we have static themes, but this could be dynamic
+            selectTheme(activeTheme);
         }
     </script>
 </body>

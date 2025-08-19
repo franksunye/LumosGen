@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="{{metadata.language}}" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{title}}</title>
+    <meta name="description" content="{{metadata.description}}">
+    <meta name="keywords" content="{{metadata.keywords}}">
+    <meta name="author" content="{{metadata.author}}">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="{{title}}">
+    <meta property="og:description" content="{{metadata.description}}">
+    <meta property="og:site_name" content="{{analysis.metadata.name}}">
+    
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{title}}">
+    <meta name="twitter:description" content="{{metadata.description}}">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="manifest" href="/manifest.json">
+    
+    <!-- Styles -->
+    <link href="assets/styles.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '{{config.primaryColor}}',
+                        secondary: '{{config.secondaryColor}}',
+                        terminal: {
+                            bg: '{{config.customProperties.terminalBg}}',
+                            text: '{{config.customProperties.terminalText}}'
+                        }
+                    },
+                    fontFamily: {
+                        mono: ['{{config.fontFamily}}'],
+                        heading: ['{{config.headingFont}}'],
+                    },
+                    borderRadius: {
+                        'theme': '{{config.borderRadius}}',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-900 text-gray-100 font-mono leading-relaxed">
+    <!-- Terminal-style Header -->
+    <header class="bg-black border-b border-primary-500">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center space-x-2">
+                    <span class="text-primary-400">$</span>
+                    <span class="text-gray-300">cd</span>
+                    <span class="text-primary-400 font-heading font-bold">{{analysis.metadata.name}}</span>
+                </div>
+                <div class="flex items-center space-x-1">
+                    <span class="text-gray-500">[</span>
+                    <a href="index.html" class="nav-link {{#if (eq currentPage 'index')}}active{{/if}}">home</a>
+                    <span class="text-gray-500">|</span>
+                    <a href="about.html" class="nav-link {{#if (eq currentPage 'about')}}active{{/if}}">about</a>
+                    <span class="text-gray-500">|</span>
+                    <a href="faq.html" class="nav-link {{#if (eq currentPage 'faq')}}active{{/if}}">faq</a>
+                    <span class="text-gray-500">]</span>
+                    <button id="theme-toggle" class="ml-4 p-2 text-gray-400 hover:text-primary-400 transition-colors">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path class="dark:hidden" d="M10 2L13.09 8.26L20 9L14 14.74L15.18 21.02L10 17.77L4.82 21.02L6 14.74L0 9L6.91 8.26L10 2Z"/>
+                            <path class="hidden dark:block" d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Terminal Window -->
+    <main class="min-h-screen bg-gray-900">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <!-- Terminal Header for Homepage -->
+            <div class="{{#unless (eq currentPage 'index')}}hidden{{/unless}} mb-8">
+                <div class="bg-black border border-gray-700 rounded-theme overflow-hidden">
+                    <div class="bg-gray-800 px-4 py-2 flex items-center space-x-2">
+                        <div class="w-3 h-3 bg-red-500 rounded-full"></div>
+                        <div class="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                        <div class="w-3 h-3 bg-green-500 rounded-full"></div>
+                        <span class="text-gray-400 text-sm ml-4">{{analysis.metadata.name}} — Terminal</span>
+                    </div>
+                    <div class="p-6 font-mono">
+                        <div class="text-primary-400">
+                            <span class="text-gray-500">user@system:~$</span> cat README.md
+                        </div>
+                        <div class="mt-4 space-y-2">
+                            <div class="text-primary-300 text-xl font-bold"># {{analysis.metadata.name}}</div>
+                            <div class="text-gray-300">{{metadata.description}}</div>
+                            <div class="text-gray-500 mt-4">
+                                <span class="text-primary-400">></span> Status: <span class="text-green-400">Active</span>
+                            </div>
+                            <div class="text-gray-500">
+                                <span class="text-primary-400">></span> Version: <span class="text-yellow-400">{{analysis.metadata.version || '1.0.0'}}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Content Terminal -->
+            <div class="bg-black border border-gray-700 rounded-theme overflow-hidden">
+                <div class="bg-gray-800 px-4 py-2 flex items-center justify-between">
+                    <div class="flex items-center space-x-2">
+                        <div class="w-3 h-3 bg-red-500 rounded-full"></div>
+                        <div class="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                        <div class="w-3 h-3 bg-green-500 rounded-full"></div>
+                        <span class="text-gray-400 text-sm ml-4">{{currentPage}}.md</span>
+                    </div>
+                    <div class="text-gray-500 text-xs">
+                        Lines: <span id="line-count">1</span> | Chars: <span id="char-count">0</span>
+                    </div>
+                </div>
+                <div class="p-6">
+                    <div class="prose prose-invert prose-green max-w-none font-mono">
+                        <div class="text-gray-500 mb-4">
+                            <span class="text-primary-400">1</span>
+                            <span class="text-gray-600 ml-2">|</span>
+                        </div>
+                        <div class="ml-8 -mt-6">
+                            {{content}}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Terminal Footer -->
+    <footer class="bg-black border-t border-gray-700">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div class="flex items-center justify-between">
+                <div class="text-gray-500 text-sm font-mono">
+                    <span class="text-primary-400">$</span> echo "Generated by LumosGen"
+                </div>
+                <div class="flex items-center space-x-4 text-sm">
+                    <a href="index.html" class="text-gray-400 hover:text-primary-400 transition-colors">home</a>
+                    <span class="text-gray-600">|</span>
+                    <a href="about.html" class="text-gray-400 hover:text-primary-400 transition-colors">about</a>
+                    <span class="text-gray-600">|</span>
+                    <a href="faq.html" class="text-gray-400 hover:text-primary-400 transition-colors">faq</a>
+                </div>
+            </div>
+            <div class="mt-4 text-center text-gray-600 text-xs font-mono">
+                &copy; 2025 {{analysis.metadata.name}} | Powered by <span class="text-primary-400">LumosGen</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="assets/main.js"></script>
+</body>
+</html>

@@ -7,11 +7,16 @@ import { TemplateEngine } from './TemplateEngine';
 import { SEOOptimizer } from './SEOOptimizer';
 
 export interface WebsiteConfig {
-    theme: 'light' | 'dark' | 'auto';
+    theme: string; // Theme name (e.g., 'modern', 'technical')
+    themeMode?: 'light' | 'dark' | 'auto'; // Light/dark mode within theme
     primaryColor: string;
+    secondaryColor?: string;
     fontFamily: string;
+    headingFont?: string;
+    borderRadius?: string;
     enableAnalytics: boolean;
     customCSS?: string;
+    customProperties?: Record<string, string>;
 }
 
 export interface BuildResult {
@@ -51,12 +56,21 @@ export class WebsiteBuilder {
             // Create output directory
             await this.ensureDirectory(outputPath);
             
-            // Build configuration
+            // Build configuration with theme support
+            const selectedTheme = config?.theme || 'modern';
+            const themeConfig = this.templateEngine.mergeThemeConfig(selectedTheme, config || {});
+
             const websiteConfig: WebsiteConfig = {
-                theme: 'auto',
+                theme: selectedTheme,
+                themeMode: 'auto',
                 primaryColor: '#3b82f6',
+                secondaryColor: '#64748b',
                 fontFamily: 'Inter, system-ui, sans-serif',
+                headingFont: 'Inter, system-ui, sans-serif',
+                borderRadius: '0.5rem',
                 enableAnalytics: false,
+                customProperties: {},
+                ...themeConfig,
                 ...config
             };
 
@@ -110,6 +124,38 @@ export class WebsiteBuilder {
                 vscode.commands.executeCommand('vscode.openFolder', folderUri, true);
             }
         });
+    }
+
+    getAvailableThemes(): string[] {
+        return this.templateEngine.getAvailableThemes();
+    }
+
+    getThemeMetadata(themeName: string) {
+        return this.templateEngine.getThemeMetadata(themeName);
+    }
+
+    getThemeCustomization(themeName: string) {
+        return this.templateEngine.getThemeCustomization(themeName);
+    }
+
+    async selectTheme(): Promise<string | undefined> {
+        const themes = this.getAvailableThemes();
+        const themeItems = themes.map(theme => {
+            const metadata = this.getThemeMetadata(theme);
+            return {
+                label: metadata?.name || theme,
+                description: metadata?.description || '',
+                detail: `Category: ${metadata?.category || 'unknown'}`,
+                value: theme
+            };
+        });
+
+        const selected = await vscode.window.showQuickPick(themeItems, {
+            placeHolder: 'Select a website theme',
+            title: 'Choose Website Theme'
+        });
+
+        return selected?.value;
     }
 
     private async generatePages(
