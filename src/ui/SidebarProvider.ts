@@ -1,6 +1,9 @@
 import * as vscode from 'vscode';
+import * as path from 'path';
 import { MarketingWorkflowManager } from '../agents/lumosgen-workflow';
 import { AgentResult } from '../agents/simple-agent-system';
+import { GitHubPagesDeployer, DeploymentStatus } from '../deployment/GitHubPagesDeployer';
+import { DeploymentMonitor } from '../deployment/DeploymentMonitor';
 
 export class SidebarProvider implements vscode.WebviewViewProvider {
     public static readonly viewType = 'lumosgen.sidebar';
@@ -9,6 +12,8 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
     private outputChannel: vscode.OutputChannel;
     private agentManager?: MarketingWorkflowManager;
     private agentStatus: { isRunning: boolean; currentTask?: string; progress?: number } = { isRunning: false };
+    private deployer: GitHubPagesDeployer;
+    private deploymentMonitor: DeploymentMonitor;
 
     constructor(
         private readonly _extensionUri: vscode.Uri,
@@ -17,6 +22,8 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
     ) {
         this.outputChannel = outputChannel;
         this.agentManager = agentManager;
+        this.deployer = new GitHubPagesDeployer(outputChannel);
+        this.deploymentMonitor = new DeploymentMonitor(outputChannel);
         this.outputChannel.appendLine('LumosGen: SidebarProvider constructor called');
 
         // Agent system handles all functionality
@@ -215,35 +222,93 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
 
             this.outputChannel.appendLine('📋 Step 2: Deploy to GitHub Pages');
 
-            // Simulate deployment process
-            this.outputChannel.appendLine('🔄 Simulating GitHub Pages deployment...');
-            this.outputChannel.appendLine('   📁 Preparing website files...');
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            // Get workspace folder
+            const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+            if (!workspaceFolder) {
+                throw new Error('No workspace folder found. Please open a folder in VS Code.');
+            }
 
-            this.outputChannel.appendLine('   🌐 Configuring GitHub Pages...');
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            // Define website path
+            const websitePath = path.join(workspaceFolder.uri.fsPath, 'lumosgen-website');
 
-            this.outputChannel.appendLine('   🚀 Publishing to GitHub Pages...');
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            // Set up deployment status monitoring
+            this.deployer.onStatusChange((status: DeploymentStatus) => {
+                this.outputChannel.appendLine(`[${status.status.toUpperCase()}] ${status.message} (${status.progress}%)`);
 
-            this.outputChannel.appendLine('✅ Deployment simulation completed successfully!');
-            this.outputChannel.appendLine('🌐 Website would be available at: https://your-username.github.io/your-repo');
-
-            vscode.window.showInformationMessage(
-                '🚀 Deployment simulation completed! In production, this would deploy your marketing website to GitHub Pages.',
-                'View Output',
-                'Learn More'
-            ).then(selection => {
-                if (selection === 'View Output') {
-                    this.outputChannel.show();
-                } else if (selection === 'Learn More') {
-                    vscode.env.openExternal(vscode.Uri.parse('https://pages.github.com/'));
+                // Update webview if available
+                if (this._view) {
+                    this._view.webview.postMessage({
+                        type: 'deploymentStatus',
+                        status: status.status,
+                        message: status.message,
+                        progress: status.progress
+                    });
                 }
             });
 
+            // Start deployment
+            this.outputChannel.appendLine('🔄 Starting real GitHub Pages deployment...');
+            const deploymentResult = await this.deployer.deploy(websitePath, {
+                branch: 'gh-pages'
+            });
+
+            if (deploymentResult.success && deploymentResult.deploymentUrl) {
+                // Start monitoring the deployed site
+                this.deploymentMonitor.startMonitoring(deploymentResult.deploymentUrl);
+
+                // Show deployment metrics
+                const metrics = this.deployer.getDeploymentMetrics();
+                if (metrics) {
+                    this.outputChannel.appendLine(`📊 Deployment completed in ${metrics.duration}ms with ${metrics.retryCount} retries`);
+                }
+
+                this.outputChannel.appendLine('✅ Deployment completed successfully!');
+                this.outputChannel.appendLine(`🌐 Website is available at: ${deploymentResult.deploymentUrl}`);
+
+                vscode.window.showInformationMessage(
+                    `🚀 Deployment successful! Your website is live at ${deploymentResult.deploymentUrl}`,
+                    'View Website',
+                    'View Output',
+                    'Monitor Health'
+                ).then(selection => {
+                    if (selection === 'View Website') {
+                        vscode.env.openExternal(vscode.Uri.parse(deploymentResult.deploymentUrl!));
+                    } else if (selection === 'View Output') {
+                        this.outputChannel.show();
+                    } else if (selection === 'Monitor Health') {
+                        this.deploymentMonitor.showHealthReport(deploymentResult.deploymentUrl!);
+                    }
+                });
+
+            } else {
+                throw new Error(deploymentResult.error || 'Deployment failed for unknown reason');
+            }
+
         } catch (error) {
-            this.outputChannel.appendLine(`❌ Deployment simulation failed: ${error}`);
-            vscode.window.showErrorMessage(`Deployment failed: ${error}`);
+            this.outputChannel.appendLine(`❌ Deployment failed: ${error}`);
+
+            // Show detailed error information
+            if (error instanceof Error) {
+                this.outputChannel.appendLine(`Error details: ${error.message}`);
+                if (error.stack) {
+                    this.outputChannel.appendLine(`Stack trace: ${error.stack}`);
+                }
+            }
+
+            vscode.window.showErrorMessage(
+                `Deployment failed: ${error}`,
+                'View Output',
+                'Retry',
+                'Help'
+            ).then(selection => {
+                if (selection === 'View Output') {
+                    this.outputChannel.show();
+                } else if (selection === 'Retry') {
+                    this.deployToGitHub();
+                } else if (selection === 'Help') {
+                    vscode.env.openExternal(vscode.Uri.parse('https://docs.github.com/en/pages'));
+                }
+            });
         }
     }
 
