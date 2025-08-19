@@ -6,6 +6,22 @@ import { promisify } from 'util';
 
 const execAsync = promisify(exec);
 
+export interface RetryConfig {
+    maxRetries: number;
+    baseDelay: number;
+    maxDelay: number;
+    backoffMultiplier: number;
+}
+
+export interface DeploymentMetrics {
+    startTime: Date;
+    endTime?: Date;
+    duration?: number;
+    retryCount: number;
+    success: boolean;
+    errorType?: string;
+}
+
 export interface DeploymentConfig {
     repositoryUrl?: string;
     customDomain?: string;
@@ -30,9 +46,17 @@ export interface DeploymentStatus {
 export class GitHubPagesDeployer {
     private outputChannel: vscode.OutputChannel;
     private statusCallbacks: ((status: DeploymentStatus) => void)[] = [];
+    private retryConfig: RetryConfig;
+    private deploymentMetrics: DeploymentMetrics | null = null;
 
-    constructor(outputChannel: vscode.OutputChannel) {
+    constructor(outputChannel: vscode.OutputChannel, retryConfig?: RetryConfig) {
         this.outputChannel = outputChannel;
+        this.retryConfig = retryConfig || {
+            maxRetries: 3,
+            baseDelay: 1000,
+            maxDelay: 10000,
+            backoffMultiplier: 2
+        };
     }
 
     public onStatusChange(callback: (status: DeploymentStatus) => void): void {
@@ -53,21 +77,33 @@ export class GitHubPagesDeployer {
     }
 
     public async deploy(websitePath: string, config: DeploymentConfig = {}): Promise<DeploymentResult> {
+        // Initialize metrics
+        this.deploymentMetrics = {
+            startTime: new Date(),
+            retryCount: 0,
+            success: false
+        };
+
         const result: DeploymentResult = {
             success: false,
             logs: []
         };
 
         try {
+            result.logs.push(`Starting deployment at ${this.deploymentMetrics.startTime.toISOString()}`);
+
             this.updateStatus({
                 status: 'preparing',
                 message: 'Preparing deployment...',
                 progress: 10
             });
 
-            // Validate inputs
-            await this.validateDeployment(websitePath);
-            result.logs.push('Validation completed');
+            // Validate inputs with retry
+            await this.executeWithRetry(
+                () => this.validateDeployment(websitePath),
+                'Validation',
+                result.logs
+            );
 
             this.updateStatus({
                 status: 'preparing',
@@ -75,8 +111,12 @@ export class GitHubPagesDeployer {
                 progress: 20
             });
 
-            // Check Git repository
-            const repoInfo = await this.checkGitRepository();
+            // Check Git repository with retry
+            const repoInfo = await this.executeWithRetry(
+                () => this.checkGitRepository(),
+                'Git repository check',
+                result.logs
+            );
             result.logs.push(`Repository: ${repoInfo.origin}`);
 
             this.updateStatus({
@@ -85,9 +125,12 @@ export class GitHubPagesDeployer {
                 progress: 40
             });
 
-            // Prepare deployment files
-            await this.prepareDeploymentFiles(websitePath, config);
-            result.logs.push('Website files prepared');
+            // Prepare deployment files with retry
+            await this.executeWithRetry(
+                () => this.prepareDeploymentFiles(websitePath, config),
+                'File preparation',
+                result.logs
+            );
 
             this.updateStatus({
                 status: 'deploying',
@@ -95,9 +138,12 @@ export class GitHubPagesDeployer {
                 progress: 60
             });
 
-            // Create and switch to gh-pages branch
-            await this.setupGhPagesBranch();
-            result.logs.push('gh-pages branch ready');
+            // Create and switch to gh-pages branch with retry
+            await this.executeWithRetry(
+                () => this.setupGhPagesBranch(),
+                'Branch setup',
+                result.logs
+            );
 
             this.updateStatus({
                 status: 'deploying',
@@ -105,13 +151,23 @@ export class GitHubPagesDeployer {
                 progress: 80
             });
 
-            // Deploy to GitHub Pages
-            await this.pushToGitHub(websitePath);
-            result.logs.push('Pushed to GitHub Pages');
+            // Deploy to GitHub Pages with retry
+            await this.executeWithRetry(
+                () => this.pushToGitHub(websitePath),
+                'GitHub push',
+                result.logs
+            );
 
             // Generate deployment URL
             const deploymentUrl = this.generateDeploymentUrl(repoInfo.origin, config.customDomain);
             result.deploymentUrl = deploymentUrl;
+
+            // Finalize metrics
+            this.deploymentMetrics.endTime = new Date();
+            this.deploymentMetrics.duration = this.deploymentMetrics.endTime.getTime() - this.deploymentMetrics.startTime.getTime();
+            this.deploymentMetrics.success = true;
+
+            result.logs.push(`Deployment completed in ${this.deploymentMetrics.duration}ms with ${this.deploymentMetrics.retryCount} retries`);
             result.logs.push(`Deployment URL: ${deploymentUrl}`);
 
             this.updateStatus({
@@ -124,15 +180,30 @@ export class GitHubPagesDeployer {
             return result;
 
         } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : String(error);
-            result.error = errorMessage;
-            result.logs.push(`Error: ${errorMessage}`);
+            // Finalize metrics on failure
+            if (this.deploymentMetrics) {
+                this.deploymentMetrics.endTime = new Date();
+                this.deploymentMetrics.duration = this.deploymentMetrics.endTime.getTime() - this.deploymentMetrics.startTime.getTime();
+                this.deploymentMetrics.success = false;
+                this.deploymentMetrics.errorType = error instanceof Error ? error.constructor.name : 'UnknownError';
+            }
+
+            const enhancedError = this.enhanceErrorMessage(error);
 
             this.updateStatus({
                 status: 'failed',
-                message: `Deployment failed: ${errorMessage}`,
+                message: `Deployment failed: ${enhancedError.message}`,
                 progress: 0
             });
+
+            result.error = enhancedError.message;
+            result.logs.push(`Error: ${enhancedError.message}`);
+            if (enhancedError.resolutionSteps.length > 0) {
+                result.logs.push('Suggested resolution steps:');
+                enhancedError.resolutionSteps.forEach((step, index) => {
+                    result.logs.push(`  ${index + 1}. ${step}`);
+                });
+            }
 
             return result;
         }
@@ -308,5 +379,121 @@ export class GitHubPagesDeployer {
     <a href="/">← Back to Home</a>
 </body>
 </html>`;
+    }
+
+    private async executeWithRetry<T>(
+        operation: () => Promise<T>,
+        operationName: string,
+        logs: string[]
+    ): Promise<T> {
+        let lastError: Error | null = null;
+
+        for (let attempt = 0; attempt <= this.retryConfig.maxRetries; attempt++) {
+            try {
+                if (attempt > 0) {
+                    const delay = Math.min(
+                        this.retryConfig.baseDelay * Math.pow(this.retryConfig.backoffMultiplier, attempt - 1),
+                        this.retryConfig.maxDelay
+                    );
+
+                    logs.push(`${operationName} failed, retrying in ${delay}ms (attempt ${attempt + 1}/${this.retryConfig.maxRetries + 1})`);
+                    await new Promise(resolve => setTimeout(resolve, delay));
+
+                    if (this.deploymentMetrics) {
+                        this.deploymentMetrics.retryCount++;
+                    }
+                }
+
+                const result = await this.executeWithTimeout(operation, 30000); // 30 second timeout
+
+                if (attempt > 0) {
+                    logs.push(`${operationName} succeeded on retry attempt ${attempt + 1}`);
+                }
+
+                return result;
+
+            } catch (error) {
+                lastError = error instanceof Error ? error : new Error(String(error));
+
+                if (attempt === this.retryConfig.maxRetries) {
+                    logs.push(`${operationName} failed after ${this.retryConfig.maxRetries + 1} attempts`);
+                    break;
+                }
+            }
+        }
+
+        throw lastError || new Error(`${operationName} failed after all retry attempts`);
+    }
+
+    private async executeWithTimeout<T>(operation: () => Promise<T>, timeoutMs: number): Promise<T> {
+        return new Promise<T>((resolve, reject) => {
+            const timeout = setTimeout(() => {
+                reject(new Error(`Operation timed out after ${timeoutMs}ms`));
+            }, timeoutMs);
+
+            operation()
+                .then(result => {
+                    clearTimeout(timeout);
+                    resolve(result);
+                })
+                .catch(error => {
+                    clearTimeout(timeout);
+                    reject(error);
+                });
+        });
+    }
+
+    private enhanceErrorMessage(error: unknown): { message: string; resolutionSteps: string[] } {
+        const originalMessage = error instanceof Error ? error.message : String(error);
+        const lowerMessage = originalMessage.toLowerCase();
+
+        let enhancedMessage = originalMessage;
+        const resolutionSteps: string[] = [];
+
+        // Git-related errors
+        if (lowerMessage.includes('not a git repository')) {
+            enhancedMessage = 'This folder is not a Git repository. LumosGen requires Git for deployment.';
+            resolutionSteps.push('Initialize Git: git init');
+            resolutionSteps.push('Add remote repository: git remote add origin <your-repo-url>');
+            resolutionSteps.push('Make initial commit: git add . && git commit -m "Initial commit"');
+        }
+
+        // Authentication errors
+        else if (lowerMessage.includes('permission denied') || lowerMessage.includes('authentication failed')) {
+            enhancedMessage = 'GitHub authentication failed. Please check your credentials.';
+            resolutionSteps.push('Verify GitHub credentials are configured');
+            resolutionSteps.push('Check if you have push access to the repository');
+            resolutionSteps.push('Consider using GitHub CLI: gh auth login');
+        }
+
+        // Network errors
+        else if (lowerMessage.includes('network') || lowerMessage.includes('connection')) {
+            enhancedMessage = 'Network connection failed. Please check your internet connection.';
+            resolutionSteps.push('Check internet connectivity');
+            resolutionSteps.push('Verify GitHub.com is accessible');
+            resolutionSteps.push('Try again in a few moments');
+        }
+
+        // File system errors
+        else if (lowerMessage.includes('no such file') || lowerMessage.includes('enoent')) {
+            enhancedMessage = 'Required files are missing. Please ensure the website was generated successfully.';
+            resolutionSteps.push('Regenerate the website using LumosGen');
+            resolutionSteps.push('Verify index.html exists in the website folder');
+            resolutionSteps.push('Check file permissions');
+        }
+
+        // Timeout errors
+        else if (lowerMessage.includes('timeout')) {
+            enhancedMessage = 'Operation timed out. This may be due to large files or slow network.';
+            resolutionSteps.push('Check network connection speed');
+            resolutionSteps.push('Reduce website file sizes if possible');
+            resolutionSteps.push('Try deployment again');
+        }
+
+        return { message: enhancedMessage, resolutionSteps };
+    }
+
+    public getDeploymentMetrics(): DeploymentMetrics | null {
+        return this.deploymentMetrics;
     }
 }
