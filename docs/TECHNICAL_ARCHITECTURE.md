@@ -118,35 +118,7 @@ class SimpleWorkflow {
 
 #### 2. 增强Agent实现 (EnhancedLumosGenAgents.ts)
 
-**EnhancedProjectWatcherAgent - 增强项目监控器**
-```typescript
-class EnhancedProjectWatcherAgent extends BaseAgent {
-  async execute(context: AgentContext): Promise<AgentResult> {
-    const { projectPath, changedFiles, strategy = 'balanced' } = context;
 
-    // 执行增强项目分析
-    const analysis = await this.analyzer.analyzeProjectEnhanced(strategy);
-
-    // 为项目分析任务选择最佳上下文
-    const selectedContext = this.contextSelector.selectContext(analysis, 'project-analysis');
-
-    // 生成增强的分析提示
-    const prompt = this.generateEnhancedAnalysisPrompt(analysis, selectedContext, changedFiles);
-
-    const response = await this.callLLM(prompt, context);
-    const enhancedAnalysis = this.parseEnhancedAnalysis(response, analysis, selectedContext);
-
-    return {
-      success: true,
-      data: enhancedAnalysis,
-      metadata: {
-        contextStrategy: strategy,
-        documentsAnalyzed: selectedContext.selectedFiles.length,
-        totalTokens: selectedContext.totalTokens
-      }
-    };
-  }
-}
 
 **ContentAnalyzerAgent - 内容策略分析师**
 class ContentAnalyzerAgent extends BaseAgent {
@@ -256,7 +228,6 @@ class LumosGenAgentManager {
   private initializeAgents(apiKey: string): void {
     const ai = new SimpleAI(apiKey);
 
-    this.agents.set('projectWatcher', new ProjectWatcherAgent('watcher', 'Project Watcher', ai));
     this.agents.set('contentAnalyzer', new ContentAnalyzerAgent('analyzer', 'Content Analyzer', ai));
     this.agents.set('contentGenerator', new ContentGeneratorAgent('generator', 'Content Generator', ai));
 
@@ -301,7 +272,6 @@ const result = await agentManager.onFileChanged(
 );
 
 // 结果包含：
-// - 项目分析 (ProjectWatcher)
 // - 内容策略 (ContentAnalyzer)
 // - 营销文案 (ContentGenerator)
 ```
@@ -707,7 +677,7 @@ class AgentMemorySystem {
 
 #### 实施计划
 1. **Week 1-2**: 实现BaseAgent框架和基础Agent通信
-2. **Week 3-4**: 开发ProjectWatcherAgent和ContentAnalyzerAgent
+2. **Week 3-4**: 开发ContentAnalyzerAgent
 3. **Week 5-6**: 构建AgentOrchestrator和协作机制
 4. **Week 7-8**: 实现Agent学习系统和记忆管理
 5. **Week 9-10**: 集成测试和Agentic能力验证
@@ -1101,7 +1071,7 @@ class IntelligentCache {
 
 ### Sprint 4-5：多Agent系统基础 + Agentic能力验证
 - **Week 1-2**: BaseAgent框架和Agent通信系统实现
-- **Week 3-4**: ProjectWatcherAgent和ContentAnalyzerAgent开发
+- **Week 3-4**: ContentAnalyzerAgent开发
 - **Week 5-6**: AgentOrchestrator和多Agent协作机制
 - **Week 7-8**: Agent学习系统和记忆管理
 - **Week 9-10**: Agentic能力验证和用户体验测试

@@ -6,7 +6,6 @@
  */
 
 import { AgentWorkflow, AgentTask } from './AgentSystem';
-import { ProjectWatcherAgent } from './ProjectWatcherAgent';
 import { ContentAnalyzerAgent } from './ContentAnalyzerAgent';
 import { ContentGeneratorAgent } from './ContentGeneratorAgent';
 import { WebsiteBuilderAgent } from './WebsiteBuilderAgent';
@@ -83,38 +82,24 @@ export class LumosGenWorkflow {
 
     private setupAgents(workspaceRoot: string): void {
         // 注册Agent
-        this.workflow.addAgent(new ProjectWatcherAgent(workspaceRoot, this.outputChannel));
         this.workflow.addAgent(new ContentAnalyzerAgent());
         this.workflow.addAgent(new ContentGeneratorAgent());
         this.workflow.addAgent(new WebsiteBuilderAgent());
     }
 
     private setupTasks(): void {
-        // 项目分析任务
-        this.workflow.addTask({
-            id: 'projectAnalysis',
-            agentName: 'ProjectWatcher',
-            description: 'Comprehensive project analysis with advanced context engineering',
-            input: {
-                projectPath: '{globalState.projectPath}',
-                changedFiles: '{globalState.changedFiles}',
-                strategy: this.config.contextStrategy
-            },
-            dependencies: []
-        });
-
         // 内容策略任务
         this.workflow.addTask({
             id: 'contentStrategy',
             agentName: 'ContentAnalyzer',
             description: 'Advanced content strategy with comprehensive document analysis',
             input: {
-                projectAnalysis: '{taskResult:projectAnalysis}',
+                projectAnalysis: '{globalState.projectAnalysis}',
                 existingContent: '{globalState.existingContent}',
                 targetAudience: this.config.targetAudience,
                 contentType: '{globalState.contentType}'
             },
-            dependencies: ['projectAnalysis']
+            dependencies: []
         });
 
         // 内容生成任务
@@ -123,13 +108,13 @@ export class LumosGenWorkflow {
             agentName: 'ContentGenerator',
             description: 'Superior content generation with intelligent context selection',
             input: {
-                projectAnalysis: '{taskResult:projectAnalysis}',
+                projectAnalysis: '{globalState.projectAnalysis}',
                 contentStrategy: '{taskResult:contentStrategy}',
                 contentType: '{globalState.contentType}',
                 targetAudience: this.config.targetAudience,
                 tone: this.config.tone
             },
-            dependencies: ['projectAnalysis', 'contentStrategy']
+            dependencies: ['contentStrategy']
         });
 
         // 网站构建任务（可选）
@@ -138,7 +123,7 @@ export class LumosGenWorkflow {
             agentName: 'WebsiteBuilder',
             description: 'Build marketing website from content',
             input: {
-                projectAnalysis: '{taskResult:projectAnalysis}',
+                projectAnalysis: '{globalState.projectAnalysis}',
                 marketingContent: '{taskResult:contentGeneration}',
                 projectPath: '{globalState.projectPath}'
             },
@@ -169,20 +154,24 @@ export class LumosGenWorkflow {
             this.outputChannel.appendLine(`🎯 Content Type: ${contentType}`);
             this.outputChannel.appendLine(`⚙️ Strategy: ${options?.customStrategy || this.config.contextStrategy}`);
 
+            // 执行项目分析
+            const strategy = options?.customStrategy || this.config.contextStrategy;
+            const projectAnalysis = await this.analyzer.analyzeProjectEnhanced(strategy);
+
             // 设置全局状态
             const globalState = {
                 projectPath,
                 changedFiles: options?.changedFiles || [],
                 existingContent: options?.existingContent || '',
                 contentType,
-                buildWebsite: options?.buildWebsite || false
+                buildWebsite: options?.buildWebsite || false,
+                projectAnalysis
             };
 
             // 执行工作流
             const results = await this.workflow.execute(globalState);
 
             // 提取结果
-            const projectAnalysisResult = results.get('projectAnalysis');
             const contentStrategyResult = results.get('contentStrategy');
             const contentGenerationResult = results.get('contentGeneration');
             const websiteResult = options?.buildWebsite ? results.get('websiteBuilding') : undefined;
@@ -190,7 +179,7 @@ export class LumosGenWorkflow {
             // 计算性能指标
             const totalTime = Date.now() - startTime;
             const performance = this.calculatePerformanceMetrics(
-                projectAnalysisResult,
+                null,
                 contentStrategyResult,
                 contentGenerationResult,
                 totalTime
@@ -198,13 +187,13 @@ export class LumosGenWorkflow {
 
             // 计算质量指标
             const quality = this.calculateQualityMetrics(
-                projectAnalysisResult,
+                null,
                 contentStrategyResult,
                 contentGenerationResult
             );
 
             const result: WorkflowResult = {
-                projectAnalysis: projectAnalysisResult?.data?.fullProjectAnalysis,
+                projectAnalysis,
                 contentStrategy: contentStrategyResult?.data,
                 generatedContent: contentGenerationResult?.data,
                 websiteResult: websiteResult?.data,
@@ -273,9 +262,9 @@ export class LumosGenWorkflow {
         contentResult: any,
         totalTime: number
     ): WorkflowResult['performance'] {
-        const documentsAnalyzed = projectResult?.metadata?.documentsAnalyzed || 0;
-        const totalTokens = (projectResult?.metadata?.totalTokens || 0) +
-                           (strategyResult?.metadata?.totalTokens || 0) +
+        const documentsAnalyzed = (strategyResult?.metadata?.contextDocuments || 0) +
+                                 (contentResult?.metadata?.contextDocuments || 0);
+        const totalTokens = (strategyResult?.metadata?.totalTokens || 0) +
                            (contentResult?.metadata?.totalTokens || 0);
         const cacheHits = this.analyzer.getCacheStats().size;
 
@@ -293,7 +282,7 @@ export class LumosGenWorkflow {
         contentResult: any
     ): WorkflowResult['quality'] {
         return {
-            analysisConfidence: projectResult?.metadata?.confidence || 0,
+            analysisConfidence: 85, // 固定值，因为直接使用EnhancedProjectAnalyzer
             strategyConfidence: strategyResult?.metadata?.confidence || 0,
             contentQuality: contentResult?.metadata?.confidence || 0
         };

@@ -61,7 +61,6 @@
 
 ### 4. 轻量级Agent系统 ✅ COMPLETED
 **功能描述：** 简洁高效的多Agent协作系统 ✅ **已实现**
-- **ProjectWatcherAgent**：项目变化监控和分析 ✅
 - **ContentAnalyzerAgent**：内容策略分析和建议 ✅
 - **ContentGeneratorAgent**：营销内容生成和优化 ✅
 - **WebsiteBuilderAgent**：网站构建和部署 ✅
@@ -149,7 +148,6 @@ class SimpleWorkflow {
 }
 
 // 专用Agent实现 (lumosgen-agents.ts) ✅ 已实现
-class ProjectWatcherAgent extends BaseAgent { }
 class ContentAnalyzerAgent extends BaseAgent { }
 class ContentGeneratorAgent extends BaseAgent { }
 class WebsiteBuilderAgent extends BaseAgent { }
@@ -162,7 +160,7 @@ class MarketingWorkflowManager {
 ```
 
 **2. 核心模块 (已集成到Agent系统)**
-- **ProjectAnalyzer**: 项目分析引擎 ✅ (被ProjectWatcherAgent使用)
+- **ProjectAnalyzer**: 项目分析引擎 ✅ (直接集成到工作流)
 - **MarketingContentGenerator**: 内容生成引擎 ✅ (被ContentGeneratorAgent使用)
 - **WebsiteBuilder**: 网站构建器 ✅ (被WebsiteBuilderAgent使用)
 - **SEOOptimizer**: SEO优化器 ✅ (集成到网站构建流程)

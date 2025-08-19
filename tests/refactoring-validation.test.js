@@ -16,7 +16,6 @@ async function testFileStructure() {
     // 验证新的文件存在
     const expectedFiles = [
         'src/agents/AgentSystem.ts',
-        'src/agents/ProjectWatcherAgent.ts',
         'src/agents/ContentAnalyzerAgent.ts',
         'src/agents/ContentGeneratorAgent.ts',
         'src/agents/WebsiteBuilderAgent.ts',
@@ -75,12 +74,6 @@ async function testImportStatements() {
         workflowContent,
         "import { AgentWorkflow, AgentTask } from './AgentSystem'",
         'Workflow.ts should import from AgentSystem'
-    );
-    
-    TestAssertions.assertContains(
-        workflowContent,
-        "import { ProjectWatcherAgent } from './ProjectWatcherAgent'",
-        'Workflow.ts should import ProjectWatcherAgent'
     );
     
     TestAssertions.assertContains(

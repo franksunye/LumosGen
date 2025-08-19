@@ -124,7 +124,6 @@ async function testAgentFileLoading() {
     console.log('🔍 Testing agent file loading...');
     
     const agentFiles = [
-        'ProjectWatcherAgent.js',
         'ContentAnalyzerAgent.js',
         'ContentGeneratorAgent.js',
         'WebsiteBuilderAgent.js'

@@ -174,7 +174,6 @@ async function testAgentSpecializations() {
 
         // Check for enhanced specialized agents
         const requiredAgents = [
-            'EnhancedProjectWatcherAgent',
             'EnhancedContentAnalyzerAgent',
             'EnhancedContentGeneratorAgent'
         ];
