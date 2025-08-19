@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { SidebarProvider } from './ui/SidebarProvider';
-import { MarketingWorkflowManager } from './agents/EnhancedWorkflow';
+import { MarketingWorkflowManager } from './agents/Workflow';
 import { MonitoringPanel } from './ui/MonitoringPanel';
 import { AIServiceProvider } from './ai/AIServiceProvider';
 // Removed i18n for MVP simplification

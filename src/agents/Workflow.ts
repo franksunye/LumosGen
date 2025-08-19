@@ -1,19 +1,21 @@
 /**
- * Enhanced LumosGen Workflow with Advanced Context Engineering
- * 
- * Integrates the new context engineering system with intelligent document selection,
+ * LumosGen Workflow with Advanced Context Engineering
+ *
+ * Integrates the context engineering system with intelligent document selection,
  * multi-strategy analysis, and optimized content generation workflows.
  */
 
-import { SimpleAgentWorkflow, AgentTask } from './simple-agent-system';
-import { EnhancedProjectWatcherAgent, EnhancedContentAnalyzerAgent, EnhancedContentGeneratorAgent } from './EnhancedLumosGenAgents';
+import { AgentWorkflow, AgentTask } from './AgentSystem';
+import { ProjectWatcherAgent } from './ProjectWatcherAgent';
+import { ContentAnalyzerAgent } from './ContentAnalyzerAgent';
+import { ContentGeneratorAgent } from './ContentGeneratorAgent';
 import { WebsiteBuilderAgent } from './WebsiteBuilderAgent';
 import { EnhancedProjectAnalyzer, EnhancedProjectAnalysis } from '../analysis/EnhancedProjectAnalyzer';
 import { ContextSelector, AITaskType } from '../analysis/ContextSelector';
 import { AIServiceProvider } from '../ai/AIServiceProvider';
 import * as vscode from 'vscode';
 
-export interface EnhancedWorkflowConfig {
+export interface WorkflowConfig {
     contextStrategy: 'minimal' | 'balanced' | 'comprehensive';
     contentTypes: AITaskType[];
     targetAudience: string;
@@ -22,7 +24,7 @@ export interface EnhancedWorkflowConfig {
     maxRetries: number;
 }
 
-export interface EnhancedWorkflowResult {
+export interface WorkflowResult {
     projectAnalysis: EnhancedProjectAnalysis;
     contentStrategy: any;
     generatedContent: any;
@@ -40,11 +42,11 @@ export interface EnhancedWorkflowResult {
     };
 }
 
-export class EnhancedLumosGenWorkflow {
-    private workflow: SimpleAgentWorkflow;
+export class LumosGenWorkflow {
+    private workflow: AgentWorkflow;
     private analyzer: EnhancedProjectAnalyzer;
     private contextSelector: ContextSelector;
-    private config: EnhancedWorkflowConfig;
+    private config: WorkflowConfig;
     private outputChannel: vscode.OutputChannel;
     private isRunning = false;
 
@@ -52,12 +54,12 @@ export class EnhancedLumosGenWorkflow {
         workspaceRoot: string,
         outputChannel: vscode.OutputChannel,
         aiService?: AIServiceProvider,
-        config?: Partial<EnhancedWorkflowConfig>
+        config?: Partial<WorkflowConfig>
     ) {
         this.outputChannel = outputChannel;
         this.analyzer = new EnhancedProjectAnalyzer(workspaceRoot, outputChannel);
         this.contextSelector = new ContextSelector();
-        
+
         // 默认配置
         this.config = {
             contextStrategy: 'balanced',
@@ -70,29 +72,28 @@ export class EnhancedLumosGenWorkflow {
         };
 
         // 创建工作流
-        this.workflow = new SimpleAgentWorkflow({
-            apiKey: 'enhanced-workflow',
-            timeout: 60000,
-            maxRetries: this.config.maxRetries
+        this.workflow = new AgentWorkflow({
+            apiKey: 'workflow',
+            timeout: 60000
         }, aiService);
 
-        this.setupEnhancedAgents(workspaceRoot);
-        this.setupEnhancedTasks();
+        this.setupAgents(workspaceRoot);
+        this.setupTasks();
     }
 
-    private setupEnhancedAgents(workspaceRoot: string): void {
-        // 注册增强的Agent
-        this.workflow.addAgent(new EnhancedProjectWatcherAgent(workspaceRoot, this.outputChannel));
-        this.workflow.addAgent(new EnhancedContentAnalyzerAgent());
-        this.workflow.addAgent(new EnhancedContentGeneratorAgent());
-        this.workflow.addAgent(new WebsiteBuilderAgent()); // 复用现有的网站构建Agent
+    private setupAgents(workspaceRoot: string): void {
+        // 注册Agent
+        this.workflow.addAgent(new ProjectWatcherAgent(workspaceRoot, this.outputChannel));
+        this.workflow.addAgent(new ContentAnalyzerAgent());
+        this.workflow.addAgent(new ContentGeneratorAgent());
+        this.workflow.addAgent(new WebsiteBuilderAgent());
     }
 
-    private setupEnhancedTasks(): void {
-        // 增强项目分析任务
+    private setupTasks(): void {
+        // 项目分析任务
         this.workflow.addTask({
-            id: 'enhancedProjectAnalysis',
-            agentName: 'EnhancedProjectWatcher',
+            id: 'projectAnalysis',
+            agentName: 'ProjectWatcher',
             description: 'Comprehensive project analysis with advanced context engineering',
             input: {
                 projectPath: '{globalState.projectPath}',
@@ -102,50 +103,50 @@ export class EnhancedLumosGenWorkflow {
             dependencies: []
         });
 
-        // 增强内容策略任务
+        // 内容策略任务
         this.workflow.addTask({
-            id: 'enhancedContentStrategy',
-            agentName: 'EnhancedContentAnalyzer',
+            id: 'contentStrategy',
+            agentName: 'ContentAnalyzer',
             description: 'Advanced content strategy with comprehensive document analysis',
             input: {
-                projectAnalysis: '{taskResult:enhancedProjectAnalysis}',
+                projectAnalysis: '{taskResult:projectAnalysis}',
                 existingContent: '{globalState.existingContent}',
                 targetAudience: this.config.targetAudience,
                 contentType: '{globalState.contentType}'
             },
-            dependencies: ['enhancedProjectAnalysis']
+            dependencies: ['projectAnalysis']
         });
 
-        // 增强内容生成任务
+        // 内容生成任务
         this.workflow.addTask({
-            id: 'enhancedContentGeneration',
-            agentName: 'EnhancedContentGenerator',
+            id: 'contentGeneration',
+            agentName: 'ContentGenerator',
             description: 'Superior content generation with intelligent context selection',
             input: {
-                projectAnalysis: '{taskResult:enhancedProjectAnalysis}',
-                contentStrategy: '{taskResult:enhancedContentStrategy}',
+                projectAnalysis: '{taskResult:projectAnalysis}',
+                contentStrategy: '{taskResult:contentStrategy}',
                 contentType: '{globalState.contentType}',
                 targetAudience: this.config.targetAudience,
                 tone: this.config.tone
             },
-            dependencies: ['enhancedProjectAnalysis', 'enhancedContentStrategy']
+            dependencies: ['projectAnalysis', 'contentStrategy']
         });
 
         // 网站构建任务（可选）
         this.workflow.addTask({
             id: 'websiteBuilding',
             agentName: 'WebsiteBuilder',
-            description: 'Build marketing website from enhanced content',
+            description: 'Build marketing website from content',
             input: {
-                projectAnalysis: '{taskResult:enhancedProjectAnalysis}',
-                marketingContent: '{taskResult:enhancedContentGeneration}',
+                projectAnalysis: '{taskResult:projectAnalysis}',
+                marketingContent: '{taskResult:contentGeneration}',
                 projectPath: '{globalState.projectPath}'
             },
-            dependencies: ['enhancedContentGeneration']
+            dependencies: ['contentGeneration']
         });
     }
 
-    async executeEnhancedWorkflow(
+    async executeWorkflow(
         projectPath: string,
         contentType: AITaskType = 'marketing-content',
         options?: {
@@ -154,16 +155,16 @@ export class EnhancedLumosGenWorkflow {
             buildWebsite?: boolean;
             customStrategy?: 'minimal' | 'balanced' | 'comprehensive';
         }
-    ): Promise<EnhancedWorkflowResult> {
+    ): Promise<WorkflowResult> {
         if (this.isRunning) {
-            throw new Error('Enhanced workflow is already running');
+            throw new Error('Workflow is already running');
         }
 
         this.isRunning = true;
         const startTime = Date.now();
 
         try {
-            this.outputChannel.appendLine(`🚀 Starting Enhanced LumosGen Workflow`);
+            this.outputChannel.appendLine(`🚀 Starting LumosGen Workflow`);
             this.outputChannel.appendLine(`📁 Project: ${projectPath}`);
             this.outputChannel.appendLine(`🎯 Content Type: ${contentType}`);
             this.outputChannel.appendLine(`⚙️ Strategy: ${options?.customStrategy || this.config.contextStrategy}`);
@@ -181,9 +182,9 @@ export class EnhancedLumosGenWorkflow {
             const results = await this.workflow.execute(globalState);
 
             // 提取结果
-            const projectAnalysisResult = results.get('enhancedProjectAnalysis');
-            const contentStrategyResult = results.get('enhancedContentStrategy');
-            const contentGenerationResult = results.get('enhancedContentGeneration');
+            const projectAnalysisResult = results.get('projectAnalysis');
+            const contentStrategyResult = results.get('contentStrategy');
+            const contentGenerationResult = results.get('contentGeneration');
             const websiteResult = options?.buildWebsite ? results.get('websiteBuilding') : undefined;
 
             // 计算性能指标
@@ -202,7 +203,7 @@ export class EnhancedLumosGenWorkflow {
                 contentGenerationResult
             );
 
-            const result: EnhancedWorkflowResult = {
+            const result: WorkflowResult = {
                 projectAnalysis: projectAnalysisResult?.data?.fullProjectAnalysis,
                 contentStrategy: contentStrategyResult?.data,
                 generatedContent: contentGenerationResult?.data,
@@ -211,14 +212,14 @@ export class EnhancedLumosGenWorkflow {
                 quality
             };
 
-            this.outputChannel.appendLine(`✅ Enhanced workflow completed in ${totalTime}ms`);
+            this.outputChannel.appendLine(`✅ Workflow completed in ${totalTime}ms`);
             this.outputChannel.appendLine(`📊 Performance: ${performance.documentsAnalyzed} docs, ${performance.totalTokens} tokens`);
             this.outputChannel.appendLine(`🎯 Quality: Analysis ${quality.analysisConfidence}%, Strategy ${quality.strategyConfidence}%, Content ${quality.contentQuality}%`);
 
             return result;
 
         } catch (error) {
-            this.outputChannel.appendLine(`❌ Enhanced workflow failed: ${error}`);
+            this.outputChannel.appendLine(`❌ Workflow failed: ${error}`);
             throw error;
         } finally {
             this.isRunning = false;
@@ -228,22 +229,22 @@ export class EnhancedLumosGenWorkflow {
     async updateWithChanges(
         changedFiles: string[],
         previousAnalysis?: EnhancedProjectAnalysis
-    ): Promise<EnhancedWorkflowResult> {
+    ): Promise<WorkflowResult> {
         this.outputChannel.appendLine(`🔄 Updating analysis for ${changedFiles.length} changed files`);
 
         if (previousAnalysis && this.config.enableCaching) {
             // 使用增量更新
             const updatedAnalysis = await this.analyzer.updateAnalysis(changedFiles, previousAnalysis);
-            
+
             // 重新执行内容生成流程
-            return this.executeEnhancedWorkflow(
+            return this.executeWorkflow(
                 previousAnalysis.structured.metadata.name,
                 'marketing-content',
                 { changedFiles }
             );
         } else {
             // 完整重新分析
-            return this.executeEnhancedWorkflow(
+            return this.executeWorkflow(
                 process.cwd(),
                 'marketing-content',
                 { changedFiles }
@@ -259,7 +260,7 @@ export class EnhancedLumosGenWorkflow {
         
         this.outputChannel.appendLine(`📝 Generating ${contentType} content for ${targetPath}`);
 
-        const result = await this.executeEnhancedWorkflow(targetPath, contentType, {
+        const result = await this.executeWorkflow(targetPath, contentType, {
             buildWebsite: false
         });
 
@@ -271,7 +272,7 @@ export class EnhancedLumosGenWorkflow {
         strategyResult: any,
         contentResult: any,
         totalTime: number
-    ): EnhancedWorkflowResult['performance'] {
+    ): WorkflowResult['performance'] {
         const documentsAnalyzed = projectResult?.metadata?.documentsAnalyzed || 0;
         const totalTokens = (projectResult?.metadata?.totalTokens || 0) +
                            (strategyResult?.metadata?.totalTokens || 0) +
@@ -290,7 +291,7 @@ export class EnhancedLumosGenWorkflow {
         projectResult: any,
         strategyResult: any,
         contentResult: any
-    ): EnhancedWorkflowResult['quality'] {
+    ): WorkflowResult['quality'] {
         return {
             analysisConfidence: projectResult?.metadata?.confidence || 0,
             strategyConfidence: strategyResult?.metadata?.confidence || 0,
@@ -299,12 +300,12 @@ export class EnhancedLumosGenWorkflow {
     }
 
     // 配置管理
-    updateConfig(newConfig: Partial<EnhancedWorkflowConfig>): void {
+    updateConfig(newConfig: Partial<WorkflowConfig>): void {
         this.config = { ...this.config, ...newConfig };
         this.outputChannel.appendLine(`⚙️ Workflow configuration updated`);
     }
 
-    getConfig(): EnhancedWorkflowConfig {
+    getConfig(): WorkflowConfig {
         return { ...this.config };
     }
 
@@ -327,14 +328,14 @@ export class EnhancedLumosGenWorkflow {
         if (this.workflow) {
             this.workflow.reset();
             this.isRunning = false;
-            this.outputChannel.appendLine(`⏹️ Enhanced workflow stopped`);
+            this.outputChannel.appendLine(`⏹️ Workflow stopped`);
         }
     }
 }
 
-// 兼容接口：Enhanced版本的 MarketingWorkflowManager
+// 兼容接口：MarketingWorkflowManager
 export class MarketingWorkflowManager {
-    private enhancedWorkflow: EnhancedLumosGenWorkflow;
+    private workflow: LumosGenWorkflow;
     private workspaceRoot: string;
     private outputChannel: vscode.OutputChannel;
     private isRunning = false;
@@ -344,10 +345,10 @@ export class MarketingWorkflowManager {
         this.workspaceRoot = this.getCurrentProjectPath();
 
         // 创建输出通道
-        this.outputChannel = vscode.window.createOutputChannel('LumosGen Enhanced');
+        this.outputChannel = vscode.window.createOutputChannel('LumosGen');
 
-        // 创建增强工作流
-        this.enhancedWorkflow = new EnhancedLumosGenWorkflow(
+        // 创建工作流
+        this.workflow = new LumosGenWorkflow(
             this.workspaceRoot,
             this.outputChannel,
             aiService
@@ -355,12 +356,12 @@ export class MarketingWorkflowManager {
     }
 
     async initialize(): Promise<void> {
-        this.outputChannel.appendLine('🚀 Enhanced MarketingWorkflowManager initialized');
+        this.outputChannel.appendLine('🚀 MarketingWorkflowManager initialized');
     }
 
     async onFileChanged(changedFiles: string[], projectPath: string): Promise<void> {
         if (this.isRunning) {
-            this.outputChannel.appendLine('⏳ Enhanced workflow already running, skipping...');
+            this.outputChannel.appendLine('⏳ Workflow already running, skipping...');
             return;
         }
 
@@ -368,16 +369,16 @@ export class MarketingWorkflowManager {
             this.isRunning = true;
             this.outputChannel.appendLine(`📁 Processing ${changedFiles.length} changed files`);
 
-            const result = await this.enhancedWorkflow.executeEnhancedWorkflow(
+            const result = await this.workflow.executeWorkflow(
                 projectPath,
                 'marketing-content',
                 { changedFiles }
             );
 
-            this.outputChannel.appendLine('✅ Enhanced workflow completed successfully');
+            this.outputChannel.appendLine('✅ Workflow completed successfully');
 
         } catch (error) {
-            this.outputChannel.appendLine(`❌ Enhanced workflow failed: ${error}`);
+            this.outputChannel.appendLine(`❌ Workflow failed: ${error}`);
             throw error;
         } finally {
             this.isRunning = false;
@@ -386,36 +387,35 @@ export class MarketingWorkflowManager {
 
     async generateContent(contentType: string = 'homepage'): Promise<any> {
         if (this.isRunning) {
-            throw new Error('Enhanced workflow already running');
+            throw new Error('Workflow already running');
         }
 
         try {
             this.isRunning = true;
-            this.outputChannel.appendLine(`🎯 Generating ${contentType} content with enhanced workflow`);
+            this.outputChannel.appendLine(`🎯 Generating ${contentType} content with workflow`);
 
-            const result = await this.enhancedWorkflow.executeEnhancedWorkflow(
+            const result = await this.workflow.executeWorkflow(
                 this.workspaceRoot,
                 'marketing-content',
                 { buildWebsite: contentType === 'website' }
             );
 
-            this.outputChannel.appendLine('✅ Enhanced content generation completed');
+            this.outputChannel.appendLine('✅ Content generation completed');
 
             return {
                 success: true,
                 data: result.generatedContent,
                 metadata: {
                     performance: result.performance,
-                    quality: result.quality,
-                    enhanced: true
+                    quality: result.quality
                 }
             };
 
         } catch (error) {
-            this.outputChannel.appendLine(`❌ Enhanced content generation failed: ${error}`);
+            this.outputChannel.appendLine(`❌ Content generation failed: ${error}`);
             return {
                 success: false,
-                error: error instanceof Error ? error.message : 'Enhanced content generation failed'
+                error: error instanceof Error ? error.message : 'Content generation failed'
             };
         } finally {
             this.isRunning = false;
@@ -435,7 +435,7 @@ export class MarketingWorkflowManager {
 
     stop(): void {
         this.isRunning = false;
-        this.outputChannel.appendLine('🛑 Enhanced workflow stopped');
+        this.outputChannel.appendLine('🛑 Workflow stopped');
     }
 
     private getCurrentProjectPath(): string {

@@ -7,7 +7,7 @@
 
 import { EnhancedProjectAnalyzer, EnhancedProjectAnalysis } from './EnhancedProjectAnalyzer';
 import { ContextSelector, AITaskType, SelectedContext } from './ContextSelector';
-import { EnhancedLumosGenWorkflow, EnhancedWorkflowConfig } from '../agents/EnhancedWorkflow';
+import { LumosGenWorkflow, WorkflowConfig } from '../agents/Workflow';
 import * as vscode from 'vscode';
 
 export interface ContextEngineConfig {
@@ -52,7 +52,7 @@ export interface ContextEngineResult {
 export class ContextEngine {
     private analyzer: EnhancedProjectAnalyzer;
     private selector: ContextSelector;
-    private workflow?: EnhancedLumosGenWorkflow;
+    private workflow?: LumosGenWorkflow;
     private config: ContextEngineConfig;
     private outputChannel: vscode.OutputChannel;
 
@@ -167,9 +167,9 @@ export class ContextEngine {
     initializeWorkflow(
         workspaceRoot: string,
         aiService?: any,
-        workflowConfig?: Partial<EnhancedWorkflowConfig>
+        workflowConfig?: Partial<WorkflowConfig>
     ): void {
-        this.workflow = new EnhancedLumosGenWorkflow(
+        this.workflow = new LumosGenWorkflow(
             workspaceRoot,
             this.outputChannel,
             aiService,
@@ -199,7 +199,7 @@ export class ContextEngine {
             throw new Error('Workflow not initialized. Call initializeWorkflow() first.');
         }
 
-        return await this.workflow.executeEnhancedWorkflow(projectPath, contentType, options);
+        return await this.workflow.executeWorkflow(projectPath, contentType, options);
     }
 
     /**

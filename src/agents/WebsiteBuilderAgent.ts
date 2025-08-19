@@ -4,7 +4,7 @@
  * Extracted from original agents for reuse in Enhanced workflow
  */
 
-import { BaseAgent, AgentResult, AgentContext } from './simple-agent-system';
+import { BaseAgent, AgentResult, AgentContext } from './AgentSystem';
 
 // 🏗️ 网站构建Agent
 export class WebsiteBuilderAgent extends BaseAgent {
@@ -180,20 +180,20 @@ export class WebsiteBuilderAgent extends BaseAgent {
             <h2>${subheadline}</h2>
             <p class="value-proposition">${valueProposition}</p>
 
-            ${features.length > 0 ? \`
+            ${features.length > 0 ? `
             <div class="features">
                 <h3>Key Features</h3>
                 <ul>
-                    \${features.map((feature: string) => \`<li>\${this.convertMarkdownToHTML(feature)}</li>\`).join('')}
+                    ${features.map((feature: string) => `<li>${this.convertMarkdownToHTML(feature)}</li>`).join('')}
                 </ul>
             </div>
-            \` : ''}
+            ` : ''}
 
-            ${fullContent ? \`
+            ${fullContent ? `
             <div class="full-content">
-                \${this.convertMarkdownToHTML(fullContent)}
+                ${this.convertMarkdownToHTML(fullContent)}
             </div>
-            \` : ''}
+            ` : ''}
 
             <div class="cta-section">
                 <button class="cta-button">${callToAction}</button>
@@ -205,11 +205,11 @@ export class WebsiteBuilderAgent extends BaseAgent {
     </footer>
     <script src="script.js"></script>
 </body>
-</html>\`;
+</html>`;
   }
 
   private generateAboutPage(content: string): string {
-    return \`<!DOCTYPE html>
+    return `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -238,11 +238,11 @@ export class WebsiteBuilderAgent extends BaseAgent {
         <p>&copy; 2025 LumosGen. Built with AI-powered automation.</p>
     </footer>
 </body>
-</html>\`;
+</html>`;
   }
 
   private generateBlogPage(content: string): string {
-    return \`<!DOCTYPE html>
+    return `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -271,11 +271,11 @@ export class WebsiteBuilderAgent extends BaseAgent {
         <p>&copy; 2025 LumosGen. Built with AI-powered automation.</p>
     </footer>
 </body>
-</html>\`;
+</html>`;
   }
 
   private generateFAQPage(content: string): string {
-    return \`<!DOCTYPE html>
+    return `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -304,11 +304,11 @@ export class WebsiteBuilderAgent extends BaseAgent {
         <p>&copy; 2025 LumosGen. Built with AI-powered automation.</p>
     </footer>
 </body>
-</html>\`;
+</html>`;
   }
 
   private generateCSS(): string {
-    return \`/* LumosGen Modern Website Styles */
+    return `/* LumosGen Modern Website Styles */
 * {
     margin: 0;
     padding: 0;
@@ -396,11 +396,11 @@ footer {
     main {
         padding: 1rem;
     }
-}\`;
+}`;
   }
 
   private generateJavaScript(): string {
-    return \`// LumosGen Website JavaScript
+    return `// LumosGen Website JavaScript
 document.addEventListener('DOMContentLoaded', function() {
     console.log('LumosGen website loaded successfully!');
 
@@ -427,45 +427,45 @@ document.addEventListener('DOMContentLoaded', function() {
             }, 200);
         });
     });
-});\`;
+});`;
   }
 
   private generateSitemap(): string {
-    return \`<?xml version="1.0" encoding="UTF-8"?>
+    return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
         <loc>https://your-domain.com/</loc>
-        <lastmod>\${new Date().toISOString().split('T')[0]}</lastmod>
+        <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
         <priority>1.0</priority>
     </url>
     <url>
         <loc>https://your-domain.com/about.html</loc>
-        <lastmod>\${new Date().toISOString().split('T')[0]}</lastmod>
+        <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
         <priority>0.8</priority>
     </url>
     <url>
         <loc>https://your-domain.com/blog.html</loc>
-        <lastmod>\${new Date().toISOString().split('T')[0]}</lastmod>
+        <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
         <priority>0.7</priority>
     </url>
     <url>
         <loc>https://your-domain.com/faq.html</loc>
-        <lastmod>\${new Date().toISOString().split('T')[0]}</lastmod>
+        <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
         <priority>0.6</priority>
     </url>
-</urlset>\`;
+</urlset>`;
   }
 
   private generateRobots(): string {
-    return \`User-agent: *
+    return `User-agent: *
 Allow: /
 
-Sitemap: https://your-domain.com/sitemap.xml\`;
+Sitemap: https://your-domain.com/sitemap.xml`;
   }
 
   private generateMetadata(projectAnalysis: any): any {
     return {
-      title: \`\${projectAnalysis?.name || 'LumosGen'} - AI-Powered Marketing\`,
+      title: `${projectAnalysis?.name || 'LumosGen'} - AI-Powered Marketing`,
       description: projectAnalysis?.description || 'Transform your development workflow with AI-powered marketing automation',
       keywords: ['AI', 'Marketing', 'Automation', 'VS Code', 'Developer Tools'],
       author: projectAnalysis?.author || 'LumosGen Team',

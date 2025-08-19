@@ -53,8 +53,8 @@ export interface ProjectAnalysis {
 }
 
 export class ProjectAnalyzer {
-    private workspaceRoot: string;
-    private outputChannel: vscode.OutputChannel;
+    protected workspaceRoot: string;
+    protected outputChannel: vscode.OutputChannel;
 
     constructor(workspaceRoot: string, outputChannel: vscode.OutputChannel) {
         this.workspaceRoot = workspaceRoot;
@@ -294,17 +294,17 @@ export class ProjectAnalyzer {
         };
     }
 
-    private extractTitle(content: string): string {
+    protected extractTitle(content: string): string {
         const titleMatch = content.match(/^#\s+(.+)$/m);
         return titleMatch ? titleMatch[1].trim() : 'Untitled';
     }
 
-    private extractSections(content: string): string[] {
+    protected extractSections(content: string): string[] {
         const sections = content.match(/^#{1,6}\s+.+$/gm) || [];
         return sections.map(section => section.replace(/^#+\s+/, '').trim());
     }
 
-    private extractCodeBlocks(content: string): string[] {
+    protected extractCodeBlocks(content: string): string[] {
         const codeBlocks = content.match(/```[\s\S]*?```/g) || [];
         return codeBlocks.map(block => block.replace(/```\w*\n?/, '').replace(/```$/, '').trim());
     }

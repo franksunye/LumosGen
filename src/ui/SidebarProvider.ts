@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
-import { MarketingWorkflowManager } from '../agents/EnhancedWorkflow';
-import { AgentResult } from '../agents/simple-agent-system';
+import { MarketingWorkflowManager } from '../agents/Workflow';
+import { AgentResult } from '../agents/AgentSystem';
 import { GitHubPagesDeployer, DeploymentStatus } from '../deployment/GitHubPagesDeployer';
 import { DeploymentMonitor } from '../deployment/DeploymentMonitor';
 import { WebsiteBuilder, WebsiteConfig } from '../website/WebsiteBuilder';
@@ -98,6 +98,11 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
     private setupAgentEventListeners(): void {
         if (!this.agentManager) return;
 
+        // TODO: Implement event listening for new workflow system
+        // The new workflow system may not have event emitters
+        // Consider implementing status polling or callback-based updates
+
+        /*
         // Listen for agent workflow events
         this.agentManager.workflow?.on('workflowStarted', () => {
             this.agentStatus.isRunning = true;
@@ -134,6 +139,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
             this.agentStatus.currentTask = undefined;
             this.updateAgentStatus(`❌ Workflow error: ${error.message}`);
         });
+        */
     }
 
     private async generateContentWithAgents(): Promise<void> {

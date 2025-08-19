@@ -1,8 +1,8 @@
 /**
- * LumosGen Simple Multi-Agent System
- * 
+ * LumosGen Multi-Agent System
+ *
  * Lightweight agent framework designed specifically for VS Code extensions.
- * No external servers, no complex dependencies - just simple, effective agent communication.
+ * No external servers, no complex dependencies - just effective agent communication.
  */
 
 import { EventEmitter } from 'events';
@@ -254,7 +254,7 @@ Configure your OpenAI API key in VS Code settings to enable full AI functionalit
 }
 
 // 轻量级工作流执行器
-export class SimpleWorkflow extends EventEmitter {
+export class AgentWorkflow extends EventEmitter {
   private agents: Map<string, IAgent> = new Map();
   private tasks: AgentTask[] = [];
   private results: Map<string, AgentResult> = new Map();
@@ -414,9 +414,9 @@ export class SimpleWorkflow extends EventEmitter {
   }
 }
 
-// 工具函数：创建简单的LumosGen工作流
-export function createLumosGenWorkflow(apiKey: string, aiService?: AIServiceProvider): SimpleWorkflow {
-  const workflow = new SimpleWorkflow({ apiKey }, aiService);
+// 工具函数：创建LumosGen工作流
+export function createLumosGenWorkflow(apiKey: string, aiService?: AIServiceProvider): AgentWorkflow {
+  const workflow = new AgentWorkflow({ apiKey }, aiService);
   
   // 可以添加日志监听器
   workflow.on('taskStarted', (taskId) => {

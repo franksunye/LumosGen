@@ -429,6 +429,21 @@ export class IncrementalContextBuilder {
         context.fullText.categories = categories;
     }
 
+    private extractTitle(content: string): string {
+        const titleMatch = content.match(/^#\s+(.+)$/m);
+        return titleMatch ? titleMatch[1].trim() : 'Untitled';
+    }
+
+    private extractSections(content: string): string[] {
+        const sections = content.match(/^#{1,6}\s+.+$/gm) || [];
+        return sections.map(section => section.replace(/^#+\s+/, '').trim());
+    }
+
+    private extractCodeBlocks(content: string): string[] {
+        const codeBlocks = content.match(/```[\s\S]*?```/g) || [];
+        return codeBlocks.map(block => block.replace(/```\w*\n?/, '').replace(/```$/, '').trim());
+    }
+
     private convertToParseMarkdown(markdownFile: MarkdownFile): ParsedMarkdown {
         const title = this.extractTitle(markdownFile.content);
         const sections = this.extractSections(markdownFile.content);
@@ -448,20 +463,11 @@ export class IncrementalContextBuilder {
         };
     }
 
-    private extractTitle(content: string): string {
-        const titleMatch = content.match(/^#\s+(.+)$/m);
-        return titleMatch ? titleMatch[1].trim() : 'Untitled';
-    }
 
-    private extractSections(content: string): string[] {
-        const sections = content.match(/^#{1,6}\s+.+$/gm) || [];
-        return sections.map(section => section.replace(/^#+\s+/, '').trim());
-    }
 
-    private extractCodeBlocks(content: string): string[] {
-        const codeBlocks = content.match(/```[\s\S]*?```/g) || [];
-        return codeBlocks.map(block => block.replace(/```\w*\n?/, '').replace(/```$/, '').trim());
-    }
+
+
+
 
     private generateSummary(content: string): string {
         // 提取前200个字符作为摘要
@@ -872,21 +878,11 @@ export class EnhancedProjectAnalyzer extends ProjectAnalyzer {
         return scripts;
     }
 
-    // 辅助方法
-    private extractTitle(content: string): string {
-        const titleMatch = content.match(/^#\s+(.+)$/m);
-        return titleMatch ? titleMatch[1].trim() : 'Untitled';
-    }
+    // 辅助方法继承自父类
 
-    private extractSections(content: string): string[] {
-        const sections = content.match(/^#{1,6}\s+.+$/gm) || [];
-        return sections.map(section => section.replace(/^#+\s+/, '').trim());
-    }
 
-    private extractCodeBlocks(content: string): string[] {
-        const codeBlocks = content.match(/```[\s\S]*?```/g) || [];
-        return codeBlocks.map(block => block.replace(/```\w*\n?/, '').replace(/```$/, '').trim());
-    }
+
+
 
     private generateSummary(content: string): string {
         // 提取前200个字符作为摘要
