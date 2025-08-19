@@ -33,6 +33,7 @@ export interface MarkdownDocument {
     content: string;
     sections: string[];
     codeBlocks: string[];
+    tokenCount?: number;
 }
 
 export interface FileStructure {
@@ -43,18 +44,42 @@ export interface FileStructure {
     documentationFiles: string[];
 }
 
-// Simplified project analysis for MVP
+// New interfaces from Enhanced version
+export interface Dependency {
+    name: string;
+    version: string;
+    type: 'production' | 'development' | 'peer';
+    category: string;
+}
+
+export interface ScriptInfo {
+    name: string;
+    command: string;
+    description?: string;
+}
+
+// Simplified document cache
+interface CachedDocument {
+    document: MarkdownDocument;
+    mtime: Date;
+}
+
+// Enhanced project analysis interface
 export interface ProjectAnalysis {
     metadata: ProjectMetadata;
     structure: FileStructure;
     techStack: TechStack[];
     features: ProjectFeature[];
     documents: MarkdownDocument[];
+    dependencies: Dependency[];
+    scripts: ScriptInfo[];
+    tokenCount?: number;
 }
 
 export class ProjectAnalyzer {
     protected workspaceRoot: string;
     protected outputChannel: vscode.OutputChannel;
+    private documentCache = new Map<string, CachedDocument>();
 
     constructor(workspaceRoot: string, outputChannel: vscode.OutputChannel) {
         this.workspaceRoot = workspaceRoot;
@@ -64,15 +89,24 @@ export class ProjectAnalyzer {
     async analyzeProject(): Promise<ProjectAnalysis> {
         this.outputChannel.appendLine('Analyzing project structure...');
 
+        const startTime = Date.now();
         const analysis: ProjectAnalysis = {
             metadata: await this.extractMetadata(),
             structure: await this.analyzeFileStructure(),
             techStack: await this.identifyTechStack(),
             features: await this.extractFeatures(),
-            documents: await this.parseDocuments()
+            documents: await this.parseDocuments(),
+            dependencies: await this.extractDependencies(),
+            scripts: await this.extractScripts()
         };
 
-        this.outputChannel.appendLine('Project analysis completed');
+        // Calculate total token count
+        analysis.tokenCount = analysis.documents.reduce((sum, doc) => sum + (doc.tokenCount || 0), 0);
+
+        const duration = Date.now() - startTime;
+        this.outputChannel.appendLine(`Project analysis completed in ${duration}ms`);
+        this.outputChannel.appendLine(`Found ${analysis.documents.length} documents, ${analysis.tokenCount} total tokens`);
+
         return analysis;
     }
 
@@ -249,22 +283,68 @@ export class ProjectAnalyzer {
 
     private async parseDocuments(): Promise<MarkdownDocument[]> {
         const documents: MarkdownDocument[] = [];
-        
-        const readmePath = this.findReadmeFile();
-        if (readmePath) {
-            try {
-                const content = fs.readFileSync(readmePath, 'utf8');
-                const doc = this.parseMarkdownDocument(readmePath, content);
-                documents.push(doc);
-                this.outputChannel.appendLine('README file found and parsed');
-            } catch (error) {
-                this.outputChannel.appendLine(`Error parsing README: ${error}`);
-            }
-        } else {
-            this.outputChannel.appendLine('No README file found');
-        }
 
+        // Scan for all markdown files
+        await this.scanMarkdownFiles(this.workspaceRoot, documents, 0, 3);
+
+        this.outputChannel.appendLine(`Found ${documents.length} markdown documents`);
         return documents;
+    }
+
+    private async scanMarkdownFiles(dirPath: string, documents: MarkdownDocument[], depth: number, maxDepth: number): Promise<void> {
+        if (depth > maxDepth) return;
+
+        try {
+            const items = await fs.promises.readdir(dirPath);
+
+            for (const item of items) {
+                // Skip hidden files and common ignore directories
+                if (item.startsWith('.') || ['node_modules', 'dist', 'build', 'coverage'].includes(item)) {
+                    continue;
+                }
+
+                const itemPath = path.join(dirPath, item);
+                const stat = await fs.promises.stat(itemPath);
+
+                if (stat.isDirectory()) {
+                    await this.scanMarkdownFiles(itemPath, documents, depth + 1, maxDepth);
+                } else if (item.toLowerCase().endsWith('.md')) {
+                    try {
+                        const doc = await this.parseMarkdownDocumentWithCache(itemPath);
+                        documents.push(doc);
+                    } catch (error) {
+                        this.outputChannel.appendLine(`Error parsing ${itemPath}: ${error}`);
+                    }
+                }
+            }
+        } catch (error) {
+            this.outputChannel.appendLine(`Error scanning directory ${dirPath}: ${error}`);
+        }
+    }
+
+    private async parseMarkdownDocumentWithCache(filePath: string): Promise<MarkdownDocument> {
+        try {
+            const stat = await fs.promises.stat(filePath);
+            const cached = this.documentCache.get(filePath);
+
+            if (cached && cached.mtime >= stat.mtime) {
+                return cached.document;
+            }
+
+            const content = await fs.promises.readFile(filePath, 'utf8');
+            const doc = this.parseMarkdownDocument(filePath, content);
+
+            this.documentCache.set(filePath, {
+                document: doc,
+                mtime: stat.mtime
+            });
+
+            return doc;
+        } catch (error) {
+            const cached = this.documentCache.get(filePath);
+            if (cached) return cached.document;
+            throw error;
+        }
     }
 
     private findReadmeFile(): string | null {
@@ -284,13 +364,15 @@ export class ProjectAnalyzer {
         const title = this.extractTitle(content);
         const sections = this.extractSections(content);
         const codeBlocks = this.extractCodeBlocks(content);
-        
+        const tokenCount = this.estimateTokens(content);
+
         return {
             path: filePath,
             title,
             content,
             sections,
-            codeBlocks
+            codeBlocks,
+            tokenCount
         };
     }
 
@@ -330,8 +412,124 @@ export class ProjectAnalyzer {
         return features;
     }
 
-    // Removed complex marketing analysis methods for MVP simplification
+    // New methods for enhanced functionality
+    private async extractDependencies(): Promise<Dependency[]> {
+        const dependencies: Dependency[] = [];
 
+        // Handle package.json
+        const packageJsonPath = path.join(this.workspaceRoot, 'package.json');
+        if (fs.existsSync(packageJsonPath)) {
+            try {
+                const packageJson = JSON.parse(await fs.promises.readFile(packageJsonPath, 'utf8'));
+                dependencies.push(...this.extractPackageJsonDependencies(packageJson));
+            } catch (error) {
+                this.outputChannel.appendLine(`Error reading package.json: ${error}`);
+            }
+        }
+
+        // TODO: Add support for other package managers (Cargo.toml, go.mod, requirements.txt, etc.)
+        return dependencies;
+    }
+
+    private extractPackageJsonDependencies(packageJson: any): Dependency[] {
+        const dependencies: Dependency[] = [];
+
+        // Production dependencies
+        if (packageJson.dependencies) {
+            Object.entries(packageJson.dependencies).forEach(([name, version]) => {
+                dependencies.push({
+                    name,
+                    version: version as string,
+                    type: 'production',
+                    category: this.categorizeDependency(name)
+                });
+            });
+        }
+
+        // Development dependencies
+        if (packageJson.devDependencies) {
+            Object.entries(packageJson.devDependencies).forEach(([name, version]) => {
+                dependencies.push({
+                    name,
+                    version: version as string,
+                    type: 'development',
+                    category: this.categorizeDependency(name)
+                });
+            });
+        }
+
+        // Peer dependencies
+        if (packageJson.peerDependencies) {
+            Object.entries(packageJson.peerDependencies).forEach(([name, version]) => {
+                dependencies.push({
+                    name,
+                    version: version as string,
+                    type: 'peer',
+                    category: this.categorizeDependency(name)
+                });
+            });
+        }
+
+        return dependencies;
+    }
+
+    private async extractScripts(): Promise<ScriptInfo[]> {
+        const scripts: ScriptInfo[] = [];
+
+        const packageJsonPath = path.join(this.workspaceRoot, 'package.json');
+        if (fs.existsSync(packageJsonPath)) {
+            try {
+                const packageJson = JSON.parse(await fs.promises.readFile(packageJsonPath, 'utf8'));
+
+                if (packageJson.scripts) {
+                    Object.entries(packageJson.scripts).forEach(([name, command]) => {
+                        scripts.push({
+                            name,
+                            command: command as string,
+                            description: this.generateScriptDescription(name, command as string)
+                        });
+                    });
+                }
+            } catch (error) {
+                this.outputChannel.appendLine(`Error reading scripts from package.json: ${error}`);
+            }
+        }
+
+        return scripts;
+    }
+
+    private categorizeDependency(name: string): string {
+        if (name.includes('react') || name.includes('vue') || name.includes('angular')) return 'frontend-framework';
+        if (name.includes('express') || name.includes('koa') || name.includes('fastify')) return 'backend-framework';
+        if (name.includes('test') || name.includes('jest') || name.includes('mocha')) return 'testing';
+        if (name.includes('webpack') || name.includes('vite') || name.includes('rollup')) return 'build-tool';
+        if (name.includes('eslint') || name.includes('prettier') || name.includes('typescript')) return 'development-tool';
+        return 'library';
+    }
+
+    private generateScriptDescription(name: string, command: string): string {
+        const descriptions: Record<string, string> = {
+            'start': 'Start the application',
+            'dev': 'Start development server',
+            'build': 'Build for production',
+            'test': 'Run tests',
+            'lint': 'Lint code',
+            'format': 'Format code',
+            'deploy': 'Deploy application',
+            'clean': 'Clean build files'
+        };
+
+        return descriptions[name] || `Execute: ${command}`;
+    }
+
+    private estimateTokens(text: string): number {
+        // Simple token estimation: ~4 characters = 1 token (English), ~2 characters = 1 token (Chinese)
+        const englishChars = (text.match(/[a-zA-Z0-9\s]/g) || []).length;
+        const chineseChars = text.length - englishChars;
+        return Math.ceil(englishChars / 4 + chineseChars / 2);
+    }
+
+    // Utility methods
     private isMainFile(filename: string): boolean {
         const mainFiles = [
             'index.js', 'index.ts', 'main.js', 'main.ts', 'app.js', 'app.ts',
@@ -352,5 +550,15 @@ export class ProjectAnalyzer {
     private isDocumentationFile(filename: string): boolean {
         const docFiles = ['README.md', 'CHANGELOG.md', 'LICENSE', 'CONTRIBUTING.md', 'DOCS.md'];
         return docFiles.includes(filename) || filename.toLowerCase().endsWith('.md');
+    }
+
+    // Public utility methods
+    clearCache(): void {
+        this.documentCache.clear();
+        this.outputChannel.appendLine('Document cache cleared');
+    }
+
+    getCacheStats(): { size: number; hitRate: number } {
+        return { size: this.documentCache.size, hitRate: 0 };
     }
 }
