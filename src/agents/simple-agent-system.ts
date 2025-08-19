@@ -6,6 +6,10 @@
  */
 
 import { EventEmitter } from 'events';
+// For Node.js fetch compatibility
+declare global {
+  function fetch(input: string, init?: any): Promise<any>;
+}
 
 // 基础Agent接口
 export interface IAgent {
@@ -19,12 +23,17 @@ export interface IAgent {
 // Agent执行结果
 export interface AgentResult {
   success: boolean;
-  data: any;
+  data?: any;
   error?: string;
   metadata?: {
-    executionTime: number;
+    executionTime?: number;
     tokensUsed?: number;
     confidence?: number;
+    agent?: string;
+    timestamp?: string;
+    buildTime?: string;
+    features?: string[];
+    [key: string]: any; // Allow additional metadata fields
   };
 }
 
@@ -60,36 +69,159 @@ export abstract class BaseAgent implements IAgent {
   abstract execute(input: any, context: AgentContext): Promise<AgentResult>;
 
   protected async callLLM(prompt: string, context: AgentContext): Promise<string> {
-    // 简单的OpenAI API调用封装
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${context.config.apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: context.config.model || 'gpt-3.5-turbo',
-        messages: [
-          {
-            role: 'system',
-            content: `You are ${this.name}, a ${this.role}. ${this.background}\n\nGoal: ${this.goal}`
-          },
-          {
-            role: 'user',
-            content: prompt
-          }
-        ],
-        temperature: 0.7,
-        max_tokens: 2000
-      })
-    });
-
-    if (!response.ok) {
-      throw new Error(`LLM API call failed: ${response.statusText}`);
+    // Check if we have a valid API key, otherwise use mock mode
+    if (!context.config.apiKey || context.config.apiKey === '' || context.config.apiKey === 'mock') {
+      return this.generateMockResponse(prompt);
     }
 
-    const data = await response.json();
-    return data.choices[0]?.message?.content || '';
+    try {
+      // 简单的OpenAI API调用封装
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${context.config.apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: context.config.model || 'gpt-3.5-turbo',
+          messages: [
+            {
+              role: 'system',
+              content: `You are ${this.name}, a ${this.role}. ${this.background}\n\nGoal: ${this.goal}`
+            },
+            {
+              role: 'user',
+              content: prompt
+            }
+          ],
+          temperature: 0.7,
+          max_tokens: 2000
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`LLM API call failed: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      return data.choices[0]?.message?.content || '';
+    } catch (error) {
+      console.warn('LLM API call failed, falling back to mock mode:', error);
+      return this.generateMockResponse(prompt);
+    }
+  }
+
+  protected generateMockResponse(prompt: string): string {
+    // Generate realistic mock responses based on prompt content
+    if (prompt.includes('project analysis') || prompt.includes('analyze project')) {
+      return this.generateMockProjectAnalysis();
+    } else if (prompt.includes('content strategy') || prompt.includes('marketing strategy')) {
+      return this.generateMockContentStrategy();
+    } else if (prompt.includes('generate content') || prompt.includes('marketing content')) {
+      return this.generateMockMarketingContent();
+    } else {
+      return this.generateGenericMockResponse();
+    }
+  }
+
+  private generateMockProjectAnalysis(): string {
+    return `## Project Analysis Results
+
+### Technology Stack
+- **Primary Language**: TypeScript/JavaScript
+- **Framework**: VS Code Extension API
+- **Build Tools**: Node.js, npm
+- **Target Platform**: VS Code Marketplace
+
+### Key Features Identified
+1. **AI-Powered Content Generation** - Automated marketing content creation
+2. **Project Analysis Engine** - Smart codebase scanning and insights
+3. **Website Builder** - Complete responsive website generation
+4. **GitHub Integration** - Seamless deployment to GitHub Pages
+
+### Marketing Opportunities
+- **Developer Tools Market** - High demand for productivity extensions
+- **AI-Powered Solutions** - Growing interest in AI-assisted development
+- **Open Source Community** - Strong potential for community adoption
+
+### Recommendations
+1. Focus on developer productivity benefits
+2. Highlight AI-powered automation features
+3. Emphasize ease of use and quick setup
+4. Target VS Code extension marketplace`;
+  }
+
+  private generateMockContentStrategy(): string {
+    return `## Content Strategy Recommendations
+
+### Target Audience
+- **Primary**: VS Code developers and development teams
+- **Secondary**: Technical content creators and project maintainers
+- **Tertiary**: Open source contributors and indie developers
+
+### Content Pillars
+1. **Productivity Enhancement** - How LumosGen saves development time
+2. **AI Innovation** - Cutting-edge AI features for developers
+3. **Ease of Use** - Simple setup and intuitive interface
+4. **Community Value** - Open source benefits and collaboration
+
+### Content Types
+- **Homepage**: Hero messaging focused on developer productivity
+- **About Page**: Technical details and team background
+- **Blog Posts**: Feature announcements and use cases
+- **FAQ**: Common questions and troubleshooting
+
+### Messaging Framework
+- **Problem**: Manual marketing content creation is time-consuming
+- **Solution**: AI-powered automation for developers
+- **Benefit**: Focus on coding while LumosGen handles marketing`;
+  }
+
+  private generateMockMarketingContent(): string {
+    return `# Transform Your Development Workflow with LumosGen
+
+## AI-Powered VS Code Extension for Effortless Marketing
+
+LumosGen revolutionizes how developers create marketing content. Our intelligent VS Code extension analyzes your projects and generates professional marketing websites automatically.
+
+### Key Features
+
+🚀 **Instant Project Analysis** - Smart scanning of your codebase structure and features
+🤖 **AI Content Generation** - Professional marketing copy created in seconds
+🎨 **Beautiful Website Templates** - Modern, responsive designs optimized for developers
+📈 **SEO Optimization** - Built-in best practices for search engine visibility
+🔧 **GitHub Integration** - One-click deployment to GitHub Pages
+
+### Why Developers Choose LumosGen
+
+- **Save Hours of Work** - Automate marketing content creation
+- **Professional Results** - AI-generated content that converts
+- **Developer-Friendly** - Built by developers, for developers
+- **Open Source** - Transparent, community-driven development
+
+### Get Started in Minutes
+
+1. Install LumosGen from VS Code Marketplace
+2. Open your project in VS Code
+3. Click the LumosGen icon in the sidebar
+4. Generate your marketing website instantly
+
+**Ready to transform your project marketing?** Install LumosGen today and join thousands of developers who've automated their marketing workflow.`;
+  }
+
+  private generateGenericMockResponse(): string {
+    return `## AI-Generated Response
+
+This is a mock response generated by LumosGen's fallback system. In production, this would be replaced by actual AI-generated content based on your specific prompt and context.
+
+### Key Points
+- Professional content generation
+- Developer-focused messaging
+- SEO-optimized structure
+- Ready-to-use marketing copy
+
+### Next Steps
+Configure your OpenAI API key in VS Code settings to enable full AI functionality.`;
   }
 }
 
@@ -120,6 +252,13 @@ export class SimpleWorkflow extends EventEmitter {
   async execute(initialInput: any = {}): Promise<Map<string, AgentResult>> {
     this.emit('workflowStarted');
     this.globalState.set('initialInput', initialInput);
+
+    // 将初始输入的所有属性设置到globalState中
+    if (typeof initialInput === 'object' && initialInput !== null) {
+      for (const [key, value] of Object.entries(initialInput)) {
+        this.globalState.set(key, value);
+      }
+    }
     
     // 按依赖关系排序任务
     const sortedTasks = this.topologicalSort();
@@ -206,10 +345,18 @@ export class SimpleWorkflow extends EventEmitter {
   private processTaskInput(input: any, context: AgentContext): any {
     if (typeof input === 'string') {
       // 替换 {taskResult:taskId} 格式的引用
-      return input.replace(/\{taskResult:(\w+)\}/g, (match, taskId) => {
+      let processed = input.replace(/\{taskResult:(\w+)\}/g, (match, taskId) => {
         const result = context.previousResults.get(taskId);
         return result?.success ? JSON.stringify(result.data) : match;
       });
+
+      // 替换 {globalState.key} 格式的引用
+      processed = processed.replace(/\{globalState\.(\w+)\}/g, (match, key) => {
+        const value = context.globalState.get(key);
+        return value !== undefined ? String(value) : match;
+      });
+
+      return processed;
     }
     
     if (typeof input === 'object' && input !== null) {

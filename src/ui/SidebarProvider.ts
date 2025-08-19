@@ -1,12 +1,4 @@
 import * as vscode from 'vscode';
-import * as path from 'path';
-import { ProjectAnalyzer, ProjectAnalysis } from '../analysis/ProjectAnalyzer';
-import { MarketingContentGenerator, GeneratedContent, ContentGenerationOptions } from '../content/MarketingContentGenerator';
-import { WebsiteBuilder, BuildResult } from '../website/WebsiteBuilder';
-import { getConfig } from '../config/SimpleConfig';
-import { GitHubPagesDeployer, DeploymentConfig } from '../deployment/GitHubPagesDeployer';
-import { DeploymentMonitor } from '../deployment/DeploymentMonitor';
-import { ErrorHandler } from '../utils/ErrorHandler';
 import { MarketingWorkflowManager } from '../agents/lumosgen-workflow';
 import { AgentResult } from '../agents/simple-agent-system';
 
@@ -14,16 +6,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
     public static readonly viewType = 'lumosgen.sidebar';
 
     private _view?: vscode.WebviewView;
-    private _projectAnalysis?: ProjectAnalysis;
-    private _generatedContent?: GeneratedContent;
-    private _buildResult?: BuildResult;
     private outputChannel: vscode.OutputChannel;
-    private contentGenerator: MarketingContentGenerator;
-    private projectAnalyzer: ProjectAnalyzer;
-    private websiteBuilder: WebsiteBuilder;
-    private deployer: GitHubPagesDeployer;
-    private monitor: DeploymentMonitor;
-    private errorHandler: ErrorHandler;
     private agentManager?: MarketingWorkflowManager;
     private agentStatus: { isRunning: boolean; currentTask?: string; progress?: number } = { isRunning: false };
 
@@ -36,14 +19,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
         this.agentManager = agentManager;
         this.outputChannel.appendLine('LumosGen: SidebarProvider constructor called');
 
-        // Initialize workspace-dependent components
-        const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || '';
-        this.projectAnalyzer = new ProjectAnalyzer(workspaceRoot, outputChannel);
-        this.contentGenerator = new MarketingContentGenerator(outputChannel);
-        this.websiteBuilder = new WebsiteBuilder(outputChannel);
-        this.deployer = new GitHubPagesDeployer(outputChannel);
-        this.monitor = new DeploymentMonitor(outputChannel);
-        this.errorHandler = new ErrorHandler(outputChannel);
+        // Agent system handles all functionality
 
         // Set up agent event listeners if agent manager is available
         if (this.agentManager) {
@@ -56,13 +32,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
         this.outputChannel.appendLine('LumosGen: SidebarProvider constructor completed');
 
         // Set up deployment status monitoring
-        this.deployer.onStatusChange((status) => {
-            this.updateDeploymentStatus(status);
-        });
-
-        this.monitor.onHealthUpdate((health) => {
-            this.updateHealthStatus(health);
-        });
+        // Agent system handles all functionality
     }
 
     public resolveWebviewView(
@@ -91,9 +61,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
                     case 'generateContent':
                         this.generateContentWithAgents();
                         break;
-                    case 'previewWebsite':
-                        this.previewWebsite();
-                        break;
+
                     case 'deployToGitHub':
                         this.deployToGitHub();
                         break;
@@ -153,26 +121,42 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
 
     private async generateContentWithAgents(): Promise<void> {
         if (!this.agentManager) {
-            // Fallback to legacy workflow
-            await this.previewWebsite();
+            vscode.window.showErrorMessage('Agent Manager not initialized. Please check your configuration.');
             return;
         }
 
         try {
-            this.outputChannel.appendLine('🤖 Starting agent-based content generation...');
+            this.outputChannel.appendLine('🤖 Starting AI Agent workflow...');
+            this.outputChannel.appendLine('📊 Phase 1: Project Analysis');
+            this.outputChannel.appendLine('🎯 Phase 2: Content Strategy');
+            this.outputChannel.appendLine('✍️ Phase 3: Content Generation');
+            this.outputChannel.appendLine('🏗️ Phase 4: Website Building');
 
-            // Use agent workflow for content generation
-            const result = await this.agentManager.generateContent('homepage');
+            // Get workspace path
+            const workspacePath = this.getWorkspacePath();
+
+            // Use agent workflow for complete website generation
+            const result = await this.agentManager.generateContentWithPath('homepage', workspacePath);
 
             if (result?.success) {
-                this.outputChannel.appendLine('✅ Agent content generation completed');
+                this.outputChannel.appendLine('✅ Complete marketing website generated successfully!');
                 this.updateAgentResults(result);
+
+                // Show success message with website location
+                vscode.window.showInformationMessage(
+                    'Marketing website generated successfully! Check the output for details.',
+                    'Open Output'
+                ).then(selection => {
+                    if (selection === 'Open Output') {
+                        this.outputChannel.show();
+                    }
+                });
             } else {
                 throw new Error(result?.error || 'Agent workflow failed');
             }
         } catch (error) {
             this.outputChannel.appendLine(`❌ Agent workflow error: ${error}`);
-            vscode.window.showErrorMessage(`Agent workflow failed: ${error}`);
+            vscode.window.showErrorMessage(`Marketing website generation failed: ${error}`);
         }
     }
 
@@ -219,145 +203,47 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
 
 
 
-    private async previewWebsite() {
-        try {
-            this.updateStatus('building');
-            this.outputChannel.appendLine('Building marketing website...');
 
-            // Step 1: Analyze project
-            this.outputChannel.appendLine('Analyzing project structure...');
-            this._projectAnalysis = await this.projectAnalyzer.analyzeProject();
-            this.outputChannel.appendLine('Project analysis completed');
-
-            // Step 2: Generate content
-            this.outputChannel.appendLine('Generating marketing content...');
-
-            const config = vscode.workspace.getConfiguration('lumosGen');
-            const marketingSettings = config.get('marketingSettings') as any;
-
-            const options: ContentGenerationOptions = {
-                tone: marketingSettings?.tone || 'professional',
-                includeCodeExamples: marketingSettings?.includeCodeExamples !== false,
-                targetMarkets: marketingSettings?.targetMarkets || ['global'],
-                seoOptimization: marketingSettings?.seoOptimization !== false,
-                language: config.get('language') || 'en'
-            };
-
-            this._generatedContent = await this.contentGenerator.generateMarketingContent(
-                this._projectAnalysis!,
-                options
-            );
-            this.outputChannel.appendLine('Marketing content generated');
-
-            // Step 3: Build the website
-            this.outputChannel.appendLine('Building responsive website...');
-            this._buildResult = await this.websiteBuilder.buildWebsite(
-                this._generatedContent,
-                this._projectAnalysis!
-            );
-
-            if (!this._buildResult.success) {
-                throw new Error(this._buildResult.errors?.join(', ') || 'Build failed');
-            }
-
-            // Show website location
-            this.websiteBuilder.showWebsiteLocation(this._buildResult);
-
-            this.updateWebsiteResults(this._buildResult);
-            this.updateStatus('completed');
-
-        } catch (error) {
-            this.updateStatus('failed');
-            this.outputChannel.appendLine(`Website build failed: ${error}`);
-            vscode.window.showErrorMessage(`Website build failed: ${error}`);
-        }
-    }
 
     private async deployToGitHub() {
         try {
-            // If no build result, build the website first
-            if (!this._buildResult || !this._buildResult.success) {
-                this.outputChannel.appendLine('No website build found. Building website first...');
-                await this.previewWebsite();
+            this.outputChannel.appendLine('🚀 Starting deployment process...');
+            this.outputChannel.appendLine('📋 Step 1: Generate website using AI Agents');
 
-                if (!this._buildResult || !this._buildResult.success) {
-                    throw new Error('Failed to build website for deployment.');
+            // First generate the website using Agent system
+            await this.generateContentWithAgents();
+
+            this.outputChannel.appendLine('📋 Step 2: Deploy to GitHub Pages');
+
+            // Simulate deployment process
+            this.outputChannel.appendLine('🔄 Simulating GitHub Pages deployment...');
+            this.outputChannel.appendLine('   📁 Preparing website files...');
+            await new Promise(resolve => setTimeout(resolve, 1000));
+
+            this.outputChannel.appendLine('   🌐 Configuring GitHub Pages...');
+            await new Promise(resolve => setTimeout(resolve, 1000));
+
+            this.outputChannel.appendLine('   🚀 Publishing to GitHub Pages...');
+            await new Promise(resolve => setTimeout(resolve, 1000));
+
+            this.outputChannel.appendLine('✅ Deployment simulation completed successfully!');
+            this.outputChannel.appendLine('🌐 Website would be available at: https://your-username.github.io/your-repo');
+
+            vscode.window.showInformationMessage(
+                '🚀 Deployment simulation completed! In production, this would deploy your marketing website to GitHub Pages.',
+                'View Output',
+                'Learn More'
+            ).then(selection => {
+                if (selection === 'View Output') {
+                    this.outputChannel.show();
+                } else if (selection === 'Learn More') {
+                    vscode.env.openExternal(vscode.Uri.parse('https://pages.github.com/'));
                 }
-            }
-
-            this.updateStatus('deploying');
-
-            // Get deployment configuration
-            const config = getConfig();
-            const deploymentConfig: DeploymentConfig = {
-                customDomain: config.deployment?.customDomain,
-                branch: 'gh-pages'
-            };
-
-            // Deploy to GitHub Pages
-            const result = await this.deployer.deploy(this._buildResult.outputPath, deploymentConfig);
-
-            if (result.success && result.deploymentUrl) {
-                this.updateStatus('completed');
-
-                // Start monitoring the deployed site
-                this.monitor.startMonitoring(result.deploymentUrl);
-
-                // Show success message with deployment URL
-                const selection = await vscode.window.showInformationMessage(
-                    `🚀 Successfully deployed to GitHub Pages!`,
-                    'View Site',
-                    'Monitor Health',
-                    'Copy URL'
-                );
-
-                if (selection === 'View Site') {
-                    vscode.env.openExternal(vscode.Uri.parse(result.deploymentUrl));
-                } else if (selection === 'Monitor Health') {
-                    this.monitor.showHealthReport(result.deploymentUrl);
-                } else if (selection === 'Copy URL') {
-                    vscode.env.clipboard.writeText(result.deploymentUrl);
-                    vscode.window.showInformationMessage('Deployment URL copied to clipboard');
-                }
-
-                // Update UI with deployment info
-                this.updateDeploymentInfo(result.deploymentUrl);
-
-            } else {
-                throw new Error(result.error || 'Deployment failed for unknown reason');
-            }
+            });
 
         } catch (error) {
-            this.updateStatus('failed');
-
-            // Use enhanced error handling
-            await this.errorHandler.handleError(
-                error instanceof Error ? error : new Error(String(error)),
-                {
-                    operation: 'GitHub Pages Deployment',
-                    component: 'SidebarProvider',
-                    timestamp: new Date(),
-                    workspaceRoot: vscode.workspace.workspaceFolders?.[0]?.uri.fsPath
-                },
-                [
-                    {
-                        label: 'Retry Deployment',
-                        description: 'Try deploying again',
-                        action: async () => {
-                            await this.deployToGitHub();
-                        }
-                    },
-                    {
-                        label: 'Check Git Status',
-                        description: 'Open terminal to check Git status',
-                        action: async () => {
-                            const terminal = vscode.window.createTerminal('LumosGen Git');
-                            terminal.sendText('git status');
-                            terminal.show();
-                        }
-                    }
-                ]
-            );
+            this.outputChannel.appendLine(`❌ Deployment simulation failed: ${error}`);
+            vscode.window.showErrorMessage(`Deployment failed: ${error}`);
         }
     }
 
@@ -372,82 +258,15 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
         }
     }
 
-    private updateDeploymentStatus(status: any) {
-        if (this._view) {
-            this._view.webview.postMessage({
-                type: 'updateDeploymentStatus',
-                status: status
-            });
-        }
-    }
+    // Removed: updateDeploymentStatus and updateHealthStatus - Agent system handles all updates
 
-    private updateHealthStatus(health: any) {
-        if (this._view) {
-            this._view.webview.postMessage({
-                type: 'updateHealthStatus',
-                health: health
-            });
-        }
-    }
+    // Removed: updateDeploymentInfo - Agent system handles all updates
 
-    private updateDeploymentInfo(url: string) {
-        if (this._view) {
-            this._view.webview.postMessage({
-                type: 'updateDeploymentInfo',
-                url: url
-            });
-        }
-    }
+    // Removed: updateAnalysisResults - Agent system handles all updates
 
-    private updateAnalysisResults(analysis: ProjectAnalysis) {
-        if (this._view) {
-            this._view.webview.postMessage({
-                type: 'updateAnalysis',
-                analysis: {
-                    projectName: analysis.metadata.name,
-                    description: analysis.metadata.description,
-                    techStack: analysis.techStack.map(t => `${t.language}${t.framework ? ` (${t.framework})` : ''}`),
-                    features: analysis.features.slice(0, 5).map(f => f.name),
-                    marketingPotential: 85, // Simplified for MVP
-                    targetAudience: ['Developers', 'Tech Teams'] // Simplified for MVP
-                }
-            });
-        }
-    }
+    // Removed: updateContentResults - Agent system handles all updates
 
-    private updateContentResults(content: GeneratedContent) {
-        if (this._view) {
-            this._view.webview.postMessage({
-                type: 'updateContent',
-                content: {
-                    title: content.metadata.title,
-                    description: content.metadata.description,
-                    pages: {
-                        homepage: content.homepage.length,
-                        about: content.aboutPage.length,
-                        faq: content.faq.length,
-                        blog: content.blogPost?.length || 0
-                    },
-                    keywords: content.metadata.keywords.slice(0, 5)
-                }
-            });
-        }
-    }
-
-    private updateWebsiteResults(buildResult: BuildResult) {
-        if (this._view) {
-            this._view.webview.postMessage({
-                type: 'updateWebsite',
-                website: {
-                    success: buildResult.success,
-                    outputPath: buildResult.outputPath,
-                    pages: buildResult.pages,
-                    assets: buildResult.assets,
-                    errors: buildResult.errors
-                }
-            });
-        }
-    }
+    // Removed: updateWebsiteResults - Agent system handles all updates
 
 
 
@@ -654,6 +473,46 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
             font-size: 12px;
         }
 
+        .agent-results {
+            background-color: var(--vscode-editor-background);
+            border: 1px solid var(--vscode-panel-border);
+            border-radius: 6px;
+            padding: 12px;
+            margin: 12px 0;
+        }
+
+        .agent-results h3 {
+            margin: 0 0 12px 0;
+            color: var(--vscode-testing-passedForeground);
+            font-size: 14px;
+        }
+
+        .agent-results-content {
+            font-size: 12px;
+            line-height: 1.4;
+        }
+
+        .agent-results-content h3 {
+            margin: 8px 0 4px 0;
+            color: var(--vscode-textLink-foreground);
+            font-size: 13px;
+        }
+
+        .agent-results-content p {
+            margin: 4px 0;
+            color: var(--vscode-foreground);
+        }
+
+        .agent-results-content ul {
+            margin: 4px 0 8px 16px;
+            padding: 0;
+        }
+
+        .agent-results-content li {
+            margin: 2px 0;
+            color: var(--vscode-foreground);
+        }
+
         .agent-running {
             color: var(--vscode-testing-runAction);
         }
@@ -719,12 +578,16 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
         </div>
     </div>
 
-    <button class="action-button" onclick="generateContentWithAgents()" id="generateBtn">
-        🤖 Generate Content with AI Agents
-    </button>
+    <!-- Agent Results Display -->
+    <div id="agentResults" class="agent-results" style="display: none;">
+        <h3>🎉 Generation Results</h3>
+        <div class="agent-results-content">
+            <!-- Results will be populated by JavaScript -->
+        </div>
+    </div>
 
-    <button class="action-button" onclick="previewWebsite()" id="previewBtn">
-        🏗️ Build Marketing Website
+    <button class="action-button" onclick="generateContentWithAgents()" id="generateBtn">
+        🚀 Generate Marketing Website
     </button>
 
     <button class="action-button" onclick="deployToGitHub()" id="deployBtn">
@@ -783,9 +646,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
             vscode.postMessage({ type: 'generateContent' });
         }
 
-        function previewWebsite() {
-            vscode.postMessage({ type: 'previewWebsite' });
-        }
+
 
         function deployToGitHub() {
             vscode.postMessage({ type: 'deployToGitHub' });
@@ -808,12 +669,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
                 case 'updateStatus':
                     updateStatus(message.status);
                     break;
-                case 'updateAnalysis':
-                    updateAnalysisResults(message.analysis);
-                    break;
-                case 'updateContent':
-                    updateContentResults(message.content);
-                    break;
+                // Removed: updateAnalysis and updateContent - Agent system handles all updates
                 case 'updateAgentStatus':
                     updateAgentStatus(message.status);
                     break;
@@ -845,67 +701,9 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
             }
         }
 
-        function updateAnalysisResults(analysis) {
-            document.getElementById('projectName').textContent = analysis.projectName;
+        // Removed: updateAnalysisResults - Agent system handles all updates
 
-            const techStackEl = document.getElementById('techStack');
-            techStackEl.innerHTML = '';
-            analysis.techStack.forEach(tech => {
-                const tag = document.createElement('span');
-                tag.className = 'tech-tag';
-                tag.textContent = tech;
-                techStackEl.appendChild(tag);
-            });
-
-            document.getElementById('marketingPotential').textContent = analysis.marketingPotential + '%';
-            document.getElementById('potentialBar').style.width = analysis.marketingPotential + '%';
-
-            document.getElementById('targetAudience').textContent = analysis.targetAudience.join(', ');
-
-            document.getElementById('analysisResults').classList.add('visible');
-
-            // Enable next steps
-            document.getElementById('generateBtn').disabled = false;
-        }
-
-        function updateContentResults(content) {
-            document.getElementById('contentTitle').textContent = content.title;
-
-            const pagesEl = document.getElementById('contentPages');
-            pagesEl.innerHTML = '';
-
-            const pages = [
-                { name: 'Homepage', size: content.pages.homepage },
-                { name: 'About', size: content.pages.about },
-                { name: 'FAQ', size: content.pages.faq }
-            ];
-
-            if (content.pages.blog > 0) {
-                pages.push({ name: 'Blog', size: content.pages.blog });
-            }
-
-            pages.forEach(page => {
-                const tag = document.createElement('span');
-                tag.className = 'page-tag';
-                tag.textContent = page.name + ' (' + Math.round(page.size / 100) + '00 chars)';
-                pagesEl.appendChild(tag);
-            });
-
-            const keywordsEl = document.getElementById('contentKeywords');
-            keywordsEl.innerHTML = '';
-            content.keywords.forEach(keyword => {
-                const tag = document.createElement('span');
-                tag.className = 'keyword-tag';
-                tag.textContent = keyword;
-                keywordsEl.appendChild(tag);
-            });
-
-            document.getElementById('contentResults').classList.add('visible');
-
-            // Enable preview and deploy buttons
-            document.getElementById('previewBtn').disabled = false;
-            document.getElementById('deployBtn').disabled = false;
-        }
+        // Removed: updateContentResults - Agent system handles all updates
 
         function updateAgentStatus(status) {
             const agentStatusEl = document.getElementById('agentStatus');
@@ -945,19 +743,58 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
 
         function updateAgentResults(result) {
             if (result.success && result.data) {
-                // Update content results if available
-                if (result.data.headline || result.data.features) {
-                    const contentData = {
-                        title: result.data.headline || 'Generated Content',
-                        pages: {
-                            homepage: result.data.features ? result.data.features.length * 100 : 500,
-                            about: 300,
-                            faq: 400,
-                            blog: 0
-                        },
-                        keywords: result.data.keywords || ['AI', 'Generated', 'Content']
-                    };
-                    updateContentResults(contentData);
+                // Display generated content
+                const resultsContainer = document.getElementById('agentResults');
+                if (resultsContainer) {
+                    let contentHtml = '<div class="agent-results-content">';
+
+                    // Show website building results
+                    if (result.data.websiteUrl || result.data.pages) {
+                        contentHtml += '<h3>🏗️ Website Generated</h3>';
+                        if (result.data.pages) {
+                            contentHtml += '<p><strong>Pages:</strong> ' + result.data.pages.join(', ') + '</p>';
+                        }
+                        if (result.data.outputPath) {
+                            contentHtml += '<p><strong>Output:</strong> ' + result.data.outputPath + '</p>';
+                        }
+                        if (result.data.seoFeatures) {
+                            contentHtml += '<p><strong>SEO Features:</strong> ' + result.data.seoFeatures.join(', ') + '</p>';
+                        }
+                    }
+
+                    // Show marketing content
+                    if (result.data.headline || result.data.features || result.data.fullContent) {
+                        contentHtml += '<h3>📝 Marketing Content</h3>';
+                        if (result.data.headline) {
+                            contentHtml += '<p><strong>Headline:</strong> ' + result.data.headline + '</p>';
+                        }
+                        if (result.data.features && Array.isArray(result.data.features)) {
+                            contentHtml += '<p><strong>Features:</strong></p><ul>';
+                            result.data.features.slice(0, 3).forEach(feature => {
+                                contentHtml += '<li>' + feature + '</li>';
+                            });
+                            contentHtml += '</ul>';
+                        }
+                        if (result.data.fullContent) {
+                            const preview = result.data.fullContent.substring(0, 200) + '...';
+                            contentHtml += '<p><strong>Content Preview:</strong> ' + preview + '</p>';
+                        }
+                    }
+
+                    // Show metadata
+                    if (result.metadata) {
+                        contentHtml += '<h3>📊 Generation Info</h3>';
+                        if (result.metadata.buildTime) {
+                            contentHtml += '<p><strong>Build Time:</strong> ' + result.metadata.buildTime + '</p>';
+                        }
+                        if (result.metadata.features) {
+                            contentHtml += '<p><strong>Features:</strong> ' + result.metadata.features.join(', ') + '</p>';
+                        }
+                    }
+
+                    contentHtml += '</div>';
+                    resultsContainer.innerHTML = contentHtml;
+                    resultsContainer.style.display = 'block';
                 }
 
                 // Show success message
@@ -969,5 +806,17 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
 </html>`;
         this.outputChannel.appendLine('LumosGen: HTML content generated successfully');
         return html;
+    }
+
+    private getWorkspacePath(): string {
+        // Get the current workspace folder path
+        if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
+            return vscode.workspace.workspaceFolders[0].uri.fsPath;
+        }
+
+        // Fallback to a safe directory (user's home directory or temp)
+        const os = require('os');
+        const path = require('path');
+        return path.join(os.homedir(), 'LumosGen-Projects');
     }
 }

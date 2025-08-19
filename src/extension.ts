@@ -21,16 +21,24 @@ export async function activate(context: vscode.ExtensionContext) {
     try {
         // Get API key from configuration
         const config = vscode.workspace.getConfiguration('lumosGen');
-        const apiKey = config.get<string>('openai.apiKey');
+        const apiKey = config.get<string>('aiService.apiKey') || config.get<string>('openai.apiKey');
 
-        if (apiKey) {
-            agentManager = new MarketingWorkflowManager(apiKey);
-            outputChannel.appendLine('✅ Agent Manager initialized successfully');
+        // Always initialize agent manager - it will use mock mode if no API key
+        agentManager = new MarketingWorkflowManager(apiKey);
+        await agentManager.initialize();
+
+        if (apiKey && apiKey !== '') {
+            outputChannel.appendLine('✅ Agent Manager initialized with API key');
         } else {
-            outputChannel.appendLine('⚠️ No OpenAI API key configured - Agent features will be limited');
+            outputChannel.appendLine('✅ Agent Manager initialized in mock mode (no API key configured)');
+            outputChannel.appendLine('💡 Configure OpenAI API key in settings to enable full AI functionality');
         }
     } catch (error) {
         outputChannel.appendLine(`❌ Failed to initialize Agent Manager: ${error}`);
+        // Fallback to mock mode
+        agentManager = new MarketingWorkflowManager();
+        await agentManager.initialize();
+        outputChannel.appendLine('✅ Fallback: Agent Manager initialized in mock mode');
     }
 
     // Create sidebar provider with agent manager

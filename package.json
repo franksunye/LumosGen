@@ -3,7 +3,6 @@
   "displayName": "LumosGen",
   "description": "AI-powered content generation for VS Code - illuminate your content creation process",
   "version": "0.1.0",
-  "type": "module",
   "publisher": "lumosgen",
   "author": {
     "name": "LumosGen Contributors"
