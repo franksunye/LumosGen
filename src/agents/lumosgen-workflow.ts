@@ -203,6 +203,37 @@ export class LumosGenAgentManager {
   }
 }
 
+// Marketing Workflow Manager - Main VS Code integration class
+export class MarketingWorkflowManager {
+  private agentManager: LumosGenAgentManager;
+  public workflow?: any;
+
+  constructor(apiKey: string) {
+    this.agentManager = new LumosGenAgentManager(apiKey);
+    this.workflow = this.agentManager.workflow;
+  }
+
+  async initialize(): Promise<void> {
+    await this.agentManager.initialize();
+  }
+
+  async onFileChanged(changedFiles: string[], projectPath: string): Promise<void> {
+    return this.agentManager.onFileChanged(changedFiles, projectPath);
+  }
+
+  async generateContent(contentType: string = 'homepage'): Promise<any> {
+    return this.agentManager.generateContent(contentType);
+  }
+
+  getStatus(): { isRunning: boolean; lastResults?: Map<string, any> } {
+    return this.agentManager.getStatus();
+  }
+
+  stop(): void {
+    this.agentManager.stop();
+  }
+}
+
 // 使用示例
 export async function initializeLumosGen(apiKey: string): Promise<LumosGenAgentManager> {
   const manager = new LumosGenAgentManager(apiKey);

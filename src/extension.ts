@@ -1,9 +1,11 @@
 import * as vscode from 'vscode';
 import { SidebarProvider } from './ui/SidebarProvider';
+import { MarketingWorkflowManager } from './agents/lumosgen-workflow';
 // Removed i18n for MVP simplification
 
 let outputChannel: vscode.OutputChannel;
 let sidebarProvider: SidebarProvider;
+let agentManager: MarketingWorkflowManager;
 
 export async function activate(context: vscode.ExtensionContext) {
     console.log('LumosGen extension is now active!');
@@ -14,9 +16,26 @@ export async function activate(context: vscode.ExtensionContext) {
 
     // Configuration is now handled by SimpleConfig
 
-    // Create sidebar provider
+    // Initialize Agent Manager
+    outputChannel.appendLine('Initializing LumosGen Agent Manager...');
+    try {
+        // Get API key from configuration
+        const config = vscode.workspace.getConfiguration('lumosGen');
+        const apiKey = config.get<string>('openai.apiKey');
+
+        if (apiKey) {
+            agentManager = new MarketingWorkflowManager(apiKey);
+            outputChannel.appendLine('✅ Agent Manager initialized successfully');
+        } else {
+            outputChannel.appendLine('⚠️ No OpenAI API key configured - Agent features will be limited');
+        }
+    } catch (error) {
+        outputChannel.appendLine(`❌ Failed to initialize Agent Manager: ${error}`);
+    }
+
+    // Create sidebar provider with agent manager
     outputChannel.appendLine('Creating LumosGen sidebar provider...');
-    sidebarProvider = new SidebarProvider(context.extensionUri, outputChannel);
+    sidebarProvider = new SidebarProvider(context.extensionUri, outputChannel, agentManager);
     outputChannel.appendLine(`Registering webview provider with viewType: ${SidebarProvider.viewType}`);
 
     // Add more debugging
@@ -28,7 +47,31 @@ export async function activate(context: vscode.ExtensionContext) {
     outputChannel.appendLine('LumosGen sidebar provider registered successfully');
     outputChannel.appendLine(`Disposable created: ${disposable ? 'yes' : 'no'}`);
 
-    // File watcher removed in MVP - using manual triggers via sidebar
+    // Add file change monitoring for agent workflow
+    const fileWatcher = vscode.workspace.onDidSaveTextDocument(async (document) => {
+        if (agentManager && vscode.workspace.workspaceFolders) {
+            const workspaceRoot = vscode.workspace.workspaceFolders[0].uri.fsPath;
+            const relativePath = vscode.workspace.asRelativePath(document.uri);
+
+            // Monitor key files that affect marketing content
+            if (relativePath.endsWith('.md') ||
+                relativePath.includes('package.json') ||
+                relativePath.includes('README') ||
+                relativePath.endsWith('.ts') ||
+                relativePath.endsWith('.js')) {
+
+                outputChannel.appendLine(`📁 File changed: ${relativePath} - triggering agent workflow`);
+                try {
+                    await agentManager.onFileChanged([relativePath], workspaceRoot);
+                    outputChannel.appendLine('✅ Agent workflow completed');
+                } catch (error) {
+                    outputChannel.appendLine(`❌ Agent workflow failed: ${error}`);
+                }
+            }
+        }
+    });
+
+    context.subscriptions.push(fileWatcher);
     
     // Register new marketing AI commands
     const analyzeProjectCommand = vscode.commands.registerCommand('lumosGen.analyzeProject', async () => {
@@ -46,11 +89,28 @@ export async function activate(context: vscode.ExtensionContext) {
     const generateMarketingContentCommand = vscode.commands.registerCommand('lumosGen.generateMarketingContent', async () => {
         try {
             outputChannel.show();
-            outputChannel.appendLine('Generating marketing content...');
-            // This will be implemented in Sprint 2
-            vscode.window.showInformationMessage('Marketing content generation will be available in Sprint 2');
+            outputChannel.appendLine('🤖 Generating marketing content with AI agents...');
+
+            if (!agentManager) {
+                throw new Error('Agent Manager not initialized. Please configure OpenAI API key.');
+            }
+
+            // Trigger agent-based content generation
+            const result = await agentManager.generateContent('homepage');
+
+            if (result?.success) {
+                outputChannel.appendLine('✅ Marketing content generated successfully');
+                vscode.window.showInformationMessage('Marketing content generated! Check the LumosGen sidebar for results.');
+
+                // Update sidebar with results
+                if (sidebarProvider) {
+                    sidebarProvider.updateAgentResults(result);
+                }
+            } else {
+                throw new Error(result?.error || 'Content generation failed');
+            }
         } catch (error) {
-            outputChannel.appendLine(`ERROR in content generation: ${error}`);
+            outputChannel.appendLine(`❌ ERROR in agent content generation: ${error}`);
             vscode.window.showErrorMessage(`LumosGen: ${error}`);
         }
     });

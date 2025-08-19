@@ -7,6 +7,8 @@ import { getConfig } from '../config/SimpleConfig';
 import { GitHubPagesDeployer, DeploymentConfig } from '../deployment/GitHubPagesDeployer';
 import { DeploymentMonitor } from '../deployment/DeploymentMonitor';
 import { ErrorHandler } from '../utils/ErrorHandler';
+import { MarketingWorkflowManager } from '../agents/lumosgen-workflow';
+import { AgentResult } from '../agents/simple-agent-system';
 
 export class SidebarProvider implements vscode.WebviewViewProvider {
     public static readonly viewType = 'lumosgen.sidebar';
@@ -22,12 +24,16 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
     private deployer: GitHubPagesDeployer;
     private monitor: DeploymentMonitor;
     private errorHandler: ErrorHandler;
+    private agentManager?: MarketingWorkflowManager;
+    private agentStatus: { isRunning: boolean; currentTask?: string; progress?: number } = { isRunning: false };
 
     constructor(
         private readonly _extensionUri: vscode.Uri,
-        outputChannel: vscode.OutputChannel
+        outputChannel: vscode.OutputChannel,
+        agentManager?: MarketingWorkflowManager
     ) {
         this.outputChannel = outputChannel;
+        this.agentManager = agentManager;
         this.outputChannel.appendLine('LumosGen: SidebarProvider constructor called');
 
         // Initialize workspace-dependent components
@@ -38,6 +44,15 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
         this.deployer = new GitHubPagesDeployer(outputChannel);
         this.monitor = new DeploymentMonitor(outputChannel);
         this.errorHandler = new ErrorHandler(outputChannel);
+
+        // Set up agent event listeners if agent manager is available
+        if (this.agentManager) {
+            this.setupAgentEventListeners();
+            this.outputChannel.appendLine('✅ Agent Manager connected to sidebar');
+        } else {
+            this.outputChannel.appendLine('⚠️ No Agent Manager - using legacy workflow');
+        }
+
         this.outputChannel.appendLine('LumosGen: SidebarProvider constructor completed');
 
         // Set up deployment status monitoring
@@ -73,7 +88,9 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
         webviewView.webview.onDidReceiveMessage(
             message => {
                 switch (message.type) {
-
+                    case 'generateContent':
+                        this.generateContentWithAgents();
+                        break;
                     case 'previewWebsite':
                         this.previewWebsite();
                         break;
@@ -83,13 +100,119 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
                     case 'openSettings':
                         vscode.commands.executeCommand('workbench.action.openSettings', 'lumosGen');
                         break;
-
-
+                    case 'stopAgentWorkflow':
+                        this.stopAgentWorkflow();
+                        break;
                 }
             },
             undefined,
             []
         );
+    }
+    // Agent-related methods
+    private setupAgentEventListeners(): void {
+        if (!this.agentManager) return;
+
+        // Listen for agent workflow events
+        this.agentManager.workflow?.on('workflowStarted', () => {
+            this.agentStatus.isRunning = true;
+            this.updateAgentStatus('🚀 Starting agent workflow...');
+        });
+
+        this.agentManager.workflow?.on('taskStarted', (taskId: string) => {
+            this.agentStatus.currentTask = taskId;
+            this.updateAgentStatus(`🤖 Running task: ${taskId}`);
+        });
+
+        this.agentManager.workflow?.on('taskCompleted', (taskId: string, result: AgentResult) => {
+            if (result.success) {
+                this.updateAgentStatus(`✅ Completed: ${taskId}`);
+            } else {
+                this.updateAgentStatus(`❌ Failed: ${taskId} - ${result.error}`);
+            }
+        });
+
+        this.agentManager.workflow?.on('workflowCompleted', (results: Map<string, AgentResult>) => {
+            this.agentStatus.isRunning = false;
+            this.agentStatus.currentTask = undefined;
+            this.updateAgentStatus('✅ Agent workflow completed');
+
+            // Update UI with results
+            const contentResult = results.get('contentGeneration');
+            if (contentResult?.success) {
+                this.updateAgentResults(contentResult);
+            }
+        });
+
+        this.agentManager.workflow?.on('workflowError', (error: Error) => {
+            this.agentStatus.isRunning = false;
+            this.agentStatus.currentTask = undefined;
+            this.updateAgentStatus(`❌ Workflow error: ${error.message}`);
+        });
+    }
+
+    private async generateContentWithAgents(): Promise<void> {
+        if (!this.agentManager) {
+            // Fallback to legacy workflow
+            await this.previewWebsite();
+            return;
+        }
+
+        try {
+            this.outputChannel.appendLine('🤖 Starting agent-based content generation...');
+
+            // Use agent workflow for content generation
+            const result = await this.agentManager.generateContent('homepage');
+
+            if (result?.success) {
+                this.outputChannel.appendLine('✅ Agent content generation completed');
+                this.updateAgentResults(result);
+            } else {
+                throw new Error(result?.error || 'Agent workflow failed');
+            }
+        } catch (error) {
+            this.outputChannel.appendLine(`❌ Agent workflow error: ${error}`);
+            vscode.window.showErrorMessage(`Agent workflow failed: ${error}`);
+        }
+    }
+
+    private stopAgentWorkflow(): void {
+        if (this.agentManager) {
+            this.agentManager.stop();
+            this.agentStatus.isRunning = false;
+            this.agentStatus.currentTask = undefined;
+            this.updateAgentStatus('⏹️ Agent workflow stopped');
+        }
+    }
+
+    public updateAgentResults(result: AgentResult): void {
+        if (this._view && result.success) {
+            this._view.webview.postMessage({
+                type: 'updateAgentResults',
+                result: {
+                    success: result.success,
+                    data: result.data,
+                    metadata: result.metadata,
+                    timestamp: new Date().toISOString()
+                }
+            });
+        }
+    }
+
+    private updateAgentStatus(status: string): void {
+        this.outputChannel.appendLine(status);
+
+        if (this._view) {
+            this._view.webview.postMessage({
+                type: 'updateAgentStatus',
+                status: {
+                    isRunning: this.agentStatus.isRunning,
+                    currentTask: this.agentStatus.currentTask,
+                    message: status,
+                    timestamp: new Date().toISOString()
+                }
+            });
+        }
     }
 
 
@@ -345,22 +468,22 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
             margin: 0;
             padding: 16px;
         }
-        
+
         .header {
             text-align: center;
             margin-bottom: 24px;
         }
-        
+
         .logo {
             font-size: 24px;
             margin-bottom: 8px;
         }
-        
+
         .subtitle {
             color: var(--vscode-descriptionForeground);
             font-size: 12px;
         }
-        
+
         .action-button {
             width: 100%;
             padding: 12px;
@@ -375,16 +498,16 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
             align-items: center;
             gap: 8px;
         }
-        
+
         .action-button:hover {
             background-color: var(--vscode-button-hoverBackground);
         }
-        
+
         .action-button:disabled {
             opacity: 0.5;
             cursor: not-allowed;
         }
-        
+
         .status {
             padding: 8px 12px;
             margin: 8px 0;
@@ -392,14 +515,14 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
             font-size: 12px;
             text-align: center;
         }
-        
+
         .status.analyzing { background-color: var(--vscode-editorInfo-background); }
         .status.generating { background-color: var(--vscode-editorWarning-background); }
         .status.building { background-color: var(--vscode-editorWarning-background); }
         .status.deploying { background-color: var(--vscode-editorInfo-background); }
         .status.completed { background-color: var(--vscode-editorGutter-addedBackground); }
         .status.failed { background-color: var(--vscode-editorError-background); }
-        
+
         .analysis-results {
             margin-top: 16px;
             padding: 12px;
@@ -407,7 +530,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
             border-radius: 4px;
             display: none;
         }
-        
+
         .analysis-results.visible {
             display: block;
         }
@@ -469,23 +592,23 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
             border-radius: 8px;
             font-size: 10px;
         }
-        
+
         .analysis-item {
             margin: 8px 0;
         }
-        
+
         .analysis-label {
             font-weight: bold;
             color: var(--vscode-textLink-foreground);
         }
-        
+
         .tech-stack {
             display: flex;
             flex-wrap: wrap;
             gap: 4px;
             margin-top: 4px;
         }
-        
+
         .tech-tag {
             background-color: var(--vscode-badge-background);
             color: var(--vscode-badge-foreground);
@@ -493,7 +616,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
             border-radius: 12px;
             font-size: 10px;
         }
-        
+
         .progress-bar {
             width: 100%;
             height: 8px;
@@ -502,11 +625,72 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
             overflow: hidden;
             margin-top: 4px;
         }
-        
+
         .progress-fill {
             height: 100%;
             background-color: var(--vscode-progressBar-background);
             transition: width 0.3s ease;
+        }
+
+        .agent-status {
+            background-color: var(--vscode-editor-background);
+            border: 1px solid var(--vscode-panel-border);
+            border-radius: 6px;
+            padding: 12px;
+            margin: 12px 0;
+        }
+
+        .agent-status h3 {
+            margin: 0 0 8px 0;
+            color: var(--vscode-textLink-foreground);
+            font-size: 14px;
+        }
+
+        .agent-status-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 4px 0;
+            font-size: 12px;
+        }
+
+        .agent-running {
+            color: var(--vscode-testing-runAction);
+        }
+
+        .agent-idle {
+            color: var(--vscode-descriptionForeground);
+        }
+
+        .agent-error {
+            color: var(--vscode-errorForeground);
+        }
+
+        .agent-success {
+            color: var(--vscode-testing-passedForeground);
+        }
+
+        .agent-task {
+            font-family: var(--vscode-editor-font-family);
+            font-size: 11px;
+            background-color: var(--vscode-badge-background);
+            color: var(--vscode-badge-foreground);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        .stop-button {
+            background-color: var(--vscode-errorForeground);
+            color: var(--vscode-editor-background);
+            border: none;
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-size: 10px;
+            cursor: pointer;
+        }
+
+        .stop-button:hover {
+            opacity: 0.8;
         }
     </style>
 </head>
@@ -515,9 +699,30 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
         <div class="logo">🔮 LumosGen</div>
         <div class="subtitle">AI-Powered Marketing Website Generator</div>
     </div>
-    
+
     <div id="status" class="status" style="display: none;"></div>
-    
+
+    <!-- Agent Status Display -->
+    <div id="agentStatus" class="agent-status" style="display: none;">
+        <h3>🤖 AI Agent Status</h3>
+        <div class="agent-status-item">
+            <span>Status:</span>
+            <span id="agentStatusText" class="agent-idle">Idle</span>
+        </div>
+        <div class="agent-status-item" id="agentTaskContainer" style="display: none;">
+            <span>Current Task:</span>
+            <span id="agentCurrentTask" class="agent-task"></span>
+        </div>
+        <div class="agent-status-item" id="agentStopContainer" style="display: none;">
+            <span></span>
+            <button class="stop-button" onclick="stopAgentWorkflow()">⏹️ Stop</button>
+        </div>
+    </div>
+
+    <button class="action-button" onclick="generateContentWithAgents()" id="generateBtn">
+        🤖 Generate Content with AI Agents
+    </button>
+
     <button class="action-button" onclick="previewWebsite()" id="previewBtn">
         🏗️ Build Marketing Website
     </button>
@@ -529,7 +734,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
     <button class="action-button" onclick="openSettings()">
         ⚙️ Settings
     </button>
-    
+
     <div id="analysisResults" class="analysis-results">
         <div class="analysis-item">
             <div class="analysis-label">Project:</div>
@@ -571,26 +776,34 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
 
     <script>
         const vscode = acquireVsCodeApi();
-        
 
-        
+
+
+        function generateContentWithAgents() {
+            vscode.postMessage({ type: 'generateContent' });
+        }
+
         function previewWebsite() {
             vscode.postMessage({ type: 'previewWebsite' });
         }
-        
+
         function deployToGitHub() {
             vscode.postMessage({ type: 'deployToGitHub' });
         }
-        
+
         function openSettings() {
             vscode.postMessage({ type: 'openSettings' });
         }
 
+        function stopAgentWorkflow() {
+            vscode.postMessage({ type: 'stopAgentWorkflow' });
+        }
 
-        
+
+
         window.addEventListener('message', event => {
             const message = event.data;
-            
+
             switch (message.type) {
                 case 'updateStatus':
                     updateStatus(message.status);
@@ -601,9 +814,15 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
                 case 'updateContent':
                     updateContentResults(message.content);
                     break;
+                case 'updateAgentStatus':
+                    updateAgentStatus(message.status);
+                    break;
+                case 'updateAgentResults':
+                    updateAgentResults(message.result);
+                    break;
             }
         });
-        
+
         function updateStatus(status) {
             const statusEl = document.getElementById('status');
             const statusTexts = {
@@ -614,21 +833,21 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
                 completed: 'Completed successfully!',
                 failed: 'Operation failed'
             };
-            
+
             statusEl.textContent = statusTexts[status] || status;
             statusEl.className = 'status ' + status;
             statusEl.style.display = 'block';
-            
+
             if (status === 'completed' || status === 'failed') {
                 setTimeout(() => {
                     statusEl.style.display = 'none';
                 }, 3000);
             }
         }
-        
+
         function updateAnalysisResults(analysis) {
             document.getElementById('projectName').textContent = analysis.projectName;
-            
+
             const techStackEl = document.getElementById('techStack');
             techStackEl.innerHTML = '';
             analysis.techStack.forEach(tech => {
@@ -637,14 +856,14 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
                 tag.textContent = tech;
                 techStackEl.appendChild(tag);
             });
-            
+
             document.getElementById('marketingPotential').textContent = analysis.marketingPotential + '%';
             document.getElementById('potentialBar').style.width = analysis.marketingPotential + '%';
-            
+
             document.getElementById('targetAudience').textContent = analysis.targetAudience.join(', ');
-            
+
             document.getElementById('analysisResults').classList.add('visible');
-            
+
             // Enable next steps
             document.getElementById('generateBtn').disabled = false;
         }
@@ -686,6 +905,64 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
             // Enable preview and deploy buttons
             document.getElementById('previewBtn').disabled = false;
             document.getElementById('deployBtn').disabled = false;
+        }
+
+        function updateAgentStatus(status) {
+            const agentStatusEl = document.getElementById('agentStatus');
+            const agentStatusTextEl = document.getElementById('agentStatusText');
+            const agentTaskContainerEl = document.getElementById('agentTaskContainer');
+            const agentCurrentTaskEl = document.getElementById('agentCurrentTask');
+            const agentStopContainerEl = document.getElementById('agentStopContainer');
+
+            // Show agent status panel
+            agentStatusEl.style.display = 'block';
+
+            // Update status text and styling
+            agentStatusTextEl.textContent = status.message || 'Unknown';
+            agentStatusTextEl.className = status.isRunning ? 'agent-running' :
+                                         status.message.includes('❌') ? 'agent-error' :
+                                         status.message.includes('✅') ? 'agent-success' : 'agent-idle';
+
+            // Show/hide current task
+            if (status.isRunning && status.currentTask) {
+                agentTaskContainerEl.style.display = 'flex';
+                agentCurrentTaskEl.textContent = status.currentTask;
+                agentStopContainerEl.style.display = 'flex';
+            } else {
+                agentTaskContainerEl.style.display = 'none';
+                agentStopContainerEl.style.display = 'none';
+            }
+
+            // Auto-hide after completion
+            if (!status.isRunning && (status.message.includes('✅') || status.message.includes('❌'))) {
+                setTimeout(() => {
+                    if (!document.getElementById('agentStatusText').className.includes('agent-running')) {
+                        agentStatusEl.style.display = 'none';
+                    }
+                }, 5000);
+            }
+        }
+
+        function updateAgentResults(result) {
+            if (result.success && result.data) {
+                // Update content results if available
+                if (result.data.headline || result.data.features) {
+                    const contentData = {
+                        title: result.data.headline || 'Generated Content',
+                        pages: {
+                            homepage: result.data.features ? result.data.features.length * 100 : 500,
+                            about: 300,
+                            faq: 400,
+                            blog: 0
+                        },
+                        keywords: result.data.keywords || ['AI', 'Generated', 'Content']
+                    };
+                    updateContentResults(contentData);
+                }
+
+                // Show success message
+                updateStatus('completed');
+            }
         }
     </script>
 </body>
