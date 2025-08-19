@@ -6,81 +6,74 @@ This directory contains utility scripts for development, testing, and maintenanc
 
 ### Development Scripts
 - `demo-test.js` - Standalone demo of core functionality
-- `test-runner.js` - Test runner for core modules (legacy)
 
-### Build Scripts
-- `build.js` - Production build script
-- `package.js` - Extension packaging script
-- `clean.js` - Clean build artifacts
-
-### Utility Scripts
-- `setup-dev.js` - Development environment setup
-- `lint-fix.js` - Automatic code formatting
-- `docs-gen.js` - Documentation generation
+> **Note**: For comprehensive testing, see the `tests/` directory which contains the main test suite including sprint tests and integration tests.
 
 ## 🚀 Usage
 
 ### Demo Test
 ```bash
+npm run demo
+# or
+npm test
+# or
 node scripts/demo-test.js
 ```
 Runs a standalone demonstration of LumosGen core functionality without VS Code.
 
-### Development Setup
-```bash
-node scripts/setup-dev.js
-```
-Sets up the development environment with all necessary dependencies.
-
 ### Build and Package
 ```bash
-npm run build
+npm run compile
 npm run package
 ```
-Builds and packages the extension for distribution.
+Compiles TypeScript and packages the extension for distribution.
 
-## 🧪 Testing Scripts
+## 🧪 Testing
 
-### Core Functionality Test
+### Demo Test
 The `demo-test.js` script simulates LumosGen functionality:
-- Scans for Markdown files
+- Scans for Markdown files in the current directory
 - Generates mock AI content
-- Writes output files
-- Validates the process
+- Writes output to `LumosGen-Summary.md`
+- Validates the complete process
 
-### Integration Testing
-Use these scripts to test different scenarios:
-- File watching simulation
-- Configuration validation
-- Error handling
-- Performance testing
+### Comprehensive Testing
+For full test coverage, use the main test suite:
+```bash
+# Run specific sprint tests
+node tests/sprint1.test.js
+node tests/sprint2.test.js
+# etc.
+```
 
-## 📋 Script Development
+The `tests/` directory contains comprehensive integration tests, mock AI agent tests, and sprint-specific functionality tests.
+
+## 📋 Development
 
 ### Adding New Scripts
 1. Create script in `scripts/` directory
 2. Add appropriate documentation
 3. Update this README
-4. Add npm script if needed
+4. Add npm script in `package.json` if needed
 
 ### Script Standards
 - Use Node.js for cross-platform compatibility
-- Include error handling
-- Add progress logging
+- Include error handling and progress logging
 - Document usage and parameters
+- Follow the existing code style
 
 ## 🔧 Maintenance
 
 ### Regular Tasks
-- Run `demo-test.js` to verify core functionality
-- Use build scripts for releases
-- Execute cleanup scripts periodically
+- Run `npm run demo` to verify core functionality
+- Use `npm run compile` before testing changes
+- Check `tests/` directory for comprehensive testing
 
 ### Troubleshooting
-- Check script output for error messages
-- Verify Node.js version compatibility
-- Ensure all dependencies are installed
+- Ensure TypeScript compilation succeeds: `npm run compile`
+- Check that all dependencies are installed: `npm install`
+- Verify Node.js version compatibility (16.x recommended)
 
 ---
 
-*These scripts help maintain and develop LumosGen efficiently!* 🛠️
+*Keep it simple and focused! For complex testing, use the `tests/` directory.* 🛠️
