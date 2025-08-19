@@ -6,6 +6,7 @@
  */
 
 import { EventEmitter } from 'events';
+import { AIServiceProvider } from '../ai/AIServiceProvider';
 // For Node.js fetch compatibility
 declare global {
   function fetch(input: string, init?: any): Promise<any>;
@@ -46,6 +47,7 @@ export interface AgentContext {
     model: string;
     timeout: number;
   };
+  aiService?: AIServiceProvider; // New AI service provider
 }
 
 // 任务定义
@@ -69,13 +71,39 @@ export abstract class BaseAgent implements IAgent {
   abstract execute(input: any, context: AgentContext): Promise<AgentResult>;
 
   protected async callLLM(prompt: string, context: AgentContext): Promise<string> {
-    // Check if we have a valid API key, otherwise use mock mode
+    // Use the new AI service provider if available
+    if (context.aiService) {
+      try {
+        const request = {
+          messages: [
+            {
+              role: 'system' as const,
+              content: `You are ${this.name}, a ${this.role}. ${this.background}\n\nGoal: ${this.goal}`
+            },
+            {
+              role: 'user' as const,
+              content: prompt
+            }
+          ],
+          temperature: 0.7,
+          maxTokens: 2000
+        };
+
+        const response = await context.aiService.generateContent(request);
+        return response.content;
+      } catch (error) {
+        console.warn('AI service call failed, falling back to mock response:', error);
+        return this.generateMockResponse(prompt);
+      }
+    }
+
+    // Legacy fallback for backward compatibility
     if (!context.config.apiKey || context.config.apiKey === '' || context.config.apiKey === 'mock') {
       return this.generateMockResponse(prompt);
     }
 
     try {
-      // 简单的OpenAI API调用封装
+      // Legacy OpenAI API call (kept for backward compatibility)
       const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -231,9 +259,11 @@ export class SimpleWorkflow extends EventEmitter {
   private tasks: AgentTask[] = [];
   private results: Map<string, AgentResult> = new Map();
   private globalState: Map<string, any> = new Map();
+  private aiService?: AIServiceProvider;
 
-  constructor(private config: { apiKey: string; model?: string; timeout?: number }) {
+  constructor(private config: { apiKey: string; model?: string; timeout?: number }, aiService?: AIServiceProvider) {
     super();
+    this.aiService = aiService;
   }
 
   // 注册Agent
@@ -280,7 +310,8 @@ export class SimpleWorkflow extends EventEmitter {
             apiKey: this.config.apiKey,
             model: this.config.model || 'gpt-3.5-turbo',
             timeout: this.config.timeout || 30000
-          }
+          },
+          aiService: this.aiService
         };
 
         // 处理任务输入，替换依赖结果
@@ -384,8 +415,8 @@ export class SimpleWorkflow extends EventEmitter {
 }
 
 // 工具函数：创建简单的LumosGen工作流
-export function createLumosGenWorkflow(apiKey: string): SimpleWorkflow {
-  const workflow = new SimpleWorkflow({ apiKey });
+export function createLumosGenWorkflow(apiKey: string, aiService?: AIServiceProvider): SimpleWorkflow {
+  const workflow = new SimpleWorkflow({ apiKey }, aiService);
   
   // 可以添加日志监听器
   workflow.on('taskStarted', (taskId) => {

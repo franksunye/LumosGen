@@ -89,12 +89,94 @@
         "lumosGen.aiService": {
           "type": "object",
           "default": {
-            "type": "openai",
-            "endpoint": "https://api.openai.com/v1",
-            "apiKey": "",
-            "model": "gpt-4o-mini"
+            "deepseekApiKey": "",
+            "deepseekEndpoint": "https://api.deepseek.com",
+            "deepseekModel": "deepseek-chat",
+            "openaiApiKey": "",
+            "openaiEndpoint": "https://api.openai.com/v1",
+            "openaiModel": "gpt-4o-mini",
+            "degradationStrategy": ["deepseek", "openai", "mock"],
+            "monitoringEnabled": true,
+            "trackCosts": true,
+            "trackUsage": true,
+            "mockResponseDelay": 500,
+            "mockSimulateErrors": false,
+            "mockErrorRate": 0.05
           },
-          "description": "AI service configuration for content generation"
+          "properties": {
+            "deepseekApiKey": {
+              "type": "string",
+              "description": "DeepSeek API key for cost-effective AI services"
+            },
+            "deepseekEndpoint": {
+              "type": "string",
+              "default": "https://api.deepseek.com",
+              "description": "DeepSeek API endpoint"
+            },
+            "deepseekModel": {
+              "type": "string",
+              "default": "deepseek-chat",
+              "enum": ["deepseek-chat", "deepseek-reasoner"],
+              "description": "DeepSeek model to use"
+            },
+            "openaiApiKey": {
+              "type": "string",
+              "description": "OpenAI API key for fallback AI services"
+            },
+            "openaiEndpoint": {
+              "type": "string",
+              "default": "https://api.openai.com/v1",
+              "description": "OpenAI API endpoint"
+            },
+            "openaiModel": {
+              "type": "string",
+              "default": "gpt-4o-mini",
+              "enum": ["gpt-4o-mini", "gpt-3.5-turbo", "gpt-4"],
+              "description": "OpenAI model to use"
+            },
+            "degradationStrategy": {
+              "type": "array",
+              "default": ["deepseek", "openai", "mock"],
+              "items": {
+                "type": "string",
+                "enum": ["deepseek", "openai", "mock"]
+              },
+              "description": "Provider fallback order"
+            },
+            "monitoringEnabled": {
+              "type": "boolean",
+              "default": true,
+              "description": "Enable usage monitoring and statistics"
+            },
+            "trackCosts": {
+              "type": "boolean",
+              "default": true,
+              "description": "Track API costs and spending"
+            },
+            "trackUsage": {
+              "type": "boolean",
+              "default": true,
+              "description": "Track token usage and performance metrics"
+            },
+            "mockResponseDelay": {
+              "type": "number",
+              "default": 500,
+              "description": "Mock provider response delay in milliseconds"
+            },
+            "mockSimulateErrors": {
+              "type": "boolean",
+              "default": false,
+              "description": "Enable error simulation in mock provider"
+            },
+            "mockErrorRate": {
+              "type": "number",
+              "default": 0.05,
+              "minimum": 0,
+              "maximum": 1,
+              "description": "Mock provider error simulation rate (0-1)"
+            }
+          },
+          "description": "Enhanced AI service configuration with DeepSeek integration and intelligent degradation"
         },
         "lumosGen.marketingSettings": {
           "type": "object",

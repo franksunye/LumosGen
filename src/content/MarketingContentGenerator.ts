@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { ProjectAnalysis } from '../analysis/ProjectAnalyzer';
-import { SimpleAI } from '../ai/SimpleAI';
+import { AIServiceProvider } from '../ai/AIServiceProvider';
+import { AIRequest } from '../ai/types';
 
 export interface GeneratedContent {
     homepage: string;
@@ -26,11 +27,11 @@ export interface ContentGenerationOptions {
 
 export class MarketingContentGenerator {
     private outputChannel: vscode.OutputChannel;
-    private ai: SimpleAI;
+    private aiService?: AIServiceProvider;
 
-    constructor(outputChannel: vscode.OutputChannel) {
+    constructor(outputChannel: vscode.OutputChannel, aiService?: AIServiceProvider) {
         this.outputChannel = outputChannel;
-        this.ai = new SimpleAI(outputChannel);
+        this.aiService = aiService;
     }
 
     async generateMarketingContent(
@@ -64,22 +65,55 @@ export class MarketingContentGenerator {
 
     private async generateHomepage(analysis: ProjectAnalysis, options: ContentGenerationOptions): Promise<string> {
         const prompt = `Generate a marketing homepage for project: ${analysis.metadata.name}`;
-        return await this.ai.generateContent(prompt);
+        return await this.generateContent(prompt);
     }
 
     private async generateAboutPage(analysis: ProjectAnalysis, options: ContentGenerationOptions): Promise<string> {
         const prompt = `Generate an about page for project: ${analysis.metadata.name}`;
-        return await this.ai.generateContent(prompt);
+        return await this.generateContent(prompt);
     }
 
     private async generateBlogPost(analysis: ProjectAnalysis, options: ContentGenerationOptions): Promise<string> {
         const prompt = `Generate a blog post about project: ${analysis.metadata.name}`;
-        return await this.ai.generateContent(prompt);
+        return await this.generateContent(prompt);
     }
 
     private async generateFAQ(analysis: ProjectAnalysis, options: ContentGenerationOptions): Promise<string> {
         const prompt = `Generate FAQ for project: ${analysis.metadata.name}`;
-        return await this.ai.generateContent(prompt);
+        return await this.generateContent(prompt);
+    }
+
+    private async generateContent(prompt: string): Promise<string> {
+        if (this.aiService) {
+            try {
+                const request: AIRequest = {
+                    messages: [
+                        { role: 'user', content: prompt }
+                    ]
+                };
+                const response = await this.aiService.generateContent(request);
+                return response.content;
+            } catch (error) {
+                this.outputChannel.appendLine(`AI service failed, using fallback: ${error}`);
+                return this.generateFallbackContent(prompt);
+            }
+        } else {
+            return this.generateFallbackContent(prompt);
+        }
+    }
+
+    private generateFallbackContent(prompt: string): string {
+        // Simple fallback content generation
+        if (prompt.includes('homepage')) {
+            return `# Welcome to Our Platform\n\nTransform your development workflow with our innovative tools and solutions.`;
+        } else if (prompt.includes('about')) {
+            return `# About Us\n\nWe are passionate about creating tools that empower developers to build amazing software.`;
+        } else if (prompt.includes('FAQ')) {
+            return `# Frequently Asked Questions\n\n**Q: How do I get started?**\nA: Simply follow our quick start guide to begin using our platform.`;
+        } else if (prompt.includes('blog')) {
+            return `# Latest Insights\n\nDiscover the latest trends and best practices in software development.`;
+        }
+        return `Generated content for: ${prompt}`;
     }
 
     private generateMetadata(analysis: ProjectAnalysis, options: ContentGenerationOptions) {
@@ -91,12 +125,4 @@ export class MarketingContentGenerator {
             language: options.language
         };
     }
-
-    // Removed duplicate method - already defined above
-
-    // Removed duplicate method - already defined above
-
-    // Removed duplicate method - already defined above
-
-    // Removed duplicate method - already defined above
 }
