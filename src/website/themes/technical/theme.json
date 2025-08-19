@@ -1,0 +1,70 @@
+{
+  "metadata": {
+    "name": "Technical",
+    "description": "Professional and code-focused design with terminal-inspired aesthetics",
+    "version": "1.0.0",
+    "author": "LumosGen",
+    "category": "technical"
+  },
+  "defaultConfig": {
+    "primaryColor": "#10b981",
+    "secondaryColor": "#374151",
+    "fontFamily": "JetBrains Mono, Fira Code, Consolas, monospace",
+    "headingFont": "JetBrains Mono, Fira Code, Consolas, monospace",
+    "borderRadius": "0.25rem",
+    "customProperties": {
+      "shadow": "0 2px 4px rgba(0, 0, 0, 0.2)",
+      "transition": "all 0.2s ease",
+      "terminalBg": "#1a1a1a",
+      "terminalText": "#00ff00"
+    }
+  },
+  "customization": {
+    "colors": {
+      "primary": {
+        "default": "#10b981",
+        "options": ["#10b981", "#06b6d4", "#8b5cf6", "#f59e0b", "#ef4444", "#84cc16"]
+      },
+      "secondary": {
+        "default": "#374151",
+        "options": ["#374151", "#4b5563", "#6b7280", "#9ca3af"]
+      }
+    },
+    "fonts": {
+      "body": {
+        "default": "JetBrains Mono, Fira Code, Consolas, monospace",
+        "options": [
+          "JetBrains Mono, Fira Code, Consolas, monospace",
+          "Source Code Pro, monospace",
+          "Ubuntu Mono, monospace",
+          "Roboto Mono, monospace",
+          "SF Mono, Monaco, monospace"
+        ]
+      },
+      "heading": {
+        "default": "JetBrains Mono, Fira Code, Consolas, monospace",
+        "options": [
+          "JetBrains Mono, Fira Code, Consolas, monospace",
+          "Source Code Pro, monospace",
+          "Ubuntu Mono, monospace",
+          "Roboto Mono, monospace"
+        ]
+      }
+    },
+    "styles": {
+      "borderRadius": {
+        "default": "0.25rem",
+        "options": ["0", "0.125rem", "0.25rem", "0.375rem"]
+      },
+      "spacing": {
+        "default": "1rem",
+        "options": ["0.75rem", "1rem", "1.25rem", "1.5rem"]
+      }
+    }
+  },
+  "templateFiles": [
+    "main.html",
+    "styles.css",
+    "main.js"
+  ]
+}

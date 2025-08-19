@@ -1,0 +1,235 @@
+/* Modern Theme Styles for LumosGen */
+
+/* Import Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+/* CSS Custom Properties for Theme Customization */
+:root {
+    --primary-color: {{config.primaryColor}};
+    --secondary-color: {{config.secondaryColor}};
+    --font-family: {{config.fontFamily}};
+    --heading-font: {{config.headingFont}};
+    --border-radius: {{config.borderRadius}};
+    --shadow: {{config.customProperties.shadow}};
+    --transition: {{config.customProperties.transition}};
+}
+
+/* Base Styles */
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: var(--font-family);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Navigation Styles */
+.nav-link {
+    @apply px-3 py-2 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-all duration-300 hover:bg-gray-100 dark:hover:bg-gray-700;
+}
+
+.nav-link.active {
+    @apply text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20 font-semibold;
+}
+
+/* Typography Enhancements */
+h1, h2, h3, h4, h5, h6 {
+    font-family: var(--heading-font);
+    font-weight: 600;
+    line-height: 1.3;
+}
+
+/* Content Styling */
+.prose {
+    color: inherit;
+}
+
+.prose h1 {
+    @apply text-4xl font-bold mb-6 text-primary-700 dark:text-primary-300;
+}
+
+.prose h2 {
+    @apply text-3xl font-semibold mb-4 text-primary-600 dark:text-primary-400 border-b border-gray-200 dark:border-gray-700 pb-2;
+}
+
+.prose h3 {
+    @apply text-2xl font-semibold mb-3 text-gray-800 dark:text-gray-200;
+}
+
+.prose p {
+    @apply mb-4 text-gray-700 dark:text-gray-300 leading-relaxed;
+}
+
+.prose a {
+    @apply text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-colors underline decoration-2 underline-offset-2;
+}
+
+.prose ul, .prose ol {
+    @apply mb-4 pl-6;
+}
+
+.prose li {
+    @apply mb-2 text-gray-700 dark:text-gray-300;
+}
+
+.prose blockquote {
+    @apply border-l-4 border-primary-500 pl-4 italic text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 p-4 rounded-r-lg my-6;
+}
+
+.prose code {
+    @apply bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded text-sm font-mono text-primary-600 dark:text-primary-400;
+}
+
+.prose pre {
+    @apply bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto my-6;
+}
+
+.prose pre code {
+    @apply bg-transparent p-0 text-gray-100;
+}
+
+/* Button Styles */
+.btn {
+    @apply px-6 py-3 rounded-lg font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2;
+}
+
+.btn-primary {
+    @apply bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-500 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5;
+}
+
+.btn-secondary {
+    @apply bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 focus:ring-gray-500;
+}
+
+/* Card Styles */
+.card {
+    @apply bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1;
+}
+
+.card-header {
+    @apply p-6 border-b border-gray-200 dark:border-gray-700;
+}
+
+.card-body {
+    @apply p-6;
+}
+
+.card-footer {
+    @apply p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-750;
+}
+
+/* Form Styles */
+.form-input {
+    @apply w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 transition-colors;
+}
+
+.form-label {
+    @apply block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2;
+}
+
+/* Alert Styles */
+.alert {
+    @apply p-4 rounded-lg border-l-4 mb-4;
+}
+
+.alert-info {
+    @apply bg-blue-50 dark:bg-blue-900/20 border-blue-500 text-blue-700 dark:text-blue-300;
+}
+
+.alert-success {
+    @apply bg-green-50 dark:bg-green-900/20 border-green-500 text-green-700 dark:text-green-300;
+}
+
+.alert-warning {
+    @apply bg-yellow-50 dark:bg-yellow-900/20 border-yellow-500 text-yellow-700 dark:text-yellow-300;
+}
+
+.alert-error {
+    @apply bg-red-50 dark:bg-red-900/20 border-red-500 text-red-700 dark:text-red-300;
+}
+
+/* Animation Classes */
+.fade-in {
+    animation: fadeIn 0.6s ease-in-out;
+}
+
+.slide-up {
+    animation: slideUp 0.6s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideUp {
+    from { 
+        opacity: 0; 
+        transform: translateY(20px); 
+    }
+    to { 
+        opacity: 1; 
+        transform: translateY(0); 
+    }
+}
+
+/* Responsive Design Enhancements */
+@media (max-width: 768px) {
+    .prose h1 {
+        @apply text-3xl;
+    }
+    
+    .prose h2 {
+        @apply text-2xl;
+    }
+    
+    .prose h3 {
+        @apply text-xl;
+    }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    @apply w-2;
+}
+
+::-webkit-scrollbar-track {
+    @apply bg-gray-100 dark:bg-gray-800;
+}
+
+::-webkit-scrollbar-thumb {
+    @apply bg-gray-400 dark:bg-gray-600 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    @apply bg-gray-500 dark:bg-gray-500;
+}
+
+/* Focus Styles for Accessibility */
+.focus-visible {
+    @apply outline-none ring-2 ring-primary-500 ring-offset-2 ring-offset-white dark:ring-offset-gray-900;
+}
+
+/* Print Styles */
+@media print {
+    .no-print {
+        display: none !important;
+    }
+    
+    body {
+        @apply text-black bg-white;
+    }
+    
+    .prose a {
+        @apply text-black no-underline;
+    }
+    
+    .prose a:after {
+        content: " (" attr(href) ")";
+        font-size: 0.8em;
+        color: #666;
+    }
+}

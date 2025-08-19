@@ -4,6 +4,7 @@ import { marked } from 'marked';
 import { GeneratedContent } from '../content/MarketingContentGenerator';
 import { ProjectAnalysis } from '../analysis/ProjectAnalyzer';
 import { WebsiteConfig } from './WebsiteBuilder';
+import { ThemeManager, ThemeConfig } from './ThemeManager';
 
 export interface PageData {
     title: string;
@@ -16,6 +17,7 @@ export interface PageData {
 
 export class TemplateEngine {
     private templateCache: Map<string, string> = new Map();
+    private themeManager: ThemeManager;
 
     constructor() {
         // Configure marked for better HTML output
@@ -23,40 +25,68 @@ export class TemplateEngine {
             breaks: true,
             gfm: true
         });
+
+        this.themeManager = new ThemeManager();
     }
 
     async renderPage(data: PageData): Promise<string> {
-        const template = await this.getTemplate('main.html');
+        const themeName = data.config.theme || 'modern';
+        const template = await this.getThemeTemplate(themeName, 'main.html');
         return this.processTemplate(template, data);
     }
 
     async generateCSS(config: WebsiteConfig): Promise<string> {
-        const baseCSS = await this.getTemplate('styles.css');
+        const themeName = config.theme || 'modern';
+        const baseCSS = await this.getThemeTemplate(themeName, 'styles.css');
         return this.processTemplate(baseCSS, { config });
     }
 
     async generateJS(config: WebsiteConfig): Promise<string> {
-        const baseJS = await this.getTemplate('main.js');
+        const themeName = config.theme || 'modern';
+        const baseJS = await this.getThemeTemplate(themeName, 'main.js');
         return this.processTemplate(baseJS, { config });
     }
 
+    getAvailableThemes(): string[] {
+        return this.themeManager.getAvailableThemes();
+    }
+
+    getThemeMetadata(themeName: string) {
+        return this.themeManager.getThemeMetadata(themeName);
+    }
+
+    getThemeCustomization(themeName: string) {
+        return this.themeManager.getThemeCustomization(themeName);
+    }
+
+    mergeThemeConfig(themeName: string, customConfig: Partial<ThemeConfig>) {
+        return this.themeManager.mergeThemeConfig(themeName, customConfig);
+    }
+
+    private async getThemeTemplate(themeName: string, templateName: string): Promise<string> {
+        const cacheKey = `${themeName}:${templateName}`;
+
+        if (this.templateCache.has(cacheKey)) {
+            return this.templateCache.get(cacheKey)!;
+        }
+
+        // Try to get template from theme manager
+        const template = await this.themeManager.getThemeTemplate(themeName, templateName);
+
+        if (template) {
+            this.templateCache.set(cacheKey, template);
+            return template;
+        }
+
+        // Fallback to built-in template if theme template not found
+        const builtInTemplate = this.getBuiltInTemplate(templateName);
+        this.templateCache.set(cacheKey, builtInTemplate);
+        return builtInTemplate;
+    }
+
     private async getTemplate(templateName: string): Promise<string> {
-        if (this.templateCache.has(templateName)) {
-            return this.templateCache.get(templateName)!;
-        }
-
-        const templatePath = path.join(__dirname, 'templates', templateName);
-        
-        // If template file doesn't exist, return built-in template
-        if (!fs.existsSync(templatePath)) {
-            const builtInTemplate = this.getBuiltInTemplate(templateName);
-            this.templateCache.set(templateName, builtInTemplate);
-            return builtInTemplate;
-        }
-
-        const template = await fs.promises.readFile(templatePath, 'utf8');
-        this.templateCache.set(templateName, template);
-        return template;
+        // Legacy method - defaults to modern theme for backward compatibility
+        return this.getThemeTemplate('modern', templateName);
     }
 
     private processTemplate(template: string, data: any): string {
@@ -66,6 +96,15 @@ export class TemplateEngine {
             // If this is content field, convert Markdown to HTML
             if (path === 'content' && typeof value === 'string') {
                 return marked(value);
+            }
+
+            // Handle theme-specific config values
+            if (path.startsWith('config.') && data.config) {
+                const configPath = path.substring(7); // Remove 'config.' prefix
+                const configValue = this.getNestedValue(data.config, configPath);
+                if (configValue !== undefined) {
+                    return configValue;
+                }
             }
 
             return value || match;
