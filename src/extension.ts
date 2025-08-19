@@ -16,22 +16,42 @@ export async function activate(context: vscode.ExtensionContext) {
 
     // Configuration is now handled by SimpleConfig
 
-    // Initialize Agent Manager
-    outputChannel.appendLine('Initializing LumosGen Agent Manager...');
+    // Initialize Agent Manager with new AI service system
+    outputChannel.appendLine('Initializing LumosGen Agent Manager with enhanced AI services...');
     try {
-        // Get API key from configuration
-        const config = vscode.workspace.getConfiguration('lumosGen');
-        const apiKey = config.get<string>('aiService.apiKey') || config.get<string>('openai.apiKey');
+        // Get enhanced AI service configuration
+        const { getAIServiceConfig, getConfiguredProviders } = await import('./config/SimpleConfig');
+        const aiServiceConfig = getAIServiceConfig();
+        const configuredProviders = getConfiguredProviders();
 
-        // Always initialize agent manager - it will use mock mode if no API key
-        agentManager = new MarketingWorkflowManager(apiKey);
+        // Initialize AI service provider
+        const { AIServiceProvider } = await import('./ai/AIServiceProvider');
+        const aiService = new AIServiceProvider(aiServiceConfig);
+        await aiService.initialize();
+
+        // Always initialize agent manager with AI service
+        agentManager = new MarketingWorkflowManager(undefined, aiService);
         await agentManager.initialize();
 
-        if (apiKey && apiKey !== '') {
-            outputChannel.appendLine('✅ Agent Manager initialized with API key');
+        // Report initialization status
+        const currentProvider = aiService.getCurrentProvider();
+        if (currentProvider && currentProvider.type !== 'mock') {
+            outputChannel.appendLine(`✅ Agent Manager initialized with ${currentProvider.type.toUpperCase()} AI service`);
+            outputChannel.appendLine(`🔄 Fallback strategy: ${aiServiceConfig.degradationStrategy.join(' → ')}`);
+
+            // Show cost information for DeepSeek
+            if (currentProvider.type === 'deepseek') {
+                const deepseekProvider = aiService.getDeepSeekProvider();
+                if (deepseekProvider) {
+                    const pricing = deepseekProvider.getCurrentPricing();
+                    const discount = deepseekProvider.getDiscountInfo();
+                    outputChannel.appendLine(`💰 Current pricing: $${pricing.input}/1M input, $${pricing.output}/1M output (${discount.discount})`);
+                }
+            }
         } else {
-            outputChannel.appendLine('✅ Agent Manager initialized in mock mode (no API key configured)');
-            outputChannel.appendLine('💡 Configure OpenAI API key in settings to enable full AI functionality');
+            outputChannel.appendLine('✅ Agent Manager initialized in mock mode');
+            outputChannel.appendLine('💡 Configure DeepSeek or OpenAI API keys in settings to enable AI functionality');
+            outputChannel.appendLine(`📋 Available providers: ${configuredProviders.join(', ')}`);
         }
     } catch (error) {
         outputChannel.appendLine(`❌ Failed to initialize Agent Manager: ${error}`);

@@ -60,10 +60,16 @@ Configure LumosGen through VS Code settings (`Ctrl+,` → search "lumosgen"):
     "seoOptimization": true
   },
   "lumosGen.aiService": {
-    "type": "mock",
-    "endpoint": "https://api.openai.com/v1",
-    "apiKey": "",
-    "model": "gpt-4o-mini"
+    "deepseekApiKey": "",
+    "deepseekEndpoint": "https://api.deepseek.com",
+    "deepseekModel": "deepseek-chat",
+    "openaiApiKey": "",
+    "openaiEndpoint": "https://api.openai.com/v1",
+    "openaiModel": "gpt-4o-mini",
+    "degradationStrategy": ["deepseek", "openai", "mock"],
+    "monitoringEnabled": true,
+    "trackCosts": true,
+    "trackUsage": true
   }
 }
 ```
@@ -75,10 +81,13 @@ Configure LumosGen through VS Code settings (`Ctrl+,` → search "lumosgen"):
 | `enabled` | Enable/disable the extension | `true` |
 | `watchPatterns` | File patterns to monitor | `["**/*.md"]` |
 | `outputFile` | Generated content output file | `"LumosGen-Summary.md"` |
-| `aiService.type` | AI service type (`mock` or `openai`) | `"mock"` |
-| `aiService.endpoint` | API endpoint URL | `""` |
-| `aiService.apiKey` | API key for authentication | `""` |
-| `aiService.model` | AI model to use | `"gpt-3.5-turbo"` |
+| `aiService.deepseekApiKey` | DeepSeek API key (primary, cost-effective) | `""` |
+| `aiService.deepseekModel` | DeepSeek model (`deepseek-chat`, `deepseek-reasoner`) | `"deepseek-chat"` |
+| `aiService.openaiApiKey` | OpenAI API key (fallback) | `""` |
+| `aiService.openaiModel` | OpenAI model (`gpt-4o-mini`, `gpt-3.5-turbo`, `gpt-4`) | `"gpt-4o-mini"` |
+| `aiService.degradationStrategy` | Provider fallback order | `["deepseek", "openai", "mock"]` |
+| `aiService.monitoringEnabled` | Enable usage monitoring | `true` |
+| `aiService.trackCosts` | Track API costs | `true` |
 | `triggerDelay` | Delay before generation (ms) | `2000` |
 | `template` | Generation template | `"summary"` |
 
@@ -98,14 +107,32 @@ Configure LumosGen through VS Code settings (`Ctrl+,` → search "lumosgen"):
 
 ### AI Service Setup
 
-#### Mock Mode (Default)
-Perfect for testing - generates sample content without external API calls.
+#### 🚀 DeepSeek Mode (Recommended - 90% Cost Savings)
+1. Get an API key from [DeepSeek Platform](https://platform.deepseek.com/)
+2. Set `lumosGen.aiService.deepseekApiKey` to your API key
+3. Choose model: `deepseek-chat` (general) or `deepseek-reasoner` (complex tasks)
+4. **Cost**: $0.27/1M input tokens, $1.10/1M output tokens (50-75% off during off-peak hours)
 
-#### OpenAI Mode
+#### 🔄 OpenAI Mode (Fallback)
 1. Get an API key from [OpenAI](https://platform.openai.com/api-keys)
-2. Set `lumosGen.aiService.type` to `"openai"`
-3. Set `lumosGen.aiService.apiKey` to your API key
-4. Set `lumosGen.aiService.endpoint` to `"https://api.openai.com/v1/chat/completions"`
+2. Set `lumosGen.aiService.openaiApiKey` to your API key
+3. Choose model: `gpt-4o-mini` (recommended), `gpt-3.5-turbo`, or `gpt-4`
+4. **Cost**: $0.15/1M input tokens, $0.60/1M output tokens
+
+#### 🎭 Mock Mode (Default)
+Perfect for testing - generates high-quality sample content without external API calls.
+
+#### 🛡️ Intelligent Degradation
+LumosGen automatically falls back through providers:
+1. **DeepSeek** (primary, cost-effective)
+2. **OpenAI** (reliable fallback)
+3. **Mock** (always available)
+
+#### 💰 Cost Monitoring
+- Real-time cost tracking and usage statistics
+- Daily/monthly spending alerts
+- Cost comparison between providers
+- Off-peak pricing optimization for DeepSeek
 
 ## 📋 Templates
 

@@ -7,11 +7,12 @@
 
 import { createLumosGenWorkflow } from './simple-agent-system';
 import { ProjectWatcherAgent, ContentAnalyzerAgent, ContentGeneratorAgent, WebsiteBuilderAgent } from './lumosgen-agents';
+import { AIServiceProvider } from '../ai/AIServiceProvider';
 
 // 创建LumosGen营销自动化工作流
-export async function createMarketingWorkflow(apiKey?: string) {
+export async function createMarketingWorkflow(apiKey?: string, aiService?: AIServiceProvider) {
   // 创建工作流实例 - 如果没有API密钥，使用模拟模式
-  const workflow = createLumosGenWorkflow(apiKey || 'mock');
+  const workflow = createLumosGenWorkflow(apiKey || 'mock', aiService);
   
   // 注册专用Agent
   workflow.addAgent(new ProjectWatcherAgent());
@@ -75,11 +76,14 @@ export async function createMarketingWorkflow(apiKey?: string) {
 export class LumosGenAgentManager {
   public workflow: any;
   private isRunning = false;
+  private aiService?: AIServiceProvider;
 
-  constructor(private apiKey: string) {}
-  
+  constructor(private apiKey: string, aiService?: AIServiceProvider) {
+    this.aiService = aiService;
+  }
+
   async initialize(): Promise<void> {
-    this.workflow = await createMarketingWorkflow(this.apiKey);
+    this.workflow = await createMarketingWorkflow(this.apiKey, this.aiService);
     
     // 设置事件监听器
     this.workflow.on('workflowStarted', () => {
@@ -261,10 +265,12 @@ export class MarketingWorkflowManager {
   private agentManager: LumosGenAgentManager;
   public workflow?: any;
   private mockMode: boolean;
+  private aiService?: AIServiceProvider;
 
-  constructor(apiKey?: string) {
+  constructor(apiKey?: string, aiService?: AIServiceProvider) {
     this.mockMode = !apiKey || apiKey === '' || apiKey === 'mock';
-    this.agentManager = new LumosGenAgentManager(apiKey || 'mock');
+    this.aiService = aiService;
+    this.agentManager = new LumosGenAgentManager(apiKey || 'mock', aiService);
   }
 
   async initialize(): Promise<void> {
