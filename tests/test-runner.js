@@ -25,9 +25,7 @@ class TestRunner {
 
     // 发现测试文件
     discoverTests(pattern = /\.test\.(js|cjs)$/) {
-        const testFiles = fs.readdirSync(this.config.testRoot)
-            .filter(file => pattern.test(file))
-            .map(file => path.join(this.config.testRoot, file));
+        const testFiles = this.findTestFiles(this.config.testRoot, pattern);
 
         for (const testFile of testFiles) {
             try {
@@ -38,6 +36,26 @@ class TestRunner {
                 console.warn(`Failed to load test file ${testFile}:`, error.message);
             }
         }
+    }
+
+    // 递归查找测试文件
+    findTestFiles(dir, pattern) {
+        let testFiles = [];
+
+        const items = fs.readdirSync(dir);
+        for (const item of items) {
+            const fullPath = path.join(dir, item);
+            const stat = fs.statSync(fullPath);
+
+            if (stat.isDirectory()) {
+                // 递归搜索子目录
+                testFiles = testFiles.concat(this.findTestFiles(fullPath, pattern));
+            } else if (pattern.test(item)) {
+                testFiles.push(fullPath);
+            }
+        }
+
+        return testFiles;
     }
 
     // 运行单个测试
