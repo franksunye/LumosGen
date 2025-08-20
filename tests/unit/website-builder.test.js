@@ -339,10 +339,13 @@ function initDarkMode() {
             validation.isValid = false;
         }
         
-        // 检查文件大小
+        // 检查文件大小和内容
         for (const [pageType, pageInfo] of Object.entries(website.pages)) {
             if (pageInfo.size === 0) {
                 validation.warnings.push(`Empty page: ${pageType}`);
+            }
+            if (pageInfo.wordCount === 0) {
+                validation.warnings.push(`No content in page: ${pageType}`);
             }
             if (pageInfo.size > 100000) { // 100KB
                 validation.warnings.push(`Large page: ${pageType} (${pageInfo.size} bytes)`);
