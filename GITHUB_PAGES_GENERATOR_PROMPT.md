@@ -1,14 +1,3 @@
-# GitHub Pages Marketing Website Generator
-
-## 🎯 Complete One-Prompt Solution
-
-Copy and paste this prompt into any AI coding tool (Augment Code, Cursor, Windsurf, etc.) to automatically create and deploy a professional marketing website for your project:
-
----
-
-## 📋 THE PROMPT
-
-```
 Please create and deploy a professional GitHub Pages marketing website for the current project:
 
 **STEP 1: PROJECT ANALYSIS & CONTENT GENERATION**
@@ -129,42 +118,3 @@ After deployment, verify:
 5. Output final website access URL
 
 Please execute this complete workflow now to create and deploy a professional marketing website to GitHub Pages.
-```
-
----
-
-## 🚀 Quick Start
-
-1. **Open your project** in any AI coding tool (Augment Code, Cursor, Windsurf, etc.)
-2. **Copy the prompt above** and paste it into the AI chat
-3. **Wait 2-3 minutes** for the AI to analyze, create, and deploy
-4. **Visit your new website** at `https://yourusername.github.io/yourrepo/`
-
-## ✨ What You Get
-
-- **Professional Marketing Website** - Modern, responsive design
-- **Complete SEO Optimization** - Meta tags, sitemaps, structured data
-- **Automatic Deployment** - GitHub Actions workflow
-- **Blog Section** - Ready for technical content
-- **Documentation Pages** - API reference and guides
-- **Performance Optimized** - Fast loading, mobile-friendly
-
-## 🎯 Perfect For
-
-- Open source project maintainers
-- Indie developers building personal brand
-- Technical teams needing quick project showcases
-- Anyone wanting professional GitHub Pages sites
-
-## 💡 Cost Comparison
-
-| Solution | Cost | Setup Time | Maintenance |
-|----------|------|------------|-------------|
-| **This Prompt** | **Free** | **2-3 minutes** | **None** |
-| Custom Development | $2,000+ | 2-4 weeks | Ongoing |
-| Marketing Agency | $5,000+ | 4-8 weeks | Monthly fees |
-| Website Builders | $20-50/month | 1-2 days | Monthly updates |
-
----
-
-*Transform your code into a professional marketing presence in minutes, not weeks.*
