@@ -105,7 +105,7 @@ class TestRunner {
         // 运行setup（如果存在）
         if (testSuite.setup && typeof testSuite.setup === 'function') {
             try {
-                await testSuite.setup();
+                await testSuite.setup.call(testSuite);
                 console.log(`  🔧 Setup completed`);
             } catch (error) {
                 console.log(`  ❌ Setup failed: ${error.message}`);
@@ -120,11 +120,13 @@ class TestRunner {
         
         // 运行所有测试
         for (const [testName, testFunction] of Object.entries(testSuite)) {
-            if (typeof testFunction === 'function' && 
-                testName !== 'setup' && 
+            if (typeof testFunction === 'function' &&
+                testName !== 'setup' &&
                 testName !== 'teardown') {
-                
-                const result = await this.runTest(testName, testFunction);
+
+                // 绑定testSuite作为this上下文
+                const boundTestFunction = testFunction.bind(testSuite);
+                const result = await this.runTest(testName, boundTestFunction);
                 suiteResults.push(result);
             }
         }
@@ -132,7 +134,7 @@ class TestRunner {
         // 运行teardown（如果存在）
         if (testSuite.teardown && typeof testSuite.teardown === 'function') {
             try {
-                await testSuite.teardown();
+                await testSuite.teardown.call(testSuite);
                 console.log(`  🧹 Teardown completed`);
             } catch (error) {
                 console.log(`  ⚠️ Teardown failed: ${error.message}`);

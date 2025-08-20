@@ -380,3 +380,6 @@ if (require.main === module) {
     
     runTests();
 }
+
+// 导出测试套件供测试运行器使用
+module.exports = errorHandlerTests;

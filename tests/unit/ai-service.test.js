@@ -125,8 +125,8 @@ const aiServiceTests = {
 
     async testBasicContentGeneration() {
         const prompt = "Generate a marketing description for a JavaScript library";
-        const result = await aiServiceTests.mockProvider.generateContent(prompt);
-        
+        const result = await this.mockProvider.generateContent(prompt);
+
         TestAssertions.assertTrue(result.content.length > 0, 'Content should not be empty');
         TestAssertions.assertEqual(result.provider, 'mock', 'Provider should be mock');
         TestAssertions.assertTrue(result.tokens > 0, 'Tokens should be positive');

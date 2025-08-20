@@ -339,10 +339,10 @@ const contentGeneratorTests = {
     },
 
     async testWordCounting() {
-        const text = "This is a test sentence with exactly eight words.";
+        const text = "This is a test sentence with exactly eight words";
         const wordCount = this.contentGenerator.countWords(text);
-        
-        TestAssertions.assertEqual(wordCount, 8, 'Word count should be accurate');
+
+        TestAssertions.assertEqual(wordCount, 9, 'Word count should be accurate');
     },
 
     async testReadingTimeEstimation() {

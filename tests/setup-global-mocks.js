@@ -3,6 +3,9 @@
  * 在所有测试运行前设置必要的 Mock 环境
  */
 
+// 加载Jest兼容层
+require('./jest-compatibility');
+
 const path = require('path');
 const Module = require('module');
 
