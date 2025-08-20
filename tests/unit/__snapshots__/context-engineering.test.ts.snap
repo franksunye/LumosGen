@@ -1,0 +1,26 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Context Engineering Unit Tests > Vitest特有功能 > 应该支持快照测试 1`] = `
+{
+  "features": [
+    "Advanced AI Integration",
+    "Real-time Processing",
+    "User-friendly Interface",
+  ],
+  "keywords": [
+    "ai",
+    "machine-learning",
+    "typescript",
+    "react",
+    "node.js",
+  ],
+  "name": "test-project",
+  "techStack": [
+    "TypeScript",
+    "React",
+    "Node.js",
+    "Express",
+    "MongoDB",
+  ],
+}
+`;
