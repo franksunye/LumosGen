@@ -238,19 +238,26 @@ describe('MonitoringPanel', () => {
       const mockUri = { fsPath: '/test/export.json' }
       mockWindow.showSaveDialog.mockResolvedValue(mockUri)
       mockWorkspace.fs.writeFile.mockResolvedValue(undefined)
-      
+
       await messageHandler({ command: 'exportData' })
-      
+
       // Verify save dialog was shown
-      expect(mockWindow.showSaveDialog).toHaveBeenCalled()
-      
+      expect(mockWindow.showSaveDialog).toHaveBeenCalledWith({
+        defaultUri: expect.objectContaining({
+          fsPath: expect.stringContaining('lumosgen-monitoring-')
+        }),
+        filters: {
+          'JSON Files': ['json']
+        }
+      })
+
       // Verify file was written
       expect(mockWorkspace.fs.writeFile).toHaveBeenCalled()
-      
+
       // Check export data structure
       const writeCall = mockWorkspace.fs.writeFile.mock.calls[0]
       const exportData = JSON.parse(writeCall[1].toString())
-      
+
       expect(exportData.timestamp).toBeTruthy()
       expect(exportData.stats).toBeTruthy()
       expect(exportData.health).toBeTruthy()
@@ -283,18 +290,10 @@ describe('MonitoringPanel', () => {
       const mockUri = { fsPath: '/test/export.json' }
       mockWindow.showSaveDialog.mockResolvedValue(mockUri)
       mockWorkspace.fs.writeFile.mockResolvedValue(undefined)
-      
+
       await messageHandler({ command: 'exportData' })
-      
-      expect(mockWindow.showSaveDialog).toHaveBeenCalledWith({
-        defaultUri: expect.objectContaining({
-          fsPath: expect.stringContaining('lumosgen-monitoring-')
-        }),
-        filters: {
-          'JSON Files': ['json']
-        }
-      })
-      
+
+      expect(mockWindow.showSaveDialog).toHaveBeenCalled()
       expect(mockWorkspace.fs.writeFile).toHaveBeenCalled()
       expect(mockWindow.showInformationMessage).toHaveBeenCalledWith(
         expect.stringContaining('Monitoring data exported to')

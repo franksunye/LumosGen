@@ -35,14 +35,24 @@ const mockOutputChannel = {
   show: vi.fn()
 }
 
-vi.mock('vscode', () => ({
+const mockVscode = {
   workspace: {
     workspaceFolders: [{ uri: { fsPath: '/test/workspace' } }]
   },
   window: {
-    createOutputChannel: vi.fn(() => mockOutputChannel)
+    createOutputChannel: vi.fn(() => mockOutputChannel),
+    showInformationMessage: vi.fn(),
+    showErrorMessage: vi.fn()
+  },
+  commands: {
+    executeCommand: vi.fn()
+  },
+  Uri: {
+    file: vi.fn((path: string) => ({ fsPath: path }))
   }
-}))
+}
+
+vi.mock('vscode', () => mockVscode)
 
 // Mock website builder dependencies
 vi.mock('@/website/TemplateEngine', () => ({
@@ -50,9 +60,11 @@ vi.mock('@/website/TemplateEngine', () => ({
     mergeThemeConfig: vi.fn((theme: string, config: any) => ({
       theme,
       primaryColor: theme === 'technical' ? '#10B981' : '#3B82F6',
+      fontFamily: 'Inter, system-ui, sans-serif',
+      borderRadius: '0.5rem',
       ...config
     })),
-    renderPage: vi.fn((data: any) => `
+    renderPage: vi.fn((data: any) => Promise.resolve(`
       <!DOCTYPE html>
       <html>
       <head>
@@ -63,23 +75,23 @@ vi.mock('@/website/TemplateEngine', () => ({
         <div class="content">${data.content}</div>
       </body>
       </html>
-    `),
+    `)),
     getAvailableThemes: vi.fn(() => ['modern', 'technical']),
     getThemeMetadata: vi.fn((theme: string) => ({
       name: theme.charAt(0).toUpperCase() + theme.slice(1),
       description: `${theme} theme description`,
       features: ['responsive']
     })),
-    generateCSS: vi.fn(() => 'body { margin: 0; }'),
-    generateJS: vi.fn(() => 'console.log("Generated JS");')
+    generateCSS: vi.fn(() => Promise.resolve('body { margin: 0; }')),
+    generateJS: vi.fn(() => Promise.resolve('console.log("Generated JS");'))
   }))
 }))
 
 vi.mock('@/website/SEOOptimizer', () => ({
   SEOOptimizer: vi.fn().mockImplementation(() => ({
-    generateSitemap: vi.fn(() => `<?xml version="1.0" encoding="UTF-8"?>
+    generateSitemap: vi.fn((pages: string[], siteName: string) => `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://test.com</loc></url>
+  <url><loc>https://${siteName.toLowerCase()}.github.io</loc></url>
 </urlset>`),
     generateRobotsTxt: vi.fn(() => 'User-agent: *\nAllow: /')
   }))
@@ -140,6 +152,9 @@ describe('WebsiteBuilder', () => {
     mockFs.promises.writeFile.mockResolvedValue(undefined)
     mockFs.promises.readFile.mockResolvedValue('mock file content')
     mockFs.promises.readdir.mockResolvedValue(['file1.txt', 'file2.txt'])
+
+    // Mock workspace folders
+    mockVscode.workspace.workspaceFolders = [{ uri: { fsPath: '/test/workspace' } }]
   }
 
   describe('Basic Website Building', () => {
