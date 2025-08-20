@@ -336,9 +336,7 @@
     "test:theme": "vitest run tests/unit/theme-manager.test.ts",
     "test:sidebar": "vitest run tests/unit/sidebar-provider.test.ts",
 
-    "test:legacy": "node tests/new-test-runner.js",
-    "test:validate": "node tests/quick-validation.js",
-    "test:manual-prep": "node tests/manual-test-helper.js",
+
 
     "lint": "echo 'Linting not configured yet'",
     "clean": "rimraf out tests/outputs/* tests/reports/* tests/coverage/*",

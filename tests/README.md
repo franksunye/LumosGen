@@ -64,19 +64,13 @@ npm run test:theme        # 主题管理测试
 npm run test:sidebar      # 侧边栏测试
 ```
 
-### 传统测试命令 (保留用于特殊用途)
+### 其他测试工具
 ```bash
-# 快速验证
-npm run test:validate
-node tests/quick-validation.js
+# 清理测试输出
+npm run clean
 
-# 手工测试准备
-npm run test:manual-prep
-node tests/manual-test-helper.js
-
-# 传统测试运行器
-npm run test:legacy
-node tests/new-test-runner.js
+# 运行演示测试
+npm run demo
 ```
 
 ## 🛠️ 测试基础设施
@@ -85,9 +79,6 @@ node tests/new-test-runner.js
 - **vitest.config.ts** - Vitest测试配置
 - **tests/setup/vitest.setup.ts** - 全局测试设置
 - **tests/mocks/vscode.mock.ts** - VS Code API Mock
-- **tests/quick-validation.js** - 快速系统验证
-- **tests/manual-test-helper.js** - 手工测试辅助
-- **tests/new-test-runner.js** - 传统测试运行器(保留)
 
 ### 支持目录
 ```
