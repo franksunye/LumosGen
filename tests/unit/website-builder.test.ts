@@ -61,6 +61,62 @@ const mockVscode = {
 
 vi.mock('vscode', () => mockVscode)
 
+// Mock ThemeManager first
+vi.mock('@/website/ThemeManager', () => ({
+  ThemeManager: vi.fn().mockImplementation(() => ({
+    getAvailableThemes: vi.fn(() => ['modern', 'technical']),
+    getThemeMetadata: vi.fn((theme: string) => ({
+      name: theme.charAt(0).toUpperCase() + theme.slice(1),
+      description: `${theme} theme description`,
+      features: ['responsive']
+    })),
+    getThemeCustomization: vi.fn((theme: string) => ({
+      colors: {
+        primary: { default: '#3B82F6', options: ['#3B82F6', '#10B981'] }
+      },
+      fonts: {
+        body: { default: 'Inter', options: ['Inter', 'Arial'] }
+      }
+    })),
+    mergeThemeConfig: vi.fn((theme: string, config: any) => ({
+      primaryColor: theme === 'technical' ? '#10B981' : '#3B82F6',
+      secondaryColor: '#64748b',
+      fontFamily: 'Inter, system-ui, sans-serif',
+      headingFont: 'Inter, system-ui, sans-serif',
+      borderRadius: '0.5rem',
+      customProperties: {},
+      ...config
+    })),
+    getThemeTemplate: vi.fn((theme: string, templateName: string) => {
+      if (templateName === 'main.html') {
+        return Promise.resolve(`<!DOCTYPE html>
+<html>
+<head>
+  <title>{{title}}</title>
+  <link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+  <div class="content">{{content}}</div>
+</body>
+</html>`)
+      }
+      if (templateName === 'styles.css') {
+        return Promise.resolve(`/* Generated CSS for ${theme} theme */
+body {
+  margin: 0;
+  font-family: {{config.fontFamily}};
+  color: {{config.primaryColor}};
+}`)
+      }
+      if (templateName === 'main.js') {
+        return Promise.resolve(`// Generated JS for ${theme} theme
+console.log("Website loaded with theme: ${theme}");`)
+      }
+      return Promise.resolve('')
+    })
+  }))
+}))
+
 // Mock website builder dependencies
 vi.mock('@/website/TemplateEngine', () => ({
   TemplateEngine: vi.fn().mockImplementation(() => ({
@@ -153,7 +209,67 @@ describe('WebsiteBuilder', () => {
 
     // Create new instance
     websiteBuilder = new WebsiteBuilder(mockOutputChannel)
-    
+
+    // Manually inject mock methods into the private templateEngine instance
+    // This is a workaround since the private properties can't be directly accessed
+    const templateEngine = (websiteBuilder as any).templateEngine
+    if (templateEngine) {
+      templateEngine.mergeThemeConfig = vi.fn((theme: string, config: any) => ({
+        primaryColor: theme === 'technical' ? '#10B981' : '#3B82F6',
+        secondaryColor: '#64748b',
+        fontFamily: 'Inter, system-ui, sans-serif',
+        headingFont: 'Inter, system-ui, sans-serif',
+        borderRadius: '0.5rem',
+        customProperties: {},
+        ...config
+      }))
+
+      templateEngine.renderPage = vi.fn((data: any) => Promise.resolve(`<!DOCTYPE html>
+<html>
+<head>
+  <title>${data.title || 'Test Project'}</title>
+  <link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+  <div class="content">${data.content || 'test homepage content'}</div>
+</body>
+</html>`))
+
+      templateEngine.getAvailableThemes = vi.fn(() => ['modern', 'technical'])
+      templateEngine.getThemeMetadata = vi.fn((theme: string) => ({
+        name: theme.charAt(0).toUpperCase() + theme.slice(1),
+        description: `${theme} theme description`,
+        features: ['responsive']
+      }))
+      templateEngine.getThemeCustomization = vi.fn((theme: string) => ({
+        colors: {
+          primary: { default: '#3B82F6', options: ['#3B82F6', '#10B981'] }
+        },
+        fonts: {
+          body: { default: 'Inter', options: ['Inter', 'Arial'] }
+        }
+      }))
+
+      templateEngine.generateCSS = vi.fn((config: any) => Promise.resolve(`/* Generated CSS for ${config.theme} theme */
+body {
+  margin: 0;
+  font-family: ${config.fontFamily || 'Arial'};
+  color: ${config.primaryColor || '#000000'};
+}`))
+
+      templateEngine.generateJS = vi.fn((config: any) => Promise.resolve(`// Generated JS for ${config.theme} theme
+console.log("Website loaded with theme: ${config.theme}");
+${config.enableAnalytics ? 'console.log("Analytics enabled");' : ''}`))
+    }
+
+    // Mock SEOOptimizer methods
+    const seoOptimizer = (websiteBuilder as any).seoOptimizer
+    if (seoOptimizer) {
+      seoOptimizer.generateSitemap = vi.fn(() => '<?xml version="1.0" encoding="UTF-8"?><urlset></urlset>')
+      seoOptimizer.generateRobotsTxt = vi.fn(() => 'User-agent: *\nAllow: /')
+      seoOptimizer.generateManifest = vi.fn(() => '{"name": "Test App"}')
+    }
+
     // Set up mock content
     mockContent = {
       metadata: {

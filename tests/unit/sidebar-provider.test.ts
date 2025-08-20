@@ -153,13 +153,46 @@ describe('SidebarProvider', () => {
   beforeEach(() => {
     // Reset all mocks
     vi.clearAllMocks()
-    
+
     extensionUri = { fsPath: '/test/extension' }
     sidebarProvider = new SidebarProvider(
       extensionUri,
       mockOutputChannel,
       mockAgentManager
     )
+
+    // Manually inject mocked WebsiteBuilder methods to ensure they work
+    const websiteBuilder = (sidebarProvider as any).websiteBuilder
+    if (websiteBuilder) {
+      websiteBuilder.getAvailableThemes = mockWebsiteBuilder.getAvailableThemes
+      websiteBuilder.getThemeMetadata = mockWebsiteBuilder.getThemeMetadata
+      websiteBuilder.getThemeCustomization = mockWebsiteBuilder.getThemeCustomization
+      websiteBuilder.buildWebsite = mockWebsiteBuilder.buildWebsite
+      websiteBuilder.showWebsiteLocation = mockWebsiteBuilder.showWebsiteLocation
+      websiteBuilder.setTheme = mockWebsiteBuilder.setTheme
+    }
+
+    // Ensure agentManager is properly set
+    const agentManager = (sidebarProvider as any).agentManager
+    if (!agentManager) {
+      console.error('AgentManager not set in SidebarProvider!')
+      // Force set it
+      ;(sidebarProvider as any).agentManager = mockAgentManager
+    }
+
+    // Debug: Check if all required methods are available
+    console.log('WebsiteBuilder methods available:', {
+      getThemeMetadata: typeof websiteBuilder?.getThemeMetadata,
+      getThemeCustomization: typeof websiteBuilder?.getThemeCustomization
+    })
+
+    // Ensure WebsiteBuilder theme methods are properly mocked
+    if (websiteBuilder) {
+      websiteBuilder.getThemeCustomization = vi.fn((theme: string) => ({
+        colors: { primary: '#3B82F6' },
+        fonts: { body: 'Inter' }
+      }))
+    }
   })
 
   afterEach(() => {
