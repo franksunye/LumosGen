@@ -1,0 +1,12 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Demo Tests - Calculator & Utilities > Vitest特有功能测试 > 应该支持快照测试 1`] = `
+{
+  "features": [
+    "AI Content Generation",
+    "Website Building",
+  ],
+  "name": "LumosGen",
+  "version": "1.0.0",
+}
+`;
