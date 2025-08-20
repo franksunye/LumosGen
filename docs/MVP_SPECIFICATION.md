@@ -1,84 +1,84 @@
-# LumosGen MVP 规格说明
+# LumosGen MVP Specification
 
-## 🎯 MVP 概述
+## 🎯 MVP Overview
 
-**目标：** 验证"开发者愿意使用AI驱动的自动化网站生成工具来展示项目"的核心价值假设
+**Objective:** Validate the core value hypothesis that "developers are willing to use AI-driven automated website generation tools to showcase their projects"
 
-**核心假设：** 开发者愿意使用AI驱动的自动化工具，在VS Code环境中快速为项目生成专业的展示网站，并部署到GitHub Pages，从而提升项目的专业形象和可见度。🔄 **待用户验证**
+**Core Hypothesis:** Developers are willing to use AI-driven automation tools within VS Code to rapidly generate professional project showcase websites and deploy them to GitHub Pages, thereby enhancing project professionalism and visibility. 🔄 **Pending User Validation**
 
-**MVP成果：** VS Code扩展 + AI内容生成 + GitHub Pages自动部署的完整工作流
+**MVP Deliverable:** Complete workflow of VS Code extension + AI content generation + GitHub Pages auto-deployment
 
-**技术实现状态：** ✅ 核心技术栈已完成，Agent系统运行稳定
+**Technical Implementation Status:** ✅ Core tech stack completed, Agent system running stably
 
-**当前状态：** MVP技术实现完成，准备进入用户验证阶段
+**Current Status:** MVP technical implementation complete, ready for user validation phase
 
-## 🚀 MVP 核心功能
+## 🚀 MVP Core Features
 
-### 1. 项目智能分析 ✅ COMPLETED
-**功能描述：** AI分析GitHub项目的营销潜力
-- 扫描项目文件结构和README等MD格式的文档
-- 识别技术栈和核心功能
-- 提取项目价值点和使用场景
-- 分析现有文档内容
+### 1. Intelligent Project Analysis ✅ COMPLETED
+**Description:** AI analyzes GitHub projects for marketing potential
+- Scans project file structure and README/MD documentation
+- Identifies tech stack and core functionality
+- Extracts project value propositions and use cases
+- Analyzes existing documentation content
 
-**输入：** 当前是VSCode的扩展，所以扩展可以得到项目的所有需要内容，未来可以考虑GitHub项目URL或本地项目路径
-**输出：** 项目特征分析和营销要点提取
+**Input:** Currently a VS Code extension with access to all project content; future consideration for GitHub project URLs or local project paths
+**Output:** Project feature analysis and marketing insights extraction
 
-### 2. AI英语内容生成 ✅ COMPLETED
-**功能描述：** AI生成专业的英语营销内容
-- 将技术文档转化为营销文案
-- 基于项目特点生成价值主张
-- 生成面向国际用户的使用场景
-- 优化英语SEO关键词
+### 2. AI English Content Generation ✅ COMPLETED
+**Description:** AI generates professional English marketing content
+- Transforms technical documentation into marketing copy
+- Generates value propositions based on project characteristics
+- Creates use cases targeting international users
+- Optimizes English SEO keywords
 
-**内容类型（MVP核心）：**
-- **营销首页**：Hero Section, Features, CTA
-- **项目介绍页**：详细功能说明和优势
-- **基础博客文章**：1-2篇技术分享
-- **简单FAQ**：常见问题解答
+**Content Types (MVP Core):**
+- **Marketing Homepage:** Hero Section, Features, CTA
+- **Project Details Page:** Comprehensive feature descriptions and advantages
+- **Basic Blog Articles:** 1-2 technical sharing posts
+- **Simple FAQ:** Common questions and answers
 
-### 3. 英语营销网站生成 ✅ COMPLETED
-**功能描述：** 生成专业的英语营销网站
-- 响应式网站模板（Tailwind CSS）
-- 完整SEO优化结构
-- 现代化设计风格（深色/浅色主题）
-- 快速加载性能优化
+### 3. English Marketing Website Generation ✅ COMPLETED
+**Description:** Generates professional English marketing websites
+- Responsive website templates (Tailwind CSS)
+- Complete SEO optimization structure
+- Modern design aesthetics (dark/light themes)
+- Fast loading performance optimization
 
-### 4. 轻量级Agent系统 ✅ COMPLETED
-**功能描述：** 简洁高效的多Agent协作系统 
-- **ContentAnalyzerAgent**：内容策略分析和建议 
-- **ContentGeneratorAgent**：营销内容生成和优化 
-- **WebsiteBuilderAgent**：网站构建和部署 
+### 4. Lightweight Agent System ✅ COMPLETED
+**Description:** Streamlined multi-agent collaboration system
+- **ContentAnalyzerAgent:** Content strategy analysis and recommendations
+- **ContentGeneratorAgent:** Marketing content generation and optimization
+- **WebsiteBuilderAgent:** Website construction and deployment
 
-**核心特性（已实现）：**
-- **事件驱动**：基于EventEmitter的简单通信
-- **任务依赖**：自动拓扑排序执行
-- **零外部依赖**：仅需Node.js + OpenAI API
-- **完美嵌入**：专为VS Code扩展设计
-- **立即可用**：无需复杂配置
-- **模拟模式**：无API密钥时自动降级
+**Core Features (Implemented):**
+- **Event-Driven:** Simple communication via EventEmitter
+- **Task Dependencies:** Automatic topological sorting execution
+- **Zero External Dependencies:** Only requires Node.js + OpenAI API
+- **Perfect Integration:** Designed specifically for VS Code extensions
+- **Ready-to-Use:** No complex configuration required
+- **Mock Mode:** Automatic fallback when API key unavailable
 
-### 5. GitHub Pages部署 ✅ COMPLETED
-**功能描述：** 简化的自动部署到GitHub Pages
-- 基础gh-pages分支创建和部署
-- 部署状态实时反馈和监控
-- 错误处理和重试机制
-- 部署健康检查和监控
+### 5. GitHub Pages Deployment ✅ COMPLETED
+**Description:** Streamlined auto-deployment to GitHub Pages
+- Basic gh-pages branch creation and deployment
+- Real-time deployment status feedback and monitoring
+- Error handling and retry mechanisms
+- Deployment health checks and monitoring
 
-### 6. 基础SEO优化 ✅ COMPLETED
-**功能描述：** 英语网站的完整SEO优化
-- 语义化HTML结构
-- 完整Meta标签和描述优化
-- Open Graph和Twitter Card标签
-- JSON-LD结构化数据
-- XML站点地图和robots.txt生成
-- 性能优化和预加载策略
+### 6. Basic SEO Optimization ✅ COMPLETED
+**Description:** Complete SEO optimization for English websites
+- Semantic HTML structure
+- Complete meta tags and description optimization
+- Open Graph and Twitter Card tags
+- JSON-LD structured data
+- XML sitemap and robots.txt generation
+- Performance optimization and preloading strategies
 
-## 🎨 用户界面设计
+## 🎨 User Interface Design
 
-### VS Code 插件界面
+### VS Code Extension Interface
 
-**侧边栏面板（MVP简化）：**
+**Sidebar Panel (MVP Simplified):**
 ```
 LumosGen
 ├── Generate Website
@@ -86,203 +86,203 @@ LumosGen
 └── Settings
 ```
 
-**主要操作流程（用户主动触发）：**
-1. 用户主动点击"Generate Website" → AI分析项目并生成预览
-2. 用户确认内容和模板选择 → 个性化配置选项
-3. 点击"Deploy to GitHub Pages" → 一键部署到GitHub Pages
-4. 访问生成的专业网站 → 获得项目展示页面
-5. 可选：用户主动触发更新 → 重新生成最新内容
+**Main Operation Flow (User-Initiated):**
+1. User clicks "Generate Website" → AI analyzes project and generates preview
+2. User confirms content and template selection → Personalization configuration options
+3. Click "Deploy to GitHub Pages" → One-click deployment to GitHub Pages
+4. Access generated professional website → Obtain project showcase page
+5. Optional: User triggers update → Regenerate latest content
 
-## 📊 MVP 验证指标
+## 📊 MVP Validation Metrics
 
-### 技术实现指标 ✅ 已达成
+### Technical Implementation Metrics ✅ Achieved
 
-**核心技术指标：** ✅ **已完成**
-- ✅ Agent工作流稳定性：100% (框架级保证)
-- ✅ 内容生成质量：专业级营销内容 (1000-2000字符)
-- ✅ 系统响应速度：<3秒完整流程
-- ✅ 部署成功率：>95% (GitHub Pages集成)
-- ✅ VS Code集成稳定性：原生扩展架构
+**Core Technical Metrics:** ✅ **Completed**
+- ✅ Agent workflow stability: 100% (framework-level guarantee)
+- ✅ Content generation quality: Professional marketing content (1000-2000 characters)
+- ✅ System response time: <3 seconds complete workflow
+- ✅ Deployment success rate: >95% (GitHub Pages integration)
+- ✅ VS Code integration stability: Native extension architecture
 
-### 用户验证指标 🔄 待验证
+### User Validation Metrics 🔄 Pending Validation
 
-**用户采用指标：**
-- VS Code扩展安装量：目标 1,000+ 安装
-- 首次使用完成率：>70% (安装到成功部署)
-- 用户留存率：>30% (7天内再次使用)
-- 活跃用户比例：>20% (月活跃用户)
+**User Adoption Metrics:**
+- VS Code extension installs: Target 1,000+ installations
+- First-use completion rate: >70% (installation to successful deployment)
+- User retention rate: >30% (reuse within 7 days)
+- Active user ratio: >20% (monthly active users)
 
-**产品价值指标：**
-- 网站生成质量满意度：>4.0/5.0
-- 用户推荐意愿：NPS >30
-- 部署成功率：>90% (用户实际使用)
-- 用户支持请求：<5% (易用性指标)
+**Product Value Metrics:**
+- Website generation quality satisfaction: >4.0/5.0
+- User recommendation willingness: NPS >30
+- Deployment success rate: >90% (actual user usage)
+- User support requests: <5% (usability indicator)
 
-**市场验证指标：**
-- VS Code Marketplace评分：>4.0/5.0
-- 用户评价质量：正面评价 >80%
-- 社区分享率：>10% (用户主动分享生成网站)
+**Market Validation Metrics:**
+- VS Code Marketplace rating: >4.0/5.0
+- User review quality: Positive reviews >80%
+- Community sharing rate: >10% (users actively share generated websites)
 
-### 成功标准
+### Success Criteria
 
-**MVP 用户验证成功标准：** 🔄 **待验证**
-1. 🔄 达到1000+真实用户安装和使用
-2. 🔄 用户满意度和推荐意愿达标
-3. 🔄 证明用户愿意为此类工具付费的意愿
-4. 🔄 建立初步的用户反馈和改进循环
-5. 🔄 验证VS Code + GitHub Pages技术路线的可行性
+**MVP User Validation Success Criteria:** 🔄 **Pending Validation**
+1. 🔄 Achieve 1000+ real user installations and usage
+2. 🔄 Meet user satisfaction and recommendation targets
+3. 🔄 Demonstrate user willingness to pay for such tools
+4. 🔄 Establish initial user feedback and improvement loop
+5. 🔄 Validate feasibility of VS Code + GitHub Pages technical approach
 
-**下一阶段：** 用户获取和产品优化 (基于用户反馈)
+**Next Phase:** User acquisition and product optimization (based on user feedback)
 
-## 🏆 竞争环境分析
+## 🏆 Competitive Landscape Analysis
 
-### 直接竞争者
-- **GitHub Pages模板**：手动配置，无AI优化，需要前端技能
-- **Gitiles/GitBook**：文档导向，非营销导向，缺乏项目展示功能
-- **传统网站生成器**：Wix、Squarespace等，通用性强但需要大量手动工作
-- **开发者作品集工具**：Portfolio.dev等，专业但缺乏自动化
+### Direct Competitors
+- **GitHub Pages Templates**: Manual configuration, no AI optimization, requires frontend skills
+- **Gitiles/GitBook**: Documentation-focused, not marketing-oriented, lacks project showcase functionality
+- **Traditional Website Builders**: Wix, Squarespace etc., versatile but require extensive manual work
+- **Developer Portfolio Tools**: Portfolio.dev etc., professional but lack automation
 
-### 差异化优势
-- **AI驱动**：自动分析项目特点生成定制内容，无需手动编写
-- **开发者友好**：VS Code原生集成，零学习成本，符合开发者工作流
-- **持续同步**：代码更新可自动反映到网站，保持内容新鲜度
-- **技术栈感知**：理解项目技术栈，生成相关的技术说明和优势
+### Differentiation Advantages
+- **AI-Driven**: Automatically analyzes project characteristics to generate customized content, no manual writing required
+- **Developer-Friendly**: Native VS Code integration, zero learning curve, aligns with developer workflow
+- **Continuous Sync**: Code updates can automatically reflect on website, maintaining content freshness
+- **Tech Stack Awareness**: Understands project technology stack, generates relevant technical descriptions and advantages
 
-### 间接竞争者
-- **LinkedIn项目展示**：社交网络限制，展示形式单一
-- **GitHub README**：技术文档导向，缺乏营销视角
-- **个人博客平台**：需要持续内容创作，维护成本高
+### Indirect Competitors
+- **LinkedIn Project Showcase**: Social network limitations, single presentation format
+- **GitHub README**: Technical documentation-oriented, lacks marketing perspective
+- **Personal Blog Platforms**: Require continuous content creation, high maintenance costs
 
-## ⚠️ MVP风险评估
+## ⚠️ MVP Risk Assessment
 
-### 产品风险
-- **用户需求验证不足**：目标用户是否真的需要这个功能？
-- **使用频率担忧**：网站更新频率可能不高，重复使用率存疑
-- **质量期望**：AI生成内容是否能达到用户专业要求？
-- **价值感知**：用户是否认为AI生成比手动制作更有价值？
+### Product Risks
+- **Insufficient User Need Validation**: Do target users actually need this functionality?
+- **Usage Frequency Concerns**: Website update frequency may be low, repeat usage questionable
+- **Quality Expectations**: Can AI-generated content meet users' professional requirements?
+- **Value Perception**: Do users consider AI generation more valuable than manual creation?
 
-### 技术风险
-- **API依赖**：OpenAI API稳定性和成本控制
-- **GitHub Pages限制**：平台政策变化风险，功能限制
-- **VS Code生态依赖**：扩展审核和分发风险
-- **内容质量一致性**：不同项目类型的生成质量差异
+### Technical Risks
+- **API Dependencies**: OpenAI API stability and cost control
+- **GitHub Pages Limitations**: Platform policy change risks, functional constraints
+- **VS Code Ecosystem Dependencies**: Extension review and distribution risks
+- **Content Quality Consistency**: Generation quality variations across different project types
 
-### 市场风险
-- **竞争加剧**：大厂可能推出类似功能（GitHub Copilot扩展等）
-- **用户获取成本**：VS Code Marketplace竞争激烈
-- **付费意愿**：开发者对此类工具的付费意愿不确定
+### Market Risks
+- **Intensifying Competition**: Major companies may launch similar features (GitHub Copilot extensions etc.)
+- **User Acquisition Costs**: Fierce competition in VS Code Marketplace
+- **Payment Willingness**: Uncertain developer willingness to pay for such tools
 
-## 🚧 MVP 限制和约束
+## 🚧 MVP Constraints and Limitations
 
-### MVP功能限制（有意选择）
-- **主要支持英语**：专注验证核心价值，中文支持在开发中
-- **精选模板**：3-5个高质量响应式模板，避免选择困难
-- **核心内容类型**：首页、项目详情、功能特性、基础FAQ
-- **基础SEO**：核心SEO优化，不包含高级分析工具
-- **个人开发者导向**：专注个人使用场景，团队功能后续添加
+### MVP Feature Limitations (Intentional Choices)
+- **Primary English Support**: Focus on validating core value, Chinese support in development
+- **Curated Templates**: 3-5 high-quality responsive templates, avoiding choice paralysis
+- **Core Content Types**: Homepage, project details, feature highlights, basic FAQ
+- **Basic SEO**: Core SEO optimization, excluding advanced analytics tools
+- **Individual Developer Focus**: Concentrate on personal use cases, team features to be added later
 
-### MVP技术限制（技术选择）
-- **GitHub Pages优先**：利用开发者熟悉的平台，后续扩展其他平台
-- **云端AI模型**：使用OpenAI API保证质量，本地模型待评估
-- **生成后编辑**：支持手动调整，但不提供在线编辑器
-- **基础分析**：专注生成质量，详细分析功能后续添加
+### MVP Technical Limitations (Technical Choices)
+- **GitHub Pages Priority**: Leverage platform familiar to developers, other platforms to follow
+- **Cloud AI Models**: Use OpenAI API for quality assurance, local models under evaluation
+- **Post-Generation Editing**: Support manual adjustments, but no online editor provided
+- **Basic Analytics**: Focus on generation quality, detailed analytics features to follow
 
-### MVP用户限制（目标聚焦）
-- **VS Code用户**：利用现有用户基础，Web版本在规划中
-- **GitHub用户**：目标用户重合度高，降低使用门槛
-- **技术项目**：专注代码项目展示，其他类型项目后续支持
-- **英语内容为主**：国际化展示需求，中文支持正在开发
+### MVP User Limitations (Target Focus)
+- **VS Code Users**: Leverage existing user base, web version in planning
+- **GitHub Users**: High target user overlap, lowering usage barriers
+- **Technical Projects**: Focus on code project showcases, other project types to follow
+- **English Content Primary**: International showcase needs, Chinese support in development
 
-## 🎯 用户故事
+## 🎯 User Stories
 
-### 核心用户故事
+### Core User Stories
 
-**故事1：开源项目专业展示（MVP核心）**
-> 作为一个开源项目维护者，我希望能够快速为我的项目生成专业的展示网站，这样我就能吸引更多用户和贡献者，而不需要花时间学习前端开发和设计。
+**Story 1: Professional Open Source Project Showcase (MVP Core)**
+> As an open source project maintainer, I want to quickly generate a professional showcase website for my project so I can attract more users and contributors without spending time learning frontend development and design.
 
-**验收标准：**
-- AI能够分析我的开源项目并提取核心价值点
-- 生成专业的项目介绍和功能说明
-- 自动部署到GitHub Pages，获得可访问的URL
-- 基础SEO优化，提升项目可发现性
+**Acceptance Criteria:**
+- AI can analyze my open source project and extract core value propositions
+- Generate professional project introductions and feature descriptions
+- Auto-deploy to GitHub Pages with accessible URL
+- Basic SEO optimization to improve project discoverability
 
-**故事2：个人品牌建设**
-> 作为一个希望建立个人技术品牌的开发者，我希望能快速为我的项目生成专业展示页面，这样我在求职或接项目时能有更好的作品展示。
+**Story 2: Personal Brand Building**
+> As a developer looking to build a personal technical brand, I want to quickly generate professional showcase pages for my projects so I can have better portfolio presentations when job hunting or taking on projects.
 
-**验收标准：**
-- AI能够分析我的项目，生成突出技术能力的内容
-- 生成包含项目特性、技术栈、实现亮点的展示页面
-- 支持多个项目的统一风格展示
-- 便于分享给潜在雇主或客户
+**Acceptance Criteria:**
+- AI can analyze my projects and generate content highlighting technical capabilities
+- Generate showcase pages including project features, tech stack, and implementation highlights
+- Support unified styling across multiple projects
+- Easy to share with potential employers or clients
 
-**故事3：项目推广和用户获取**
-> 作为独立开发者，我希望能为我的项目快速生成营销页面，这样能更好地向潜在用户介绍项目价值，获得更多用户。
+**Story 3: Project Promotion and User Acquisition**
+> As an independent developer, I want to quickly generate marketing pages for my projects so I can better introduce project value to potential users and gain more users.
 
-**验收标准：**
-- 生成面向用户的产品介绍页面（而非技术文档）
-- 突出项目解决的问题和用户价值
-- 包含清晰的使用指南和获取方式
-- 支持用户反馈和联系方式
+**Acceptance Criteria:**
+- Generate user-facing product introduction pages (not technical documentation)
+- Highlight problems solved by the project and user value
+- Include clear usage guides and acquisition methods
+- Support user feedback and contact information
 
-## 🚀 可扩展功能规划
+## 🚀 Extensible Feature Roadmap
 
-### 多语言扩展能力
-**设计考虑：** MVP架构支持后续多语言扩展
-- **西班牙语**：拉美和西班牙市场
-- **日语**：高价值的日本市场
-- **德语**：欧洲技术中心
-- **法语**：法国和加拿大市场
-- **葡萄牙语**：巴西市场
+### Multi-Language Extension Capabilities
+**Design Consideration:** MVP architecture supports future multi-language expansion
+- **Spanish**: Latin America and Spain markets
+- **Japanese**: High-value Japanese market
+- **German**: European technology hub
+- **French**: France and Canada markets
+- **Portuguese**: Brazil market
 
-### 多平台部署扩展
-**设计考虑：** 部署引擎支持多平台适配
-- **Vercel**：全球CDN优化
-- **Netlify**：JAMstack优化
-- **AWS S3**：企业级部署
-- **自定义域名**：品牌化支持
+### Multi-Platform Deployment Extension
+**Design Consideration:** Deployment engine supports multi-platform adaptation
+- **Vercel**: Global CDN optimization
+- **Netlify**: JAMstack optimization
+- **AWS S3**: Enterprise-grade deployment
+- **Custom Domains**: Brand support
 
-### AI Agent智能化扩展
-**设计考虑：** AI引擎支持更高级的智能分析
-- **全球市场分析**：不同地区的市场机会评估
-- **竞品分析**：同类项目的营销策略分析
-- **A/B测试**：不同营销内容的效果对比
-- **持续学习**：基于用户反馈的内容优化
+### AI Agent Intelligence Extension
+**Design Consideration:** AI engine supports advanced intelligent analysis
+- **Global Market Analysis**: Market opportunity assessment across different regions
+- **Competitive Analysis**: Marketing strategy analysis of similar projects
+- **A/B Testing**: Performance comparison of different marketing content
+- **Continuous Learning**: Content optimization based on user feedback
 
-### 团队协作扩展
-**设计考虑：** 架构支持多用户协作
-- **团队工作空间**：多人协作编辑
-- **品牌管理**：统一的品牌调性和风格
-- **审批流程**：内容发布前的审核机制
-- **权限管理**：不同角色的访问控制
+### Team Collaboration Extension
+**Design Consideration:** Architecture supports multi-user collaboration
+- **Team Workspaces**: Multi-person collaborative editing
+- **Brand Management**: Unified brand tone and style
+- **Approval Workflows**: Review mechanisms before content publication
+- **Permission Management**: Access control for different roles
 
-## 📋 下一步行动计划
+## 📋 Next Action Plan
 
-### 立即行动（1-2周）
-1. **VS Code Marketplace发布**
-   - 完善扩展描述和截图
-   - 准备演示视频和使用指南
-   - 提交审核并发布
+### Immediate Actions (1-2 weeks)
+1. **VS Code Marketplace Release**
+   - Refine extension description and screenshots
+   - Prepare demo videos and usage guides
+   - Submit for review and publish
 
-2. **用户反馈机制**
-   - 集成用户反馈收集
-   - 设置使用数据分析
-   - 建立快速响应流程
+2. **User Feedback Mechanism**
+   - Integrate user feedback collection
+   - Set up usage data analytics
+   - Establish rapid response processes
 
-### 短期目标（1个月）
-1. **获得初始用户**：目标100+真实用户安装使用
-2. **收集反馈**：至少20个详细用户反馈
-3. **快速迭代**：基于反馈进行2-3次快速更新
-4. **验证假设**：确认用户确实愿意使用此类工具
+### Short-term Goals (1 month)
+1. **Acquire Initial Users**: Target 100+ real user installations and usage
+2. **Collect Feedback**: At least 20 detailed user feedback responses
+3. **Rapid Iteration**: 2-3 quick updates based on feedback
+4. **Validate Hypothesis**: Confirm users are indeed willing to use such tools
 
-### 中期目标（3个月）
-1. **用户增长**：达到1000+活跃用户
-2. **产品优化**：基于数据优化核心功能
-3. **功能扩展**：添加最受欢迎的功能请求
-4. **商业模式验证**：测试付费功能的接受度
+### Medium-term Goals (3 months)
+1. **User Growth**: Reach 1000+ active users
+2. **Product Optimization**: Optimize core features based on data
+3. **Feature Expansion**: Add most requested features
+4. **Business Model Validation**: Test acceptance of paid features
 
 ---
 
-*文档版本：v2.0*
-*最后更新：2025-08-19*
-*状态：MVP技术实现完成，进入用户验证阶段*
-*下一里程碑：VS Code Marketplace发布和用户反馈收集*
+*Document Version: v2.0*
+*Last Updated: 2025-08-19*
+*Status: MVP technical implementation complete, entering user validation phase*
+*Next Milestone: VS Code Marketplace release and user feedback collection*
