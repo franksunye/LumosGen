@@ -9,75 +9,85 @@
 ### 🔬 单元测试 (Unit Tests) - 70%
 ```
 tests/unit/
-├── ai-service.test.js          # AI服务核心功能
-├── content-generator.test.js   # 内容生成器
-├── website-builder.test.js     # 网站构建器
-├── error-handler.test.js       # 错误处理机制
-├── theme-manager.test.js       # 主题管理
-├── simple-config.test.js       # 配置管理
-├── sidebar-provider.test.js    # 侧边栏提供者
-├── monitoring-panel.test.js    # 监控面板
-├── context-engineering.test.js # 上下文工程
-├── prompt-engineering.test.js  # 提示工程
-└── demo.test.js               # 测试框架演示
+├── ai-service.test.ts          # AI服务核心功能
+├── content-generator.test.ts   # 内容生成器
+├── website-builder.test.ts     # 网站构建器
+├── error-handler.test.ts       # 错误处理机制
+├── theme-manager.test.ts       # 主题管理
+├── simple-config.test.ts       # 配置管理
+├── sidebar-provider.test.ts    # 侧边栏提供者
+├── monitoring-panel.test.ts    # 监控面板
+├── context-engineering.test.ts # 上下文工程
+├── prompt-engineering.test.ts  # 提示工程
+├── agent-system.test.ts        # 智能代理系统
+└── demo.test.ts               # 测试框架演示
 ```
 
 ### 🔗 集成测试 (Integration Tests) - 20%
 ```
 tests/integration/
-└── end-to-end.test.js         # 端到端集成测试
+└── end-to-end.test.ts         # 端到端集成测试
 ```
 
-### 🎯 端到端测试 (E2E Tests) - 10%
-- 完整用户工作流验证
-- VS Code 扩展生命周期测试
-- 真实环境功能验证
+### 🎯 性能测试 (Performance Tests) - 10%
+```
+tests/
+├── deployment-e2e.test.ts        # 部署端到端测试
+└── deployment-performance.test.ts # 部署性能测试
+```
 
 ## 🚀 运行测试
 
-### 基础命令
+### 现代化测试命令 (Vitest)
 ```bash
 # 运行所有测试
 npm test
-node tests/test-runner.js
+npm run test:run
 
-# 运行特定测试套件
-node tests/test-runner.js suite ai-service.test
-node tests/test-runner.js suite content-generator.test
+# 监视模式
+npm run test:watch
 
-# 列出所有可用测试套件
-node tests/test-runner.js list
-
-# 快速验证
-npm run test:validate
-node tests/quick-validation.js
-```
-
-### 专业测试命令
-```bash
-# 单元测试
-npm run test:unit
-
-# 集成测试
-npm run test:integration
-
-# 端到端测试
-npm run test:e2e
+# 测试UI界面
+npm run test:ui
 
 # 覆盖率报告
 npm run test:coverage
 
-# 性能测试
-npm run test:performance
+# 运行特定测试套件
+npm run test:unit          # 单元测试
+npm run test:integration   # 集成测试
+npm run test:ai           # AI服务测试
+npm run test:content      # 内容生成测试
+npm run test:website      # 网站构建测试
+npm run test:config       # 配置管理测试
+npm run test:theme        # 主题管理测试
+npm run test:sidebar      # 侧边栏测试
+```
+
+### 传统测试命令 (保留用于特殊用途)
+```bash
+# 快速验证
+npm run test:validate
+node tests/quick-validation.js
+
+# 手工测试准备
+npm run test:manual-prep
+node tests/manual-test-helper.js
+
+# 传统测试运行器
+npm run test:legacy
+node tests/new-test-runner.js
 ```
 
 ## 🛠️ 测试基础设施
 
-### 核心组件
-- **test-config.js** - 测试配置和工具类
-- **test-runner.js** - 统一测试运行器
-- **quick-validation.js** - 快速系统验证
-- **manual-test-helper.js** - 手工测试辅助
+### 现代化测试架构 (TypeScript + Vitest)
+- **vitest.config.ts** - Vitest测试配置
+- **tests/setup/vitest.setup.ts** - 全局测试设置
+- **tests/mocks/vscode.mock.ts** - VS Code API Mock
+- **tests/quick-validation.js** - 快速系统验证
+- **tests/manual-test-helper.js** - 手工测试辅助
+- **tests/new-test-runner.js** - 传统测试运行器(保留)
 
 ### 支持目录
 ```
