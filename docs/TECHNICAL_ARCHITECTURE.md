@@ -2,31 +2,56 @@
 
 ## 📋 文档概述
 
-**文档目的：** 定义LumosGen项目的增强Agent系统架构，专为VS Code扩展优化设计
+**文档目的：** 定义LumosGen项目的完整技术架构，包含智能上下文工程系统和增强Agent架构
 
-**适用范围：** LumosGen VS Code扩展的核心技术架构
+**适用范围：** LumosGen VS Code扩展的核心技术架构与实现
 
-**版本：** v3.1 (增强Agent架构 + 智能上下文工程 + Agentic AI最佳实践)
+**版本：** v4.0 (统一架构 + 智能上下文工程 + 增强Agent系统 + Agentic AI最佳实践)
 
 **最后更新：** 2025-01-20
 
 ## 🎯 架构设计目标
 
 ### 核心需求
-1. **增强Agent系统**：构建智能化的多Agent协作框架，支持高级上下文工程
-2. **VS Code完美集成**：专为扩展环境设计的嵌入式架构，包含实时监控面板
-3. **智能AI集成**：支持DeepSeek + OpenAI的智能降级策略，成本优化
-4. **上下文工程**：基于规则与全文本平衡的智能文档选择系统
-5. **模板驱动生成**：结构化内容模板系统，确保输出质量
+1. **智能上下文工程**：构建规则与全文本平衡的智能文档选择系统，支持任务特定的上下文策略
+2. **增强Agent系统**：实现多Agent协作框架，包含专业化的内容分析、生成和网站构建Agent
+3. **VS Code完美集成**：专为扩展环境设计的嵌入式架构，包含实时监控面板和增强侧边栏
+4. **智能AI集成**：支持DeepSeek + OpenAI的智能降级策略，实现成本优化和服务可靠性
+5. **模板驱动生成**：结构化内容模板系统，确保输出质量和一致性
 
 ### 设计原则
-- **智能优先**：利用AI能力提供最佳用户体验
-- **成本效益**：DeepSeek优先的成本优化策略
-- **质量保证**：多层验证和模板驱动的内容生成
-- **性能监控**：实时AI使用监控和成本跟踪
-- **渐进增强**：从基础功能到高级AI能力的平滑升级
+- **智能优先**：利用AI能力提供最佳用户体验，智能化内容生成和项目分析
+- **成本效益**：DeepSeek优先的成本优化策略，显著降低AI使用成本
+- **质量保证**：多层验证和模板驱动的内容生成，确保输出质量
+- **性能监控**：实时AI使用监控和成本跟踪，透明的资源使用情况
+- **渐进增强**：从基础功能到高级AI能力的平滑升级路径
 
-## 🏗️ 增强Agent架构设计
+## 🏗️ 系统架构总览
+
+### 核心组件关系图
+```
+用户请求 → ContextEngine → ProjectAnalyzer → ContextSelector → AgentWorkflow → AI服务 → 内容验证 → 结果输出
+    ↓           ↓              ↓              ↓              ↓         ↓        ↓         ↓
+VS Code    统一接口        项目分析        智能选择        工作流编排   多提供商   质量保证   网站构建
+```
+
+### 三层架构设计
+
+#### 1. 智能上下文工程层
+- **ContextEngine**: 统一上下文引擎，协调项目分析和文档选择
+- **ProjectAnalyzer**: 增强项目分析器，支持多格式配置文件和智能特性提取
+- **ContextSelector**: 智能文档选择器，基于任务类型的优先级策略
+
+#### 2. 增强Agent系统层
+- **AgentWorkflow**: 轻量级工作流引擎，支持动态上下文引用
+- **ContentAnalyzerAgent**: 内容策略分析专家
+- **ContentGeneratorAgent**: 增强营销内容创作者
+- **WebsiteBuilderAgent**: 网站构建专家
+
+#### 3. AI服务集成层
+- **AIServiceProvider**: 多提供商服务编排，智能降级策略
+- **PromptTemplates**: 结构化提示模板系统
+- **ContentValidator**: 多维度内容质量验证
 
 ### 当前架构组件 (已实现)
 ```
@@ -74,20 +99,131 @@ LumosGen/
 ```
 
 ### 增强架构优势
+- ✅ **智能上下文工程**：三层上下文策略，任务特定的文档选择
 - ✅ **智能Agent系统**：3个专业化Agent，支持高级上下文工程
 - ✅ **成本优化AI集成**：DeepSeek优先，智能降级到OpenAI/Mock
 - ✅ **完美VS Code集成**：实时监控面板 + 增强侧边栏
-- ✅ **智能上下文选择**：规则与全文本平衡的文档选择策略
 - ✅ **模板驱动生成**：结构化内容模板，确保输出质量
 - ✅ **实时监控**：AI使用统计、成本跟踪、性能监控
 
 ### 核心架构特点
+- ✅ **智能上下文工程**：ContextEngine + ContextSelector + ProjectAnalyzer 协同工作
 - ✅ **多Agent协作**：ContentAnalyzer → ContentGenerator → WebsiteBuilder
-- ✅ **智能上下文工程**：ContextSelector + ProjectAnalyzer 协同工作
 - ✅ **AI服务编排**：AIServiceProvider 统一管理多个AI提供商
 - ✅ **模板系统**：TemplateEngine + ContentValidator 确保内容质量
 - ✅ **实时监控**：MonitoringPanel 提供AI使用可视化
 - ✅ **成本控制**：DeepSeek优先策略，显著降低AI使用成本
+
+## 🧠 智能上下文工程系统
+
+### 三层上下文策略
+
+LumosGen实现了**智能化、多层次的上下文分析与提示生成**，通过先进的文档选择策略、多提供商AI服务和质量保证机制，为营销内容生成提供最优质的技术支持。
+
+#### 1. 结构化数据层 - 规则提取的精确信息
+- **项目元数据**: package.json, Cargo.toml, composer.json等配置文件解析
+- **技术栈识别**: 自动识别编程语言、框架和依赖关系
+- **脚本和配置**: 构建脚本、部署配置、环境设置分析
+
+#### 2. 半结构化文档层 - 重要文档的智能解析
+- **README.md**: 项目介绍、特性说明、使用指南
+- **CHANGELOG.md**: 版本历史和更新记录
+- **用户指南**: 安装说明、API文档、示例代码
+
+#### 3. 全文本上下文层 - 所有markdown文件的智能处理
+- **基于任务类型的优先级排序**: 不同内容类型使用不同的文档权重
+- **Token预算管理**: 智能截断和选择，确保在限制内提供最相关信息
+- **上下文压缩和优化**: 保留最重要信息，去除冗余内容
+
+### 核心组件实现
+
+#### 1. ContextEngine - 统一上下文引擎 (`src/analysis/ContextEngineering.ts`)
+
+**核心功能**:
+```typescript
+export class ContextEngine {
+    private analyzer: ProjectAnalyzer;
+    private selector: ContextSelector;
+    private workflow?: LumosGenWorkflow;
+
+    // 项目分析
+    async analyzeProject(): Promise<ContextEngineResult>;
+
+    // 任务特定上下文选择
+    async selectContextForTask(taskType: AITaskType): Promise<SelectedContext>;
+
+    // 完整工作流执行
+    async executeFullWorkflow(projectPath: string, contentType: AITaskType): Promise<any>;
+}
+```
+
+**配置选项**:
+```typescript
+interface ContextEngineConfig {
+    analysisStrategy: 'minimal' | 'balanced' | 'comprehensive';
+    enableCaching: boolean;
+    maxDocuments: number;
+    maxTokensPerDocument: number;
+    defaultContentType: AITaskType;
+    defaultAudience: string;
+    defaultTone: string;
+}
+```
+
+#### 2. ContextSelector - 智能文档选择器 (`src/analysis/ContextSelector.ts`)
+
+**任务特定策略**:
+```typescript
+export class ContextSelector {
+    private strategies: Record<AITaskType, ContextSelectionStrategy> = {
+        'marketing-content': {
+            requiredCategories: ['readme'],
+            optionalCategories: ['docs', 'guide', 'example', 'changelog'],
+            priorityWeights: { readme: 1.0, docs: 0.8, guide: 0.7, ... },
+            maxTokens: 8000,
+            includeStructured: true,
+            includeSemiStructured: true
+        },
+        'technical-docs': { /* 技术文档策略 */ },
+        'api-documentation': { /* API文档策略 */ }
+    };
+}
+```
+
+**选择流程**:
+1. **筛选相关文档** - 基于文件类型和内容相关性
+2. **应用优先级权重** - 任务特定的文档重要性评分
+3. **Token预算管理** - 智能截断和选择，确保在限制内
+4. **生成选择原因** - 可解释的决策过程和透明度
+
+#### 3. ProjectAnalyzer - 增强项目分析器 (`src/analysis/ProjectAnalyzer.ts`)
+
+**分析能力**:
+```typescript
+export interface ProjectAnalysis {
+    metadata: ProjectMetadata;        // 项目基本信息
+    structure: FileStructure;         // 文件结构分析
+    techStack: TechStack[];          // 技术栈识别
+    features: ProjectFeature[];       // 功能特性提取
+    documents: MarkdownDocument[];    // 文档解析结果
+    dependencies: Dependency[];       // 依赖关系分析
+    scripts: ScriptInfo[];           // 脚本信息
+}
+```
+
+**智能特性**:
+- **文档缓存机制**: 提升重复分析性能，避免重复解析
+- **多格式配置文件支持**: package.json, Cargo.toml, composer.json等
+- **递归文档扫描**: 智能跳过无关目录（node_modules, .git等）
+- **特性自动提取**: 从README和代码注释中提取项目特性
+
+### 分析策略对比
+
+| 策略 | 文档数量 | Token使用 | 分析深度 | 适用场景 |
+|------|----------|-----------|----------|----------|
+| **minimal** | 5-10个 | 2K-4K | 基础 | 快速预览、简单项目 |
+| **balanced** | 10-20个 | 4K-8K | 中等 | 大多数项目、日常使用 |
+| **comprehensive** | 20-50个 | 8K-16K | 深度 | 复杂项目、详细分析 |
 
 ## 🎯 Agentic AI 最佳实践
 
@@ -248,6 +384,75 @@ ContentAnalyzer → ContentGenerator → WebsiteBuilder → 结果
 - 50个文档项目在一次Agent调用中处理
 - 避免50次独立API调用
 - 显著降低延迟和成本
+
+## 🎯 AI服务架构
+
+### 1. AIServiceProvider - 多提供商服务 (`src/ai/AIServiceProvider.ts`)
+
+**智能降级策略**:
+```typescript
+// 降级顺序: DeepSeek → OpenAI → Mock
+async generateContent(request: AIRequest): Promise<AIResponse> {
+    for (const providerType of this.config.degradationStrategy) {
+        const provider = this.providers.get(providerType);
+
+        if (!provider || !provider.isAvailable()) {
+            continue; // 尝试下一个提供商
+        }
+
+        try {
+            const response = await provider.generateContent(request);
+            return response; // 成功返回
+        } catch (error) {
+            // 记录错误，继续尝试下一个提供商
+        }
+    }
+
+    throw new Error('All AI providers failed');
+}
+```
+
+**成本优化**:
+- **DeepSeek非高峰时段检测**: 16:30-00:30 UTC时段优先使用
+- **实时成本计算和预警**: 基于token使用量的成本跟踪
+- **使用统计和性能监控**: 详细的API调用统计和响应时间监控
+
+### 2. PromptTemplates - 结构化提示模板 (`src/content/PromptTemplates.ts`)
+
+**模板系统**:
+```typescript
+export interface PromptTemplate {
+    name: string;
+    description: string;
+    template: string;
+    expectedStructure: string[];
+    validationRules: string[];
+}
+```
+
+**动态上下文注入**:
+- **项目信息自动替换**: {{projectName}}, {{techStack}}, {{features}}等变量
+- **智能推断**: 项目类型、安装方法、使用场景自动识别
+- **上下文压缩**: 保留最重要信息，优化token使用
+
+### 3. ContentValidator - 质量保证系统 (`src/content/ContentValidator.ts`)
+
+**多维度验证**:
+```typescript
+interface ValidationResult {
+    isValid: boolean;
+    score: number;           // 0-100分综合评分
+    errors: ValidationError[];
+    warnings: ValidationWarning[];
+    suggestions: string[];
+}
+```
+
+**验证层次**:
+- **结构验证**: Markdown格式、标题层级、链接有效性
+- **内容验证**: 字数要求、关键信息完整性、技术准确性
+- **质量评分**: 基于错误严重程度的综合评分
+- **改进建议**: 具体的优化方向和修改建议
 
 ## 🚀 增强Agent系统实现
 
@@ -592,6 +797,74 @@ export class ContextSelector {
     }
 }
 ```
+## 🔧 配置与使用
+
+### AI服务配置 (`src/config/SimpleConfig.ts`)
+```typescript
+export function getAIServiceConfig(): AIServiceConfig {
+    return {
+        primary: { type: 'deepseek', apiKey: '...', model: 'deepseek-chat' },
+        fallback: { type: 'openai', apiKey: '...', model: 'gpt-4o-mini' },
+        degradationStrategy: ['deepseek', 'openai', 'mock'],
+        monitoring: { enabled: true, trackCosts: true, trackUsage: true }
+    };
+}
+```
+
+### 使用监控 (`src/ai/monitoring/UsageMonitor.ts`)
+- **实时请求统计**: 成功/失败率、响应时间分布
+- **Token使用跟踪**: 输入/输出/总计token统计
+- **成本计算和预警**: 日/月限额监控和预警
+- **性能指标**: 响应时间、可用性、错误率统计
+
+### 快速开始
+
+#### 基础使用
+```typescript
+import { ContextEngine } from '../src/analysis/ContextEngineering';
+
+// 创建上下文引擎
+const engine = new ContextEngine(workspaceRoot, outputChannel, {
+    analysisStrategy: 'balanced',
+    enableCaching: true,
+    defaultContentType: 'marketing-content'
+});
+
+// 执行项目分析
+const result = await engine.analyzeProject();
+console.log(`处理了 ${result.performance.documentsProcessed} 个文档`);
+```
+
+#### 完整工作流
+```typescript
+// 初始化工作流
+engine.initializeWorkflow(workspaceRoot, aiService);
+
+// 执行完整的内容生成
+const workflowResult = await engine.executeFullWorkflow(
+    projectPath,
+    'marketing-content',
+    { changedFiles: ['README.md'], buildWebsite: true }
+);
+```
+
+### 最佳实践
+
+#### 1. 策略选择
+- **开发阶段**: `minimal` - 快速迭代，节省成本
+- **日常使用**: `balanced` - 平衡质量和性能
+- **重要发布**: `comprehensive` - 最高质量分析
+
+#### 2. 性能优化
+- **启用缓存**: 显著提升重复分析速度
+- **合理设置Token预算**: 避免超出API限制
+- **定期清理缓存**: 项目结构变更后清理
+
+#### 3. 质量保证
+- **多重验证**: 结构、内容、格式三层验证
+- **智能重试**: 基于验证结果的自动重试
+- **持续改进**: A/B测试提示词效果
+
 ### 使用示例
 
 #### 完整工作流集成
@@ -771,6 +1044,113 @@ interface ErrorMetrics {
 - **性能**: 智能缓存，不影响VS Code (✅ 达标)
 - **价值**: AI驱动的高质量内容生成 (✅ 超预期)
 - **成本效益**: DeepSeek集成，显著降低使用成本 (✅ 超预期)
+## 📈 技术优势与创新
+
+### 核心优势
+1. **智能上下文选择** - 任务特定的文档选择策略，确保最相关信息
+2. **多提供商支持** - 智能降级确保服务可用性，DeepSeek优先降低成本
+3. **质量保证机制** - 多层验证和评分系统，确保输出质量
+4. **性能优化** - 缓存、增量更新、Token管理，提升用户体验
+5. **成本控制** - 实时监控和优化建议，透明的成本管理
+
+### 技术创新
+- **规则与全文本平衡** - 结合结构化和非结构化信息的智能处理
+- **动态上下文压缩** - 智能保留最重要信息，优化token使用
+- **可解释的选择过程** - 透明的决策机制，用户可理解AI的选择逻辑
+- **自适应质量控制** - 基于内容类型的验证标准，确保输出适配性
+
+## 🎨 高级用法
+
+### 自定义上下文策略
+```typescript
+const customStrategy = selector.createCustomStrategy('marketing-content', {
+    requiredCategories: ['readme', 'docs'],
+    optionalCategories: ['example', 'guide'],
+    maxTokens: 10000,
+    priorityWeights: {
+        readme: 1.0,
+        docs: 0.9,
+        example: 0.7,
+        guide: 0.6
+    }
+});
+```
+
+### 营销准备度评估
+```typescript
+const assessment = await engine.assessMarketingReadiness();
+console.log(`营销准备度: ${assessment.score}/100`);
+console.log('优势:', assessment.strengths);
+console.log('建议:', assessment.recommendations);
+```
+
+### 增量更新
+```typescript
+// 初始分析
+const initialResult = await workflow.executeWorkflow(projectPath, 'marketing-content');
+
+// 文件变更后的增量更新
+const changedFiles = ['README.md', 'package.json'];
+const updateResult = await workflow.updateWithChanges(changedFiles, initialResult.projectAnalysis);
+```
+
+### 批量内容生成
+```typescript
+// 生成多种类型的内容
+const contentTypes: AITaskType[] = ['marketing-content', 'technical-docs', 'user-guide'];
+
+for (const contentType of contentTypes) {
+    const result = await engine.executeFullWorkflow(projectPath, contentType, {
+        buildWebsite: false
+    });
+    console.log(`${contentType} 生成完成:`, result.generatedContent);
+}
+```
+
+## 🔍 故障排除
+
+### 常见问题
+
+1. **分析速度慢**
+   ```typescript
+   // 使用minimal策略
+   const result = await engine.analyzeProject('minimal');
+
+   // 或减少最大文档数
+   engine.updateConfig({ maxDocuments: 20 });
+   ```
+
+2. **Token使用过多**
+   ```typescript
+   // 降低每文档token限制
+   engine.updateConfig({ maxTokensPerDocument: 1000 });
+
+   // 或使用更保守的策略
+   engine.updateConfig({ analysisStrategy: 'minimal' });
+   ```
+
+3. **缓存问题**
+   ```typescript
+   // 清理缓存
+   engine.clearCache();
+
+   // 禁用缓存
+   engine.updateConfig({ enableCaching: false });
+   ```
+
+### 调试模式
+```typescript
+// 启用详细日志
+const engine = new ContextEngine(workspaceRoot, outputChannel, {
+    // 配置会自动输出详细的分析过程
+});
+
+// 查看选择的文档
+const context = await engine.selectContextForTask('marketing-content');
+console.log('选择的文档:', context.selectedFiles.map(f => f.path));
+console.log('选择原因:', context.selectionReason);
+```
+
 ## 🔮 未来扩展路径
 
 ### 规划中的增强功能
@@ -786,31 +1166,76 @@ interface ErrorMetrics {
 - **用户驱动**: 根据用户反馈决定扩展方向
 - **质量保证**: 确保扩展功能的稳定性和可靠性
 
+## 🧪 测试与验证
+
+### 提示词A/B测试框架
+```typescript
+interface PromptTest {
+    testId: string;
+    variants: {
+        control: string;    // 对照组提示词
+        treatment: string;  // 实验组提示词
+    };
+    metrics: {
+        qualityScore: number;
+        generationTime: number;
+        retryCount: number;
+        userSatisfaction: number;
+    };
+}
+```
+
+### 质量基准测试
+```typescript
+// 标准测试项目集合
+const benchmarkProjects = [
+    {
+        type: 'VS Code Extension',
+        complexity: 'medium',
+        techStack: ['TypeScript', 'Node.js'],
+        expectedQuality: 85
+    },
+    {
+        type: 'React Library',
+        complexity: 'high',
+        techStack: ['React', 'TypeScript', 'Webpack'],
+        expectedQuality: 90
+    }
+];
+```
+
 ## 🎉 总结
 
-增强Agent系统完美实现了LumosGen的核心目标：
+LumosGen的统一技术架构完美整合了智能上下文工程系统和增强Agent架构，实现了业界领先的AI驱动内容生成平台：
 
 ### ✅ 核心优势 (已实现)
-1. **智能Agent系统** - 3个专业化Agent，支持高级上下文工程
-2. **成本优化AI集成** - DeepSeek优先，成本降低80%+
-3. **完美VS Code集成** - 实时监控面板 + 增强侧边栏
-4. **智能上下文工程** - 规则与全文本平衡的文档选择
-5. **模板驱动生成** - 结构化内容模板，确保输出质量
+1. **智能上下文工程** - 三层上下文策略，任务特定的智能文档选择
+2. **增强Agent系统** - 3个专业化Agent协作，支持复杂内容生成流程
+3. **成本优化AI集成** - DeepSeek优先策略，成本降低80%+，智能降级保障可用性
+4. **完美VS Code集成** - 实时监控面板 + 增强侧边栏，无缝开发体验
+5. **质量保证机制** - 多层验证和模板驱动生成，确保输出质量
 
-### 🎯 实现目标 (已完成)
-- ✅ 多Agent协作框架 (AgentSystem + Workflow)
-- ✅ 智能AI服务集成 (AIServiceProvider + 降级策略)
-- ✅ 上下文工程系统 (ContextSelector + ProjectAnalyzer)
-- ✅ VS Code完美集成 (SidebarProvider + MonitoringPanel)
-- ✅ 实时监控和成本跟踪
+### 🎯 技术实现 (已完成)
+- ✅ **上下文工程系统** (ContextEngine + ContextSelector + ProjectAnalyzer)
+- ✅ **多Agent协作框架** (AgentSystem + Workflow + 3个专业Agent)
+- ✅ **智能AI服务集成** (AIServiceProvider + 多提供商降级策略)
+- ✅ **VS Code完美集成** (SidebarProvider + MonitoringPanel + 实时监控)
+- ✅ **质量保证系统** (ContentValidator + PromptTemplates + 多维验证)
 
 ### 📈 价值体现 (超预期)
-- **开发效率**: AI驱动的高质量内容生成
-- **成本控制**: DeepSeek集成，显著降低AI使用成本
-- **用户体验**: 一键操作，智能化内容创作流程
-- **技术先进性**: 业界领先的上下文工程和AI集成
+- **开发效率**: 智能化项目分析 + AI驱动的高质量内容生成
+- **成本控制**: DeepSeek集成 + 智能token管理，显著降低AI使用成本
+- **用户体验**: 一键操作 + 实时监控 + 透明的决策过程
+- **技术先进性**: 业界领先的上下文工程 + Agentic AI最佳实践
+- **系统可靠性**: 多层降级策略 + 智能错误恢复 + 性能监控
 
-**结论**: LumosGen已成功实现从概念到产品的完整转化，建立了业界领先的AI驱动内容生成系统，完美平衡了功能丰富性、成本效益和用户体验。
+### 🚀 创新突破
+- **规则与全文本平衡**: 首创的混合上下文选择策略
+- **任务特定优化**: 基于内容类型的智能文档权重分配
+- **可解释AI决策**: 透明的上下文选择和Agent执行过程
+- **成本效益平衡**: DeepSeek优先 + OpenAI降级的最优成本策略
+
+**结论**: LumosGen已成功建立了完整的AI驱动内容生成生态系统，通过智能上下文工程和增强Agent架构的深度整合，实现了功能丰富性、成本效益、用户体验和技术先进性的完美平衡。这套统一架构为未来的功能扩展和技术演进奠定了坚实基础。
 
 ## 📚 参考文献
 
@@ -842,8 +1267,9 @@ LumosGen的Agent架构设计充分借鉴了UserJot在反馈分析系统中的实
 
 ---
 
-*文档版本：v3.1 (增强Agent架构 + 智能上下文工程 + Agentic AI最佳实践)*
+*文档版本：v4.0 (统一技术架构 - 智能上下文工程 + 增强Agent系统 + Agentic AI最佳实践)*
 *最后更新：2025-01-20*
 *下次审查：2025-02-20*
+*合并说明：本文档整合了原CONTEXT_ENGINEERING.md和TECHNICAL_ARCHITECTURE.md的精华内容，形成统一的技术架构文档*
 
 
