@@ -16,7 +16,8 @@ vi.mock('fs', () => ({
     readdir: vi.fn(),
     stat: vi.fn(),
     readFile: vi.fn(),
-    writeFile: vi.fn()
+    writeFile: vi.fn(),
+    copyFile: vi.fn()
   }
 }))
 
@@ -82,6 +83,14 @@ vi.mock('@/website/TemplateEngine', () => ({
       description: `${theme} theme description`,
       features: ['responsive']
     })),
+    getThemeCustomization: vi.fn((theme: string) => ({
+      colors: {
+        primary: { default: '#3B82F6', options: ['#3B82F6', '#10B981'] }
+      },
+      fonts: {
+        body: { default: 'Inter', options: ['Inter', 'Arial'] }
+      }
+    })),
     generateCSS: vi.fn(() => Promise.resolve('body { margin: 0; }')),
     generateJS: vi.fn(() => Promise.resolve('console.log("Generated JS");'))
   }))
@@ -93,7 +102,14 @@ vi.mock('@/website/SEOOptimizer', () => ({
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url><loc>https://${siteName.toLowerCase()}.github.io</loc></url>
 </urlset>`),
-    generateRobotsTxt: vi.fn(() => 'User-agent: *\nAllow: /')
+    generateRobotsTxt: vi.fn(() => 'User-agent: *\nAllow: /'),
+    generateManifest: vi.fn((metadata: any, analysis: any) => JSON.stringify({
+      name: metadata.title,
+      short_name: metadata.title,
+      description: metadata.description,
+      start_url: "/",
+      display: "standalone"
+    }))
   }))
 }))
 
@@ -127,18 +143,13 @@ describe('WebsiteBuilder', () => {
       metadata: {
         title: 'Test Project',
         description: 'Test project description',
-        keywords: ['test', 'project']
+        keywords: ['test', 'project'],
+        author: 'Test Author'
       },
-      homepage: {
-        title: 'Test Project Homepage',
-        content: 'This is a test homepage content.\n\nIt has multiple paragraphs.',
-        sections: ['hero', 'features', 'contact']
-      },
-      about: {
-        title: 'About Test Project',
-        content: 'This is the about page content.',
-        sections: ['story', 'team']
-      }
+      homepage: 'This is a test homepage content.\n\nIt has multiple paragraphs.',
+      aboutPage: 'This is the about page content.',
+      faq: 'Frequently asked questions content.',
+      blogPost: 'This is a blog post content.'
     }
   })
 
@@ -152,6 +163,7 @@ describe('WebsiteBuilder', () => {
     mockFs.promises.writeFile.mockResolvedValue(undefined)
     mockFs.promises.readFile.mockResolvedValue('mock file content')
     mockFs.promises.readdir.mockResolvedValue(['file1.txt', 'file2.txt'])
+    mockFs.promises.copyFile.mockResolvedValue(undefined)
 
     // Mock workspace folders
     mockVscode.workspace.workspaceFolders = [{ uri: { fsPath: '/test/workspace' } }]
@@ -162,7 +174,15 @@ describe('WebsiteBuilder', () => {
       const mockAnalysis = {
         projectType: 'web',
         technologies: ['JavaScript', 'HTML', 'CSS'],
-        features: ['responsive', 'seo']
+        features: ['responsive', 'seo'],
+        metadata: {
+          name: 'test-project',
+          version: '1.0.0',
+          description: 'Test project'
+        },
+        techStack: [
+          { language: 'JavaScript', framework: 'None' }
+        ]
       }
 
       const result = await websiteBuilder.buildWebsite(mockContent, mockAnalysis)
@@ -174,7 +194,13 @@ describe('WebsiteBuilder', () => {
     })
 
     it('should create output directory', async () => {
-      const mockAnalysis = { projectType: 'web', technologies: [], features: [] }
+      const mockAnalysis = {
+        projectType: 'web',
+        technologies: [],
+        features: [],
+        metadata: { name: 'test-project', version: '1.0.0' },
+        techStack: []
+      }
 
       await websiteBuilder.buildWebsite(mockContent, mockAnalysis)
 
@@ -185,7 +211,13 @@ describe('WebsiteBuilder', () => {
     })
 
     it('should generate HTML pages', async () => {
-      const mockAnalysis = { projectType: 'web', technologies: [], features: [] }
+      const mockAnalysis = {
+        projectType: 'web',
+        technologies: [],
+        features: [],
+        metadata: { name: 'test-project', version: '1.0.0' },
+        techStack: []
+      }
 
       const result = await websiteBuilder.buildWebsite(mockContent, mockAnalysis)
 
@@ -201,20 +233,37 @@ describe('WebsiteBuilder', () => {
 
   describe('Theme Application', () => {
     it('should apply technical theme correctly', async () => {
-      const mockAnalysis = { projectType: 'web', technologies: [], features: [] }
-      const config = { theme: 'technical' }
-      
+      const mockAnalysis = {
+        projectType: 'web',
+        technologies: [],
+        features: [],
+        metadata: { name: 'test-project', version: '1.0.0' },
+        techStack: []
+      }
+      const config = {
+        theme: 'technical',
+        primaryColor: '#10B981',
+        fontFamily: 'Arial',
+        enableAnalytics: false
+      }
+
       const result = await websiteBuilder.buildWebsite(mockContent, mockAnalysis, config)
-      
+
       expect(result.success).toBe(true)
       // The theme should be applied through the template engine
     })
 
     it('should use modern theme as default', async () => {
-      const mockAnalysis = { projectType: 'web', technologies: [], features: [] }
-      
+      const mockAnalysis = {
+        projectType: 'web',
+        technologies: [],
+        features: [],
+        metadata: { name: 'test-project', version: '1.0.0' },
+        techStack: []
+      }
+
       const result = await websiteBuilder.buildWebsite(mockContent, mockAnalysis)
-      
+
       expect(result.success).toBe(true)
       // Default theme should be applied
     })
@@ -222,14 +271,20 @@ describe('WebsiteBuilder', () => {
 
   describe('HTML Generation', () => {
     it('should generate valid HTML structure', async () => {
-      const mockAnalysis = { projectType: 'web', technologies: [], features: [] }
-      
+      const mockAnalysis = {
+        projectType: 'web',
+        technologies: [],
+        features: [],
+        metadata: { name: 'test-project', version: '1.0.0' },
+        techStack: []
+      }
+
       await websiteBuilder.buildWebsite(mockContent, mockAnalysis)
-      
+
       // Check that writeFile was called with HTML content
       const writeFileCalls = mockFs.promises.writeFile.mock.calls
       const htmlCall = writeFileCalls.find(call => call[0].includes('.html'))
-      
+
       expect(htmlCall).toBeTruthy()
       expect(htmlCall[1]).toContain('<!DOCTYPE html>')
       expect(htmlCall[1]).toContain('<html>')
@@ -240,24 +295,36 @@ describe('WebsiteBuilder', () => {
     })
 
     it('should include page content in HTML', async () => {
-      const mockAnalysis = { projectType: 'web', technologies: [], features: [] }
-      
+      const mockAnalysis = {
+        projectType: 'web',
+        technologies: [],
+        features: [],
+        metadata: { name: 'test-project', version: '1.0.0' },
+        techStack: []
+      }
+
       await websiteBuilder.buildWebsite(mockContent, mockAnalysis)
-      
+
       const writeFileCalls = mockFs.promises.writeFile.mock.calls
       const htmlCall = writeFileCalls.find(call => call[0].includes('.html'))
-      
+
       expect(htmlCall[1]).toContain('test homepage content')
     })
   })
 
   describe('Asset Generation', () => {
     it('should generate CSS assets', async () => {
-      const mockAnalysis = { projectType: 'web', technologies: [], features: [] }
-      
+      const mockAnalysis = {
+        projectType: 'web',
+        technologies: [],
+        features: [],
+        metadata: { name: 'test-project', version: '1.0.0' },
+        techStack: []
+      }
+
       const result = await websiteBuilder.buildWebsite(mockContent, mockAnalysis)
-      
-      expect(result.assets).toContain('styles.css')
+
+      expect(result.assets).toContain('assets/styles.css')
       expect(mockFs.promises.writeFile).toHaveBeenCalledWith(
         expect.stringContaining('styles.css'),
         expect.any(String),
@@ -266,22 +333,44 @@ describe('WebsiteBuilder', () => {
     })
 
     it('should generate JavaScript when enabled', async () => {
-      const mockAnalysis = { projectType: 'web', technologies: [], features: [] }
-      const config = { includeJS: true, analytics: true, darkMode: true }
-      
+      const mockAnalysis = {
+        projectType: 'web',
+        technologies: [],
+        features: [],
+        metadata: { name: 'test-project', version: '1.0.0' },
+        techStack: []
+      }
+      const config = {
+        theme: 'modern',
+        primaryColor: '#000000',
+        fontFamily: 'Arial',
+        enableAnalytics: true
+      }
+
       const result = await websiteBuilder.buildWebsite(mockContent, mockAnalysis, config)
-      
-      expect(result.assets).toContain('script.js')
+
+      expect(result.assets).toContain('assets/main.js')
     })
   })
 
   describe('SEO Files Generation', () => {
     it('should generate sitemap.xml', async () => {
-      const mockAnalysis = { projectType: 'web', technologies: [], features: [] }
-      const config = { baseUrl: 'https://test.com' }
-      
+      const mockAnalysis = {
+        projectType: 'web',
+        technologies: [],
+        features: [],
+        metadata: { name: 'test-project', version: '1.0.0' },
+        techStack: []
+      }
+      const config = {
+        theme: 'modern',
+        primaryColor: '#000000',
+        fontFamily: 'Arial',
+        enableAnalytics: false
+      }
+
       const result = await websiteBuilder.buildWebsite(mockContent, mockAnalysis, config)
-      
+
       expect(result.assets).toContain('sitemap.xml')
       expect(mockFs.promises.writeFile).toHaveBeenCalledWith(
         expect.stringContaining('sitemap.xml'),
@@ -291,18 +380,38 @@ describe('WebsiteBuilder', () => {
     })
 
     it('should generate robots.txt', async () => {
-      const mockAnalysis = { projectType: 'web', technologies: [], features: [] }
-      
+      const mockAnalysis = {
+        projectType: 'web',
+        technologies: [],
+        features: [],
+        metadata: { name: 'test-project', version: '1.0.0' },
+        techStack: []
+      }
+
       const result = await websiteBuilder.buildWebsite(mockContent, mockAnalysis)
-      
+
       expect(result.assets).toContain('robots.txt')
+    })
+
+    it('should generate manifest.json', async () => {
+      const mockAnalysis = {
+        projectType: 'web',
+        technologies: [],
+        features: [],
+        metadata: { name: 'test-project', version: '1.0.0' },
+        techStack: []
+      }
+
+      const result = await websiteBuilder.buildWebsite(mockContent, mockAnalysis)
+
+      expect(result.assets).toContain('manifest.json')
     })
   })
 
   describe('Theme Management', () => {
     it('should return available themes', () => {
       const themes = websiteBuilder.getAvailableThemes()
-      
+
       expect(Array.isArray(themes)).toBe(true)
       expect(themes).toContain('modern')
       expect(themes).toContain('technical')
@@ -310,18 +419,16 @@ describe('WebsiteBuilder', () => {
 
     it('should return theme metadata', () => {
       const metadata = websiteBuilder.getThemeMetadata('modern')
-      
+
       expect(metadata).toBeTruthy()
       expect(metadata.name).toBe('Modern')
       expect(metadata.description).toBeTruthy()
     })
 
-    it('should handle theme switching', () => {
-      const success = websiteBuilder.setTheme('technical')
-      expect(success).toBe(true)
-      
-      const invalidSuccess = websiteBuilder.setTheme('non-existent')
-      expect(invalidSuccess).toBe(false)
+    it('should return theme customization options', () => {
+      const customization = websiteBuilder.getThemeCustomization('modern')
+
+      expect(customization).toBeTruthy()
     })
   })
 
@@ -348,13 +455,21 @@ describe('WebsiteBuilder', () => {
 
     it('should handle empty content gracefully', async () => {
       const emptyContent = {
-        metadata: { title: '', description: '', keywords: [] },
-        homepage: { title: '', content: '', sections: [] }
+        metadata: { title: '', description: '', keywords: [], author: '' },
+        homepage: '',
+        aboutPage: '',
+        faq: ''
       }
-      const mockAnalysis = { projectType: 'web', technologies: [], features: [] }
-      
+      const mockAnalysis = {
+        projectType: 'web',
+        technologies: [],
+        features: [],
+        metadata: { name: 'test-project', version: '1.0.0' },
+        techStack: []
+      }
+
       const result = await websiteBuilder.buildWebsite(emptyContent, mockAnalysis)
-      
+
       expect(result.success).toBe(true)
       // Should handle empty content without errors
     })
