@@ -64,6 +64,51 @@ class MockAIServiceProvider {
   }
 }
 
+// 智能降级策略测试
+class MockDegradationStrategy {
+  private providers: MockAIServiceProvider[]
+  private currentProviderIndex = 0
+  private failureCount = new Map<string, number>()
+
+  constructor(providers: MockAIServiceProvider[]) {
+    this.providers = providers
+  }
+
+  async executeWithDegradation(prompt: string, options: any = {}) {
+    let lastError: Error
+
+    for (let i = 0; i < this.providers.length; i++) {
+      const provider = this.providers[i]
+      const providerName = provider.constructor.name
+
+      try {
+        const result = await provider.generateContent(prompt, options)
+
+        return {
+          ...result,
+          usedProvider: providerName,
+          attemptNumber: i + 1
+        }
+
+      } catch (error) {
+        lastError = error as Error
+
+        // 增加失败计数
+        const currentFailures = this.failureCount.get(providerName) || 0
+        this.failureCount.set(providerName, currentFailures + 1)
+
+        console.log(`Provider ${providerName} failed (attempt ${i + 1}): ${error.message}`)
+      }
+    }
+
+    throw new Error(`All providers failed. Last error: ${lastError!.message}`)
+  }
+
+  getFailureStats() {
+    return Object.fromEntries(this.failureCount)
+  }
+}
+
 describe('AI Service Provider', () => {
   let mockProvider: MockAIServiceProvider
   let errorProvider: MockAIServiceProvider
@@ -188,9 +233,163 @@ describe('AI Service Provider', () => {
         responseDelay: 50,
         errorRate: 0.1
       })
-      
+
       expect(customProvider['config'].responseDelay).toBe(50)
       expect(customProvider['config'].errorRate).toBe(0.1)
+    })
+  })
+
+  describe('降级策略测试', () => {
+    it('应该在主要提供者失败时使用备用提供者', async () => {
+      const primaryProvider = new MockAIServiceProvider({
+        simulateErrors: true,
+        errorRate: 1.0
+      })
+      const fallbackProvider = new MockAIServiceProvider({
+        simulateErrors: false
+      })
+
+      const degradationStrategy = new MockDegradationStrategy([
+        primaryProvider,
+        fallbackProvider
+      ])
+
+      const result = await degradationStrategy.executeWithDegradation("Test prompt")
+
+      expect(result.content).toBeTruthy()
+      expect(result.usedProvider).toBe('MockAIServiceProvider')
+      expect(result.attemptNumber).toBe(2) // 第二个提供者成功
+    })
+
+    it('应该在所有提供者失败时抛出错误', async () => {
+      const provider1 = new MockAIServiceProvider({
+        simulateErrors: true,
+        errorRate: 1.0
+      })
+      const provider2 = new MockAIServiceProvider({
+        simulateErrors: true,
+        errorRate: 1.0
+      })
+
+      const degradationStrategy = new MockDegradationStrategy([
+        provider1,
+        provider2
+      ])
+
+      await expect(
+        degradationStrategy.executeWithDegradation("Test prompt")
+      ).rejects.toThrow('All providers failed')
+    })
+
+    it('应该跟踪提供者失败统计', async () => {
+      const failingProvider = new MockAIServiceProvider({
+        simulateErrors: true,
+        errorRate: 1.0
+      })
+      const workingProvider = new MockAIServiceProvider({
+        simulateErrors: false
+      })
+
+      const degradationStrategy = new MockDegradationStrategy([
+        failingProvider,
+        workingProvider
+      ])
+
+      await degradationStrategy.executeWithDegradation("Test prompt")
+
+      const failureStats = degradationStrategy.getFailureStats()
+      // 检查是否有失败记录（键可能不同）
+      const failureKeys = Object.keys(failureStats)
+      expect(failureKeys.length).toBeGreaterThan(0)
+
+      // 检查总失败次数
+      const totalFailures = Object.values(failureStats).reduce((sum: number, count: any) => sum + count, 0)
+      expect(totalFailures).toBeGreaterThanOrEqual(1)
+    })
+  })
+
+  describe('边缘情况测试', () => {
+    it('应该处理长提示', async () => {
+      const longPrompt = 'A'.repeat(10000) // 10KB的提示
+
+      const result = await mockProvider.generateContent(longPrompt)
+
+      expect(result.content).toBeTruthy()
+      expect(result.tokens).toBeGreaterThan(2000) // 长提示应该使用更多token
+      expect(result.cost).toBeGreaterThan(0.2) // 相应的成本也更高
+    })
+
+    it('应该处理空提示', async () => {
+      const emptyPrompt = ""
+
+      const result = await mockProvider.generateContent(emptyPrompt)
+
+      expect(result.content).toBeTruthy()
+      expect(result.tokens).toBe(0) // 空提示应该是0个token
+      expect(result.cost).toBe(0) // 相应的成本也是0
+    })
+
+    it('应该处理特殊字符提示', async () => {
+      const specialPrompt = "测试中文 🚀 Special chars: @#$%^&*()[]{}|\\:;\"'<>,.?/~`"
+
+      const result = await mockProvider.generateContent(specialPrompt)
+
+      expect(result.content).toBeTruthy()
+      expect(result.tokens).toBeGreaterThan(0)
+      expect(result.content).toContain('Generated content for:')
+    })
+
+    it('应该处理非常短的提示', async () => {
+      const shortPrompt = "Hi"
+
+      const result = await mockProvider.generateContent(shortPrompt)
+
+      expect(result.content).toBeTruthy()
+      expect(result.tokens).toBeGreaterThanOrEqual(0)
+      expect(result.cost).toBeGreaterThanOrEqual(0)
+    })
+  })
+
+  describe('高级功能测试', () => {
+    it('应该支持自定义选项', async () => {
+      const options = {
+        temperature: 0.7,
+        maxTokens: 1000,
+        model: 'custom-model'
+      }
+
+      const result = await mockProvider.generateContent("Test with options", options)
+
+      expect(result.content).toBeTruthy()
+      expect(result.provider).toBe('mock')
+    })
+
+    it('应该正确处理时间戳', async () => {
+      const beforeTime = new Date().toISOString()
+      const result = await mockProvider.generateContent("Test timestamp")
+      const afterTime = new Date().toISOString()
+
+      expect(result.timestamp).toBeTruthy()
+      expect(result.timestamp >= beforeTime).toBe(true)
+      expect(result.timestamp <= afterTime).toBe(true)
+    })
+
+    it('应该支持批量请求', async () => {
+      const prompts = [
+        "Generate content 1",
+        "Generate content 2",
+        "Generate content 3"
+      ]
+
+      const results = await Promise.all(
+        prompts.map(prompt => mockProvider.generateContent(prompt))
+      )
+
+      expect(results).toHaveLength(3)
+      results.forEach((result, index) => {
+        expect(result.content).toContain(`Generate content ${index + 1}`)
+        expect(result.provider).toBe('mock')
+      })
     })
   })
 })
