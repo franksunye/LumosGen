@@ -163,8 +163,8 @@ export class DeepSeekProvider implements AIProvider {
       throw new Error(`HTTP ${response.status}: ${errorText}`);
     }
 
-    const data = await response.json();
-    
+    const data = await response.json() as any;
+
     if (!data.choices || !data.choices[0] || !data.choices[0].message) {
       throw new Error('Invalid response format from DeepSeek API');
     }

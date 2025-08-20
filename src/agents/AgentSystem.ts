@@ -131,7 +131,7 @@ export abstract class BaseAgent implements IAgent {
         throw new Error(`LLM API call failed: ${response.statusText}`);
       }
 
-      const data = await response.json();
+      const data = await response.json() as any;
       return data.choices[0]?.message?.content || '';
     } catch (error) {
       console.warn('LLM API call failed, falling back to mock mode:', error);
