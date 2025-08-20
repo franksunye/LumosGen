@@ -115,6 +115,7 @@ PROJECT CONTEXT:
 - Name: {{projectName}}
 - Description: {{projectDescription}}
 - Tech Stack: {{techStack}}
+- Frameworks: {{frameworks}}
 - Key Features: {{features}}
 - Target Audience: {{targetAudience}}
 
@@ -395,11 +396,26 @@ FORMATTING RULES:
         prompt = prompt.replace(/\{\{techStack\}\}/g, analysis.techStack.map(t => t.language).join(', '));
         prompt = prompt.replace(/\{\{features\}\}/g, analysis.features.map(f => f.name).join(', '));
         prompt = prompt.replace(/\{\{author\}\}/g, analysis.metadata.author || 'Development Team');
-        prompt = prompt.replace(/\{\{tone\}\}/g, options.tone);
-        prompt = prompt.replace(/\{\{targetAudience\}\}/g, 'developers and technical teams');
+        prompt = prompt.replace(/\{\{tone\}\}/g, options.tone || 'professional');
+        prompt = prompt.replace(/\{\{targetAudience\}\}/g, options.audience || 'developers and technical teams');
         prompt = prompt.replace(/\{\{repositoryUrl\}\}/g, analysis.metadata.repositoryUrl || '#');
         prompt = prompt.replace(/\{\{projectType\}\}/g, this.determineProjectType(analysis));
         prompt = prompt.replace(/\{\{installationMethod\}\}/g, this.determineInstallationMethod(analysis));
+
+        // Advanced replacements for personalization
+        prompt = prompt.replace(/\{\{frameworks\}\}/g, analysis.techStack.map(t => t.framework).filter(f => f).join(', '));
+        prompt = prompt.replace(/\{\{keywords\}\}/g, analysis.metadata.keywords?.join(', ') || '');
+        prompt = prompt.replace(/\{\{version\}\}/g, analysis.metadata.version || '1.0.0');
+
+        // Apply optimization strategy
+        if (options.optimizationStrategy) {
+            prompt = this.applyOptimizationStrategy(prompt, options.optimizationStrategy);
+        }
+
+        // Add version support
+        if (options.version) {
+            prompt = this.applyVersionCompatibility(prompt, options.version);
+        }
 
         return prompt;
     }
@@ -430,18 +446,52 @@ FORMATTING RULES:
         return 'Download and install';
     }
 
+    private applyOptimizationStrategy(prompt: string, strategy: string): string {
+        switch (strategy) {
+            case 'concise':
+                // 添加简洁性指令
+                return prompt + '\n\nIMPORTANT: Keep the content concise and to the point. Focus on essential information only.';
+            case 'detailed':
+                // 添加详细性指令
+                return prompt + '\n\nIMPORTANT: Provide comprehensive and detailed content. Include examples, explanations, and thorough coverage.';
+            case 'creative':
+                // 添加创意性指令
+                return prompt + '\n\nIMPORTANT: Be creative and engaging. Use compelling language, metaphors, and innovative presentation.';
+            default:
+                return prompt;
+        }
+    }
+
+    private applyVersionCompatibility(prompt: string, version: string): string {
+        if (version === '1.0') {
+            // 兼容旧版本格式
+            return prompt.replace(/\{\{([^}]+)\}\}/g, '{{$1}}');
+        }
+        return prompt;
+    }
+
     public getAvailableTemplates(): string[] {
         return Array.from(this.templates.keys());
     }
 
-    public getTemplateInfo(templateName: string): { name: string; description: string; structure: string[] } | undefined {
+    public getTemplateInfo(templateName: string): {
+        name: string;
+        description: string;
+        structure: string[];
+        validationRules: string[];
+        version: string;
+        supportedOptions: string[];
+    } | undefined {
         const template = this.templates.get(templateName);
         if (!template) return undefined;
-        
+
         return {
             name: template.name,
             description: template.description,
-            structure: template.expectedStructure
+            structure: template.expectedStructure,
+            validationRules: template.validationRules,
+            version: '1.0.0',
+            supportedOptions: ['tone', 'audience', 'includeCodeExamples', 'seoOptimization', 'optimizationStrategy']
         };
     }
 }

@@ -125,7 +125,18 @@ LumosGen-Summary.md
 tests/outputs/*
 tests/reports/*
 test-results.json
+tests/performance-report.json
+test-project/
 
 # Keep directory structure but ignore contents
 !tests/outputs/.gitkeep
 !tests/reports/.gitkeep
+
+# Temporary documentation and reports (exclude from commits)
+*_RESULTS.md
+*_REPORT.md
+*_PLAN.md
+QA_TEST_REPORT.md
+IMMEDIATE_ACTION_RESULTS.md
+100_PERCENT_TEST_COVERAGE_REPORT.md
+CONTEXT_PROMPT_ENGINEERING_TEST_PLAN.md

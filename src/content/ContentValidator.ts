@@ -23,7 +23,97 @@ export interface ValidationWarning {
 }
 
 export class ContentValidator {
-    
+
+    /**
+     * 主要的内容验证方法 - 根据内容类型选择合适的验证策略
+     */
+    async validateContent(
+        content: string,
+        contentType: string,
+        criteria?: { minWords?: number; maxWords?: number; requiredSections?: string[] }
+    ): Promise<ValidationResult> {
+        // 根据内容类型选择验证方法
+        switch (contentType.toLowerCase()) {
+            case 'homepage':
+                return this.validateHomepage(content);
+            case 'about':
+                return this.validateAboutPage(content);
+            case 'faq':
+                return this.validateFAQ(content);
+            case 'blog':
+            case 'blog-post':
+                return this.validateBlogPost(content);
+            default:
+                return this.validateGenericContent(content, criteria);
+        }
+    }
+
+    /**
+     * 通用内容验证方法
+     */
+    private validateGenericContent(
+        content: string,
+        criteria?: { minWords?: number; maxWords?: number; requiredSections?: string[] }
+    ): ValidationResult {
+        const result: ValidationResult = {
+            isValid: true,
+            score: 100,
+            errors: [],
+            warnings: [],
+            suggestions: []
+        };
+
+        // 基本结构验证
+        this.validateMarkdownStructure(content, 'generic', result);
+
+        // 长度验证
+        const wordCount = this.countWords(content);
+        if (criteria?.minWords && wordCount < criteria.minWords) {
+            result.errors.push({
+                type: 'length',
+                message: `Content too short: ${wordCount} words (minimum: ${criteria.minWords})`,
+                severity: 'major'
+            });
+        }
+
+        if (criteria?.maxWords && wordCount > criteria.maxWords) {
+            result.warnings.push({
+                type: 'style',
+                message: `Content might be too long: ${wordCount} words (maximum: ${criteria.maxWords})`,
+                suggestion: 'Consider breaking into smaller sections'
+            });
+        }
+
+        // 必需章节验证
+        if (criteria?.requiredSections) {
+            for (const section of criteria.requiredSections) {
+                if (!content.toLowerCase().includes(section.toLowerCase())) {
+                    result.errors.push({
+                        type: 'structure',
+                        message: `Missing required section: ${section}`,
+                        severity: 'major'
+                    });
+                }
+            }
+        }
+
+        // 通用质量检查
+        this.validateContentQuality(content, result);
+
+        // 计算最终分数
+        result.score = this.calculateScore(result);
+        result.isValid = result.score >= 70 && result.errors.filter(e => e.severity === 'critical').length === 0;
+
+        return result;
+    }
+
+    /**
+     * 计算单词数
+     */
+    private countWords(content: string): number {
+        return content.trim().split(/\s+/).filter(word => word.length > 0).length;
+    }
+
     /**
      * Validates homepage content against template requirements
      */

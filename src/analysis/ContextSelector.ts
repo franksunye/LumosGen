@@ -50,6 +50,11 @@ export interface SelectedContext {
     totalTokens: number;
     strategy: ContextSelectionStrategy;
     selectionReason: string;
+    appliedLimits?: {
+        maxTokens: number;
+        actualTokens: number;
+        documentCount: number;
+    };
 }
 
 // 智能上下文选择器
@@ -165,7 +170,7 @@ export class ContextSelector {
         const totalTokens = selectedFiles.reduce((sum, file) => sum + file.tokenCount, 0);
         
         // 5. 生成选择原因
-        const selectionReason = this.generateSelectionReason(selectedFiles, strategy, analysis);
+        const selectionReason = this.generateSelectionReason(taskType, selectedFiles, strategy);
         
         return {
             structured: strategy.includeStructured ? {
@@ -293,22 +298,7 @@ export class ContextSelector {
         };
     }
     
-    private generateSelectionReason(files: MarkdownFile[], strategy: ContextSelectionStrategy, analysis: ProjectAnalysis): string {
-        const categories = files.reduce((acc, file) => {
-            acc[file.category] = (acc[file.category] || 0) + 1;
-            return acc;
-        }, {} as Record<DocumentCategory, number>);
 
-        const categoryList = Object.entries(categories)
-            .map(([cat, count]) => `${cat}(${count})`)
-            .join(', ');
-
-        const totalFiles = analysis.documents.length;
-        const selectedCount = files.length;
-        const selectionRate = ((selectedCount / totalFiles) * 100).toFixed(1);
-
-        return `为${strategy.taskType}任务选择了${selectedCount}/${totalFiles}个文档(${selectionRate}%)，包含: ${categoryList}`;
-    }
     
     // 自定义策略
     createCustomStrategy(taskType: AITaskType, customStrategy: Partial<ContextSelectionStrategy>): ContextSelectionStrategy {
@@ -329,5 +319,142 @@ export class ContextSelector {
     // 获取策略详情
     getStrategy(taskType: AITaskType): ContextSelectionStrategy {
         return this.strategies[taskType] || this.strategies.general;
+    }
+
+    /**
+     * 为特定任务选择最佳上下文 - 核心方法
+     */
+    async selectContextForTask(
+        taskType: AITaskType,
+        analysis: ProjectAnalysis,
+        options?: { maxTokens?: number; strategy?: 'minimal' | 'balanced' | 'comprehensive' }
+    ): Promise<SelectedContext> {
+        const strategy = this.strategies[taskType];
+        if (!strategy) {
+            throw new Error(`No strategy found for task type: ${taskType}`);
+        }
+
+        const maxTokens = options?.maxTokens || strategy.maxTokens;
+        const analysisStrategy = options?.strategy || 'balanced';
+
+        // 1. 准备结构化数据
+        const structured = strategy.includeStructured ? {
+            metadata: analysis.metadata,
+            techStack: analysis.techStack,
+            dependencies: analysis.dependencies,
+            scripts: analysis.scripts
+        } : undefined;
+
+        // 2. 准备半结构化数据
+        const semiStructured = strategy.includeSemiStructured ? {
+            readme: analysis.documents.find(doc => doc.path.toLowerCase().includes('readme')),
+            changelog: analysis.documents.find(doc => doc.path.toLowerCase().includes('changelog')),
+            userGuide: analysis.documents.find(doc => doc.path.toLowerCase().includes('guide')),
+            primaryDocs: analysis.documents.filter(doc =>
+                ['readme', 'changelog', 'guide'].some(type => doc.path.toLowerCase().includes(type))
+            )
+        } : undefined;
+
+        // 3. 选择最相关的文档
+        const selectedFiles = await this.selectRelevantDocuments(
+            analysis.documents,
+            strategy,
+            maxTokens,
+            analysisStrategy
+        );
+
+        // 4. 计算总Token数
+        const totalTokens = selectedFiles.reduce((sum, file) => sum + file.tokenCount, 0);
+
+        // 5. 生成选择原因
+        const selectionReason = this.generateSelectionReason(taskType, selectedFiles, strategy);
+
+        return {
+            structured,
+            semiStructured,
+            selectedFiles,
+            totalTokens,
+            selectionReason,
+            strategy: strategy,
+            appliedLimits: {
+                maxTokens,
+                actualTokens: totalTokens,
+                documentCount: selectedFiles.length
+            }
+        };
+    }
+
+    /**
+     * 选择相关文档的核心算法
+     */
+    private async selectRelevantDocuments(
+        documents: MarkdownDocument[],
+        strategy: ContextSelectionStrategy,
+        maxTokens: number,
+        analysisStrategy: 'minimal' | 'balanced' | 'comprehensive'
+    ): Promise<MarkdownFile[]> {
+        // 转换文档格式
+        const markdownFiles: MarkdownFile[] = documents.map(doc => ({
+            path: doc.path,
+            content: doc.content,
+            tokenCount: doc.tokenCount || 0,
+            priority: 0,
+            category: this.categorizeDocument(doc.path),
+            lastModified: new Date(),
+            size: doc.content.length
+        }));
+
+        // 应用优先级权重
+        markdownFiles.forEach(file => {
+            file.priority = strategy.priorityWeights[file.category] || 0.1;
+
+            // 根据分析策略调整优先级
+            if (analysisStrategy === 'comprehensive') {
+                file.priority *= 1.2;
+            } else if (analysisStrategy === 'minimal') {
+                file.priority *= 0.8;
+            }
+        });
+
+        // 按优先级排序
+        markdownFiles.sort((a, b) => b.priority - a.priority);
+
+        // 选择文档直到达到Token限制
+        const selectedFiles: MarkdownFile[] = [];
+        let currentTokens = 0;
+
+        for (const file of markdownFiles) {
+            if (currentTokens + file.tokenCount <= maxTokens) {
+                selectedFiles.push(file);
+                currentTokens += file.tokenCount;
+            } else if (selectedFiles.length === 0) {
+                // 如果第一个文档就超过限制，截断它
+                const truncatedFile = { ...file };
+                const ratio = maxTokens / file.tokenCount;
+                truncatedFile.content = file.content.substring(0, Math.floor(file.content.length * ratio));
+                truncatedFile.tokenCount = maxTokens;
+                selectedFiles.push(truncatedFile);
+                break;
+            }
+        }
+
+        return selectedFiles;
+    }
+
+    /**
+     * 生成选择原因说明
+     */
+    private generateSelectionReason(
+        taskType: AITaskType,
+        selectedFiles: MarkdownFile[],
+        strategy: ContextSelectionStrategy
+    ): string {
+        const categories = selectedFiles.map(f => f.category);
+        const uniqueCategories = [...new Set(categories)];
+
+        return `Selected ${selectedFiles.length} documents for ${taskType} task. ` +
+               `Categories included: ${uniqueCategories.join(', ')}. ` +
+               `Total tokens: ${selectedFiles.reduce((sum, f) => sum + f.tokenCount, 0)}. ` +
+               `Strategy: prioritized ${strategy.requiredCategories.join(', ')} as required categories.`;
     }
 }

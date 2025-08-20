@@ -20,11 +20,14 @@ export interface GeneratedContent {
 }
 
 export interface ContentGenerationOptions {
-    tone: 'professional' | 'casual' | 'technical' | 'friendly';
-    includeCodeExamples: boolean;
-    targetMarkets: string[];
-    seoOptimization: boolean;
-    language: string;
+    tone?: 'professional' | 'casual' | 'technical' | 'friendly';
+    includeCodeExamples?: boolean;
+    targetMarkets?: string[];
+    seoOptimization?: boolean;
+    language?: string;
+    audience?: string;
+    optimizationStrategy?: 'concise' | 'detailed' | 'creative';
+    version?: string;
 }
 
 export class MarketingContentGenerator {
@@ -334,7 +337,7 @@ Please check the configuration and try again.`;
             description: analysis.metadata.description || 'An innovative software project',
             keywords: analysis.techStack.map(t => t.language).slice(0, 10),
             author: analysis.metadata.author || 'Developer',
-            language: options.language
+            language: options.language || 'en'
         };
     }
 

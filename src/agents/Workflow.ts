@@ -156,7 +156,7 @@ export class LumosGenWorkflow {
 
             // 执行项目分析
             const strategy = options?.customStrategy || this.config.contextStrategy;
-            const projectAnalysis = await this.analyzer.analyzeProjectEnhanced(strategy);
+            const projectAnalysis = await this.analyzer.analyzeProject();
 
             // 设置全局状态
             const globalState = {
