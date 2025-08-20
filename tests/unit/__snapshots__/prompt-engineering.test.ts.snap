@@ -1,0 +1,12 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Prompt Engineering Unit Tests > Vitest特有功能 > 应该支持快照测试 1`] = `
+{
+  "containsFeatures": true,
+  "containsProjectName": true,
+  "containsTechStack": true,
+  "hasOptimization": true,
+  "promptLength": 578,
+  "templateUsed": "homepage",
+}
+`;
