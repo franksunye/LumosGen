@@ -1,0 +1,25 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Content Generator Unit Tests > Vitest特有功能 > 应该支持快照测试 1`] = `
+{
+  "metadataKeys": [
+    "keywords",
+    "description",
+    "author",
+    "generated",
+  ],
+  "sections": [
+    "hero",
+    "features",
+    "cta",
+  ],
+  "statsKeys": [
+    "wordCount",
+    "readingTime",
+    "tokens",
+    "cost",
+  ],
+  "title": "awesome-library - An awesome JavaScript library for developers",
+  "type": "homepage",
+}
+`;
