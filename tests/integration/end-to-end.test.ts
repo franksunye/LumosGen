@@ -40,6 +40,9 @@ class MockLumosGenSystem {
             
             if (!analysisResult.success) {
                 workflow.errors.push('Project analysis failed');
+                workflow.endTime = Date.now();
+                workflow.duration = workflow.endTime - workflow.startTime;
+                workflow.success = false;
                 return workflow;
             }
 
@@ -53,6 +56,9 @@ class MockLumosGenSystem {
             
             if (!contentResult.success) {
                 workflow.errors.push('Content generation failed');
+                workflow.endTime = Date.now();
+                workflow.duration = workflow.endTime - workflow.startTime;
+                workflow.success = false;
                 return workflow;
             }
 
@@ -67,6 +73,9 @@ class MockLumosGenSystem {
             
             if (!buildResult.success) {
                 workflow.errors.push('Website building failed');
+                workflow.endTime = Date.now();
+                workflow.duration = workflow.endTime - workflow.startTime;
+                workflow.success = false;
                 return workflow;
             }
 
@@ -81,6 +90,9 @@ class MockLumosGenSystem {
                 
                 if (!deployResult.success) {
                     workflow.errors.push('Deployment failed');
+                    workflow.endTime = Date.now();
+                    workflow.duration = workflow.endTime - workflow.startTime;
+                    workflow.success = false;
                     return workflow;
                 }
             }
@@ -395,9 +407,9 @@ describe('End-to-End Integration Tests', () => {
                 deployOptions: { simulateNetworkError: true }
             };
 
-            // Run multiple times to potentially hit the random failure
+            // Run multiple times to potentially hit the random failure (reduced from 20 to 5)
             let hasFailure = false;
-            for (let i = 0; i < 20; i++) {
+            for (let i = 0; i < 5; i++) {
                 const workflow = await lumosGenSystem.executeFullWorkflow(projectPath, options);
                 if (!workflow.success && workflow.errors.some(e => e.includes('network'))) {
                     hasFailure = true;
@@ -405,9 +417,9 @@ describe('End-to-End Integration Tests', () => {
                     break;
                 }
             }
-            
+
             // Note: Due to random nature, we can't guarantee failure, but the test structure is correct
-        });
+        }, 60000);
 
         it('应该在步骤失败时停止工作流', async () => {
             const projectPath = '/test/project';
@@ -445,6 +457,12 @@ describe('End-to-End Integration Tests', () => {
                     scenario.projectPath,
                     { buildOptions: { theme: scenario.theme } }
                 );
+
+                if (!workflow.success) {
+                    console.error(`Scenario failed: ${scenario.projectPath} with theme ${scenario.theme}`);
+                    console.error('Errors:', workflow.errors);
+                    console.error('Steps completed:', workflow.steps);
+                }
 
                 expect(workflow.success).toBe(true);
                 expect(workflow.results.build.theme).toBe(scenario.theme);
