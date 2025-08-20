@@ -1,0 +1,12 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Agent System Unit Tests > Vitest特有功能 > 应该支持快照测试 1`] = `
+{
+  "hasAnalysisResult": true,
+  "hasBuildResult": true,
+  "hasGenerationResult": false,
+  "resultCount": 3,
+  "success": true,
+  "tasksCompleted": 3,
+}
+`;
