@@ -26,7 +26,13 @@ vi.mock('path', async () => {
   const actual = await vi.importActual('path')
   return {
     ...actual,
-    join: vi.fn((...args: string[]) => args.join('/'))
+    join: vi.fn((...args: string[]) => {
+      // Handle __dirname paths specially
+      if (args.some(arg => arg && arg.includes('templates'))) {
+        return '/mock/templates/assets/favicon.ico'
+      }
+      return args.filter(arg => arg).join('/')
+    })
   }
 })
 
@@ -58,25 +64,28 @@ vi.mock('vscode', () => mockVscode)
 // Mock website builder dependencies
 vi.mock('@/website/TemplateEngine', () => ({
   TemplateEngine: vi.fn().mockImplementation(() => ({
-    mergeThemeConfig: vi.fn((theme: string, config: any) => ({
-      theme,
-      primaryColor: theme === 'technical' ? '#10B981' : '#3B82F6',
-      fontFamily: 'Inter, system-ui, sans-serif',
-      borderRadius: '0.5rem',
-      ...config
-    })),
-    renderPage: vi.fn((data: any) => Promise.resolve(`
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>${data.title}</title>
-        <link rel="stylesheet" href="styles.css">
-      </head>
-      <body>
-        <div class="content">${data.content}</div>
-      </body>
-      </html>
-    `)),
+    mergeThemeConfig: vi.fn((theme: string, config: any) => {
+      // This should return a ThemeConfig object that matches the expected structure
+      return {
+        primaryColor: theme === 'technical' ? '#10B981' : '#3B82F6',
+        secondaryColor: '#64748b',
+        fontFamily: 'Inter, system-ui, sans-serif',
+        headingFont: 'Inter, system-ui, sans-serif',
+        borderRadius: '0.5rem',
+        customProperties: {},
+        ...config
+      }
+    }),
+    renderPage: vi.fn((data: any) => Promise.resolve(`<!DOCTYPE html>
+<html>
+<head>
+  <title>${data.title || 'Test Project'}</title>
+  <link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+  <div class="content">${data.content || 'test homepage content'}</div>
+</body>
+</html>`)),
     getAvailableThemes: vi.fn(() => ['modern', 'technical']),
     getThemeMetadata: vi.fn((theme: string) => ({
       name: theme.charAt(0).toUpperCase() + theme.slice(1),
@@ -91,8 +100,15 @@ vi.mock('@/website/TemplateEngine', () => ({
         body: { default: 'Inter', options: ['Inter', 'Arial'] }
       }
     })),
-    generateCSS: vi.fn(() => Promise.resolve('body { margin: 0; }')),
-    generateJS: vi.fn(() => Promise.resolve('console.log("Generated JS");'))
+    generateCSS: vi.fn((config: any) => Promise.resolve(`/* Generated CSS for ${config.theme} theme */
+body {
+  margin: 0;
+  font-family: ${config.fontFamily || 'Arial'};
+  color: ${config.primaryColor || '#000000'};
+}`)),
+    generateJS: vi.fn((config: any) => Promise.resolve(`// Generated JS for ${config.theme} theme
+console.log("Website loaded with theme: ${config.theme}");
+${config.enableAnalytics ? 'console.log("Analytics enabled");' : ''}`))
   }))
 }))
 
@@ -128,13 +144,13 @@ describe('WebsiteBuilder', () => {
   beforeEach(async () => {
     // Reset all mocks
     vi.clearAllMocks()
-    
+
     // Get mocked fs
     mockFs = await import('fs')
-    
+
     // Set up mock file system
     setupMockFileSystem()
-    
+
     // Create new instance
     websiteBuilder = new WebsiteBuilder(mockOutputChannel)
     
@@ -158,7 +174,14 @@ describe('WebsiteBuilder', () => {
   })
 
   function setupMockFileSystem() {
-    mockFs.existsSync.mockReturnValue(true)
+    // Mock fs.existsSync to return false for directories (so mkdir gets called)
+    // but true for favicon.ico (so copyFile gets called)
+    mockFs.existsSync.mockImplementation((path: string) => {
+      if (!path || typeof path !== 'string') return false
+      if (path.includes('favicon.ico')) return true
+      return false // Directories don't exist, need to create them
+    })
+
     mockFs.promises.mkdir.mockResolvedValue(undefined)
     mockFs.promises.writeFile.mockResolvedValue(undefined)
     mockFs.promises.readFile.mockResolvedValue('mock file content')
@@ -186,6 +209,12 @@ describe('WebsiteBuilder', () => {
       }
 
       const result = await websiteBuilder.buildWebsite(mockContent, mockAnalysis)
+
+      // Debug: log the result to see what's happening
+      if (!result.success) {
+        console.log('Build failed with errors:', result.errors)
+        console.log('Result:', result)
+      }
 
       expect(result.success).toBe(true)
       expect(result.outputPath).toContain('lumosgen-website')
@@ -248,6 +277,11 @@ describe('WebsiteBuilder', () => {
       }
 
       const result = await websiteBuilder.buildWebsite(mockContent, mockAnalysis, config)
+
+      // Debug: log the result to see what's happening
+      if (!result.success) {
+        console.log('Build failed with errors:', result.errors)
+      }
 
       expect(result.success).toBe(true)
       // The theme should be applied through the template engine
