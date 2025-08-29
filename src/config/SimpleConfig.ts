@@ -25,8 +25,8 @@ export function getAIServiceConfig(): AIServiceConfig {
     const aiService = config.get('aiService', {}) as any;
 
     // Legacy support for old configuration format
-    const legacyApiKey = config.get('openai.apiKey') || aiService.apiKey;
-    const legacyModel = aiService.model || 'gpt-4o-mini';
+    const legacyApiKey = config.get('openai.apiKey') || (aiService && aiService.apiKey);
+    const legacyModel = (aiService && aiService.model) || 'gpt-4o-mini';
 
     // Determine primary provider based on configuration
     let primaryProvider: AIProviderConfig;

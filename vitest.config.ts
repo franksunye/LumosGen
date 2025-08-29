@@ -35,8 +35,13 @@ export default defineConfig({
       exclude: [
         'src/**/*.d.ts',
         'src/**/*.test.{js,ts}',
-        'src/**/*.spec.{js,ts}'
+        'src/**/*.spec.{js,ts}',
+        'node_modules/**',
+        'tests/**',
+        'out/**'
       ],
+      all: true,
+      clean: true,
       thresholds: {
         global: {
           branches: 80,

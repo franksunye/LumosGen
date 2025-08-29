@@ -67,14 +67,9 @@ describe('SimpleConfig Unit Tests', () => {
     // 设置默认配置
     setupDefaultConfig(mockConfiguration)
     
-    // 动态导入SimpleConfig（在Mock之后）
-    try {
-      const module = await import('../../out/config/SimpleConfig')
-      SimpleConfig = module.default || module
-    } catch (error) {
-      // 如果编译的文件不存在，创建一个Mock版本用于测试
-      SimpleConfig = createMockSimpleConfig()
-    }
+    // 直接导入TypeScript源码（确保覆盖率正确收集）
+    const module = await import('../../src/config/SimpleConfig')
+    SimpleConfig = module.default || module
   })
 
   const setupDefaultConfig = (config: MockConfiguration) => {
