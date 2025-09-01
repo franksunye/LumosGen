@@ -11,7 +11,7 @@ import fs from 'fs'
 
 // 导入VS Code Mock和真实源码
 import { setupVSCodeMock, defaultTestConfig } from '../mocks/vscode-mock'
-import { ContextEngineering } from '../../src/analysis/ContextEngineering'
+import { ContextEngine } from '../../src/analysis/ContextEngineering'
 import { ContextSelector } from '../../src/analysis/ContextSelector'
 
 // Mock VS Code API
@@ -628,7 +628,7 @@ describe('Context Engineering Unit Tests', () => {
 
   // 新增：真实上下文工程集成测试
   describe('真实上下文工程集成测试', () => {
-    let contextEngineering: ContextEngineering
+    let contextEngine: ContextEngine
     let contextSelector: ContextSelector
 
     beforeEach(() => {
@@ -636,13 +636,18 @@ describe('Context Engineering Unit Tests', () => {
       setupVSCodeMock(defaultTestConfig)
 
       // 创建真实的上下文工程实例
-      contextEngineering = new ContextEngineering()
+      const mockOutputChannel = {
+        appendLine: vi.fn(),
+        show: vi.fn(),
+        clear: vi.fn()
+      }
+      contextEngine = new ContextEngine('/test/workspace', mockOutputChannel as any)
       contextSelector = new ContextSelector()
     })
 
     it('应该正确初始化上下文工程', () => {
-      expect(contextEngineering).toBeDefined()
-      expect(typeof contextEngineering.analyzeContext).toBe('function')
+      expect(contextEngine).toBeDefined()
+      expect(typeof contextEngine.analyzeProject).toBe('function')
     })
 
     it('应该正确初始化上下文选择器', () => {
@@ -651,34 +656,54 @@ describe('Context Engineering Unit Tests', () => {
     })
 
     it('应该能够分析项目上下文', async () => {
-      const projectPath = '/test/project'
-      const context = await contextEngineering.analyzeContext(projectPath)
-      expect(context).toBeDefined()
-      expect(typeof context).toBe('object')
+      const result = await contextEngine.analyzeProject()
+      expect(result).toBeDefined()
+      expect(typeof result).toBe('object')
+      expect(result.analysis).toBeDefined()
+      expect(result.selectedContext).toBeDefined()
     })
 
     it('应该能够选择相关上下文', () => {
-      const files = ['file1.ts', 'file2.ts', 'file3.js']
-      const query = 'TypeScript functions'
-      const selected = contextSelector.selectContext(files, query)
-      expect(Array.isArray(selected)).toBe(true)
+      const mockAnalysis = {
+        metadata: { name: 'test' },
+        structure: { totalFiles: 3 },
+        techStack: [],
+        features: [],
+        documents: [],
+        dependencies: [],
+        scripts: []
+      }
+      const selected = contextSelector.selectContext(mockAnalysis, 'marketing-content')
+      expect(selected).toBeDefined()
+      expect(typeof selected).toBe('object')
     })
 
-    it('应该能够获取上下文统计', () => {
-      const stats = contextEngineering.getContextStats()
-      expect(stats).toBeDefined()
-      expect(typeof stats).toBe('object')
+    it('应该能够获取上下文统计', async () => {
+      const result = await contextEngine.analyzeProject()
+      expect(result.performance).toBeDefined()
+      expect(typeof result.performance).toBe('object')
+      expect(result.performance.analysisTime).toBeGreaterThanOrEqual(0)
     })
 
     it('应该能够优化上下文选择', () => {
-      const context = {
-        files: ['file1.ts', 'file2.ts'],
+      const mockAnalysis = {
+        metadata: { name: 'test' },
+        structure: { totalFiles: 2 },
+        techStack: ['typescript'],
+        features: [],
+        documents: [],
         dependencies: ['dep1', 'dep2'],
-        metadata: { type: 'typescript' }
+        scripts: []
       }
-      const optimized = contextSelector.optimizeContext(context)
-      expect(optimized).toBeDefined()
-      expect(typeof optimized).toBe('object')
+      // 测试上下文选择功能存在
+      expect(typeof contextSelector.selectContext).toBe('function')
+      // 使用有效的taskType 'general' 而不是 'optimization'
+      const selected = contextSelector.selectContext(mockAnalysis, 'general')
+      expect(selected).toBeDefined()
+      expect(typeof selected).toBe('object')
+      expect(selected.strategy).toBeDefined()
+      expect(selected.strategy.maxTokens).toBeDefined()
+      expect(selected.totalTokens).toBeDefined()
     })
   })
 })

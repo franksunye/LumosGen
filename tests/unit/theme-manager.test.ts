@@ -345,7 +345,7 @@ describe('ThemeManager', () => {
         templates: {}
       }
 
-      const isValid = themeManager.validateTheme(validTheme)
+      const isValid = themeManager.validateThemeData(validTheme)
       expect(typeof isValid).toBe('boolean')
     })
 

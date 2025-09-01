@@ -33,16 +33,16 @@ export function getAIServiceConfig(): AIServiceConfig {
     let fallbackProvider: AIProviderConfig | undefined;
 
     // Check if DeepSeek is configured
-    const deepseekApiKey = aiService.deepseekApiKey || aiService.apiKey;
-    const openaiApiKey = aiService.openaiApiKey || legacyApiKey;
+    const deepseekApiKey = aiService?.deepseekApiKey || aiService?.apiKey;
+    const openaiApiKey = aiService?.openaiApiKey || legacyApiKey;
 
     if (deepseekApiKey && deepseekApiKey !== '' && deepseekApiKey !== 'mock') {
         // DeepSeek as primary
         primaryProvider = {
             type: 'deepseek',
             apiKey: deepseekApiKey,
-            endpoint: aiService.deepseekEndpoint || 'https://api.deepseek.com',
-            model: aiService.deepseekModel || 'deepseek-chat',
+            endpoint: aiService?.deepseekEndpoint || 'https://api.deepseek.com',
+            model: aiService?.deepseekModel || 'deepseek-chat',
             enabled: true
         };
 
@@ -51,8 +51,8 @@ export function getAIServiceConfig(): AIServiceConfig {
             fallbackProvider = {
                 type: 'openai',
                 apiKey: openaiApiKey,
-                endpoint: aiService.openaiEndpoint || 'https://api.openai.com/v1',
-                model: aiService.openaiModel || legacyModel,
+                endpoint: aiService?.openaiEndpoint || 'https://api.openai.com/v1',
+                model: aiService?.openaiModel || legacyModel,
                 enabled: true
             };
         }
@@ -61,8 +61,8 @@ export function getAIServiceConfig(): AIServiceConfig {
         primaryProvider = {
             type: 'openai',
             apiKey: openaiApiKey,
-            endpoint: aiService.openaiEndpoint || aiService.endpoint || 'https://api.openai.com/v1',
-            model: aiService.openaiModel || legacyModel,
+            endpoint: aiService?.openaiEndpoint || aiService?.endpoint || 'https://api.openai.com/v1',
+            model: aiService?.openaiModel || legacyModel,
             enabled: true
         };
     } else {

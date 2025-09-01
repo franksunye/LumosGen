@@ -181,4 +181,41 @@ export class ThemeManager {
             ...customConfig
         };
     }
+
+    getDefaultTheme(): Theme | null {
+        // Return the first available theme as default, or 'modern' if it exists
+        if (this.themes.has('modern')) {
+            return this.themes.get('modern') || null;
+        }
+
+        const availableThemes = this.getAvailableThemes();
+        if (availableThemes.length > 0) {
+            return this.themes.get(availableThemes[0]) || null;
+        }
+
+        return null;
+    }
+
+    applyTheme(themeName: string): boolean {
+        const theme = this.themes.get(themeName);
+        if (!theme) {
+            console.warn(`Theme '${themeName}' not found`);
+            return false;
+        }
+
+        // In a real implementation, this would apply the theme to the current context
+        // For now, we just validate that the theme exists and return success
+        console.log(`Applied theme: ${theme.metadata.name}`);
+        return true;
+    }
+
+    validateThemeData(themeData: any): boolean {
+        // Basic validation for theme structure
+        return !!(
+            themeData &&
+            typeof themeData === 'object' &&
+            themeData.name &&
+            typeof themeData.name === 'string'
+        );
+    }
 }

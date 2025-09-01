@@ -243,10 +243,8 @@ class MockDeployer {
             return { success: false, error: 'No website path provided' };
         }
 
-        // Simulate occasional deployment failures
-        if (Math.random() < 0.1) { // 10% failure rate
-            return { success: false, error: 'Deployment failed due to network issues' };
-        }
+        // For testing purposes, we'll make deployment always succeed
+        // unless explicitly testing failure scenarios
 
         return {
             success: true,

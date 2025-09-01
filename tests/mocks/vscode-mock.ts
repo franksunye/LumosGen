@@ -108,7 +108,24 @@ export function createMockWindow(): MockWindow {
       hide: vi.fn(),
       dispose: vi.fn()
     })),
-    createWebviewPanel: vi.fn(),
+    createWebviewPanel: vi.fn((viewType: string, title: string, showOptions: any, options?: any) => ({
+      viewType,
+      title,
+      webview: {
+        html: '',
+        options: options || {},
+        onDidReceiveMessage: vi.fn(),
+        postMessage: vi.fn(),
+        asWebviewUri: vi.fn((uri: any) => uri),
+        cspSource: 'vscode-webview:'
+      },
+      onDidDispose: vi.fn(),
+      onDidChangeViewState: vi.fn(),
+      reveal: vi.fn(),
+      dispose: vi.fn(),
+      visible: true,
+      active: true
+    })),
     withProgress: vi.fn((options, task) => task({ report: vi.fn() }))
   }
 }
@@ -154,7 +171,11 @@ export function createVSCodeMock(config: Record<string, any> = {}) {
     commands: mockCommands,
     Uri: {
       file: vi.fn((path: string) => ({ fsPath: path, scheme: 'file' })),
-      parse: vi.fn((uri: string) => ({ fsPath: uri, scheme: 'file' }))
+      parse: vi.fn((uri: string) => ({ fsPath: uri, scheme: 'file' })),
+      joinPath: vi.fn((base: any, ...pathSegments: string[]) => ({
+        fsPath: `${base.fsPath}/${pathSegments.join('/')}`,
+        scheme: base.scheme || 'file'
+      }))
     },
     Range: vi.fn(),
     Position: vi.fn(),
