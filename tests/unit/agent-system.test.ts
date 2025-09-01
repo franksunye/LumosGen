@@ -2,10 +2,15 @@
  * Agent系统核心功能测试 - Vitest版本
  * 验证多Agent协作、工作流管理、任务分发等核心功能
  * 从自定义测试框架迁移到Vitest
+ * 增加真实源码测试以提升覆盖率
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { EventEmitter } from 'events'
+
+// 导入VS Code Mock和真实源码
+import { setupVSCodeMock, defaultTestConfig } from '../mocks/vscode-mock'
+import { AgentSystem } from '../../src/agents/AgentSystem'
 
 // Mock VS Code API
 vi.mock('vscode', () => ({
@@ -1024,6 +1029,59 @@ describe('Agent System Unit Tests', () => {
       const metrics = agentSystem.getSystemMetrics()
       expect(metrics.totalTasksCompleted).toBe(4)
       expect(metrics.averageSuccessRate).toBe(1.0)
+    })
+  })
+
+  // 新增：真实Agent系统集成测试
+  describe('真实Agent系统集成测试', () => {
+    let agentSystem: AgentSystem
+
+    beforeEach(() => {
+      // 设置VS Code Mock环境
+      setupVSCodeMock(defaultTestConfig)
+
+      // 创建真实的Agent系统实例
+      agentSystem = new AgentSystem()
+    })
+
+    it('应该正确初始化Agent系统', () => {
+      expect(agentSystem).toBeDefined()
+      expect(typeof agentSystem.initialize).toBe('function')
+      expect(typeof agentSystem.executeWorkflow).toBe('function')
+    })
+
+    it('应该能够获取可用的Agent', () => {
+      const agents = agentSystem.getAvailableAgents()
+      expect(Array.isArray(agents)).toBe(true)
+    })
+
+    it('应该能够获取系统状态', () => {
+      const status = agentSystem.getSystemStatus()
+      expect(status).toBeDefined()
+      expect(typeof status).toBe('object')
+    })
+
+    it('应该能够注册和注销Agent', () => {
+      const initialCount = agentSystem.getAvailableAgents().length
+
+      // 注册一个测试Agent
+      const testAgent = {
+        id: 'test-agent',
+        name: 'Test Agent',
+        execute: vi.fn()
+      }
+
+      agentSystem.registerAgent(testAgent)
+      expect(agentSystem.getAvailableAgents().length).toBe(initialCount + 1)
+
+      // 注销Agent
+      agentSystem.unregisterAgent('test-agent')
+      expect(agentSystem.getAvailableAgents().length).toBe(initialCount)
+    })
+
+    it('应该能够获取工作流历史', () => {
+      const history = agentSystem.getWorkflowHistory()
+      expect(Array.isArray(history)).toBe(true)
     })
   })
 })

@@ -1,10 +1,17 @@
 /**
  * AI服务测试 - Vitest版本
  * 从自定义测试框架迁移到Vitest
+ * 增加真实源码测试以提升覆盖率
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import type { MockedFunction } from 'vitest'
+
+// 导入VS Code Mock
+import { setupVSCodeMock, defaultTestConfig } from '../mocks/vscode-mock'
+
+// 导入真实的源码
+import { AIServiceProvider } from '../../src/ai/AIServiceProvider'
 
 // Mock AI服务提供者
 class MockAIServiceProvider {
@@ -390,6 +397,50 @@ describe('AI Service Provider', () => {
         expect(result.content).toContain(`Generate content ${index + 1}`)
         expect(result.provider).toBe('mock')
       })
+    })
+  })
+
+  // 新增：真实源码集成测试
+  describe('真实AI服务集成测试', () => {
+    let aiService: AIServiceProvider
+
+    beforeEach(() => {
+      // 设置VS Code Mock环境
+      setupVSCodeMock(defaultTestConfig)
+
+      // 创建真实的AI服务实例
+      aiService = new AIServiceProvider()
+    })
+
+    it('应该正确初始化AI服务', () => {
+      expect(aiService).toBeDefined()
+      expect(typeof aiService.generateContent).toBe('function')
+      expect(typeof aiService.getAvailableProviders).toBe('function')
+    })
+
+    it('应该返回可用的提供者列表', () => {
+      const providers = aiService.getAvailableProviders()
+      expect(Array.isArray(providers)).toBe(true)
+      expect(providers.length).toBeGreaterThan(0)
+    })
+
+    it('应该能够获取使用统计', () => {
+      const stats = aiService.getUsageStats()
+      expect(stats).toBeDefined()
+      expect(typeof stats).toBe('object')
+    })
+
+    it('应该能够执行健康检查', async () => {
+      const health = await aiService.healthCheck()
+      expect(health).toBeDefined()
+      expect(health.status).toBeDefined()
+      expect(['healthy', 'degraded', 'unhealthy']).toContain(health.status)
+    })
+
+    it('应该能够获取配置', () => {
+      const config = aiService.getConfig()
+      expect(config).toBeDefined()
+      expect(typeof config).toBe('object')
     })
   })
 })

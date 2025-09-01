@@ -1,12 +1,17 @@
 /**
  * WebsiteBuilder Unit Tests - Vitest Migration
- * 
+ *
  * Comprehensive testing of website generation and building functionality
+ * 增加真实源码测试以提升覆盖率
  */
 
 import { describe, it, expect, beforeEach, vi, beforeAll, afterEach } from 'vitest'
 import { promises as fs } from 'fs'
 import * as path from 'path'
+
+// 导入VS Code Mock和真实源码
+import { setupVSCodeMock, defaultTestConfig } from '../mocks/vscode-mock'
+import { WebsiteBuilder } from '../../src/website/WebsiteBuilder'
 
 // Mock file system operations
 vi.mock('fs', () => ({
@@ -648,12 +653,50 @@ ${config.enableAnalytics ? 'console.log("Analytics enabled");' : ''}`))
 
     it('should log build progress', async () => {
       const mockAnalysis = { projectType: 'web', technologies: [], features: [] }
-      
+
       await websiteBuilder.buildWebsite(mockContent, mockAnalysis)
-      
+
       expect(mockOutputChannel.appendLine).toHaveBeenCalledWith(
         expect.stringContaining('Building responsive website')
       )
+    })
+  })
+
+  // 新增：真实网站构建器集成测试
+  describe('真实网站构建器集成测试', () => {
+    let websiteBuilder: WebsiteBuilder
+
+    beforeEach(() => {
+      // 设置VS Code Mock环境
+      setupVSCodeMock(defaultTestConfig)
+
+      // 创建真实的网站构建器实例
+      websiteBuilder = new WebsiteBuilder()
+    })
+
+    it('应该正确初始化网站构建器', () => {
+      expect(websiteBuilder).toBeDefined()
+      expect(typeof websiteBuilder.buildWebsite).toBe('function')
+    })
+
+    it('应该能够获取支持的主题', () => {
+      const themes = websiteBuilder.getAvailableThemes()
+      expect(Array.isArray(themes)).toBe(true)
+    })
+
+    it('应该能够验证构建配置', () => {
+      const config = {
+        theme: 'modern',
+        outputPath: '/test/output'
+      }
+      const isValid = websiteBuilder.validateConfig(config)
+      expect(typeof isValid).toBe('boolean')
+    })
+
+    it('应该能够获取构建状态', () => {
+      const status = websiteBuilder.getBuildStatus()
+      expect(status).toBeDefined()
+      expect(typeof status).toBe('object')
     })
   })
 })

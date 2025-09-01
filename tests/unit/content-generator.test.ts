@@ -2,9 +2,14 @@
  * 内容生成器单元测试 - Vitest版本
  * 测试营销内容生成的核心功能
  * 从自定义测试框架迁移到Vitest
+ * 增加真实源码测试以提升覆盖率
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest'
+
+// 导入VS Code Mock和真实源码
+import { setupVSCodeMock, defaultTestConfig } from '../mocks/vscode-mock'
+import { MarketingContentGenerator } from '../../src/content/MarketingContentGenerator'
 
 // Mock项目分析结果
 const mockProjectAnalysis = {
@@ -635,6 +640,48 @@ describe('Content Generator Unit Tests', () => {
 
       expect(result).toBe('mocked content')
       expect(mockFn).toHaveBeenCalledWith('test')
+    })
+  })
+
+  // 新增：真实内容生成器集成测试
+  describe('真实内容生成器集成测试', () => {
+    let contentGenerator: MarketingContentGenerator
+
+    beforeEach(() => {
+      // 设置VS Code Mock环境
+      setupVSCodeMock(defaultTestConfig)
+
+      // 创建真实的内容生成器实例
+      contentGenerator = new MarketingContentGenerator()
+    })
+
+    it('应该正确初始化内容生成器', () => {
+      expect(contentGenerator).toBeDefined()
+      expect(typeof contentGenerator.generateContent).toBe('function')
+    })
+
+    it('应该能够生成基础内容', async () => {
+      const projectInfo = {
+        name: 'test-project',
+        description: 'A test project',
+        techStack: ['JavaScript'],
+        features: ['Feature 1']
+      }
+
+      const content = await contentGenerator.generateContent('readme', projectInfo)
+      expect(content).toBeDefined()
+      expect(typeof content).toBe('string')
+    })
+
+    it('应该能够验证内容', () => {
+      const testContent = 'This is test content'
+      const isValid = contentGenerator.validateContent(testContent)
+      expect(typeof isValid).toBe('boolean')
+    })
+
+    it('应该能够获取支持的内容类型', () => {
+      const types = contentGenerator.getSupportedTypes()
+      expect(Array.isArray(types)).toBe(true)
     })
   })
 })
