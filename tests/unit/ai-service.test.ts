@@ -408,8 +408,26 @@ describe('AI Service Provider', () => {
       // 设置VS Code Mock环境
       setupVSCodeMock(defaultTestConfig)
 
-      // 创建真实的AI服务实例
-      aiService = new AIServiceProvider()
+      // 创建真实的AI服务实例，使用Mock配置
+      const mockConfig = {
+        primary: {
+          type: 'mock',
+          apiKey: 'test-key',
+          model: 'test-model'
+        },
+        fallback: {
+          type: 'mock',
+          apiKey: 'test-key',
+          model: 'test-model'
+        },
+        degradationStrategy: ['mock'],
+        monitoring: {
+          enabled: true,
+          trackCosts: true,
+          trackUsage: true
+        }
+      }
+      aiService = new AIServiceProvider(mockConfig)
     })
 
     it('应该正确初始化AI服务', () => {

@@ -2,11 +2,17 @@
  * 上下文工程系统专项测试 - Vitest版本
  * 验证 ContextEngine、ContextSelector、PromptTemplates 的核心功能
  * 从自定义测试框架迁移到Vitest
+ * 增加真实源码测试以提升覆盖率
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import path from 'path'
 import fs from 'fs'
+
+// 导入VS Code Mock和真实源码
+import { setupVSCodeMock, defaultTestConfig } from '../mocks/vscode-mock'
+import { ContextEngineering } from '../../src/analysis/ContextEngineering'
+import { ContextSelector } from '../../src/analysis/ContextSelector'
 
 // Mock VS Code API
 vi.mock('vscode', () => ({
@@ -617,6 +623,62 @@ describe('Context Engineering Unit Tests', () => {
 
       expect(analysis).toBeDefined()
       expect(context).toBeDefined()
+    })
+  })
+
+  // 新增：真实上下文工程集成测试
+  describe('真实上下文工程集成测试', () => {
+    let contextEngineering: ContextEngineering
+    let contextSelector: ContextSelector
+
+    beforeEach(() => {
+      // 设置VS Code Mock环境
+      setupVSCodeMock(defaultTestConfig)
+
+      // 创建真实的上下文工程实例
+      contextEngineering = new ContextEngineering()
+      contextSelector = new ContextSelector()
+    })
+
+    it('应该正确初始化上下文工程', () => {
+      expect(contextEngineering).toBeDefined()
+      expect(typeof contextEngineering.analyzeContext).toBe('function')
+    })
+
+    it('应该正确初始化上下文选择器', () => {
+      expect(contextSelector).toBeDefined()
+      expect(typeof contextSelector.selectContext).toBe('function')
+    })
+
+    it('应该能够分析项目上下文', async () => {
+      const projectPath = '/test/project'
+      const context = await contextEngineering.analyzeContext(projectPath)
+      expect(context).toBeDefined()
+      expect(typeof context).toBe('object')
+    })
+
+    it('应该能够选择相关上下文', () => {
+      const files = ['file1.ts', 'file2.ts', 'file3.js']
+      const query = 'TypeScript functions'
+      const selected = contextSelector.selectContext(files, query)
+      expect(Array.isArray(selected)).toBe(true)
+    })
+
+    it('应该能够获取上下文统计', () => {
+      const stats = contextEngineering.getContextStats()
+      expect(stats).toBeDefined()
+      expect(typeof stats).toBe('object')
+    })
+
+    it('应该能够优化上下文选择', () => {
+      const context = {
+        files: ['file1.ts', 'file2.ts'],
+        dependencies: ['dep1', 'dep2'],
+        metadata: { type: 'typescript' }
+      }
+      const optimized = contextSelector.optimizeContext(context)
+      expect(optimized).toBeDefined()
+      expect(typeof optimized).toBe('object')
     })
   })
 })

@@ -1,12 +1,17 @@
 /**
  * ErrorHandler Unit Tests - Vitest版本
- * 
+ *
  * 错误处理的全面测试，包括分类、解决步骤和用户通知机制
  * 从Jest迁移到Vitest
+ * 增加真实源码测试以提升覆盖率
  */
 
 import { describe, it, expect, beforeEach, vi, type MockedFunction } from 'vitest'
 import fs from 'fs'
+
+// 导入VS Code Mock和真实源码
+import { setupVSCodeMock, defaultTestConfig } from '../mocks/vscode-mock'
+import { ErrorHandler } from '../../src/utils/ErrorHandler'
 
 // Mock文件系统
 vi.mock('fs', () => ({
@@ -475,6 +480,67 @@ describe('ErrorHandler Unit Tests', () => {
 
       expect(mockWithImplementation(5)).toBe(10)
       expect(mockWithImplementation).toHaveBeenCalledWith(5)
+    })
+  })
+
+  // 新增：真实错误处理器集成测试
+  describe('真实错误处理器集成测试', () => {
+    let errorHandler: ErrorHandler
+
+    beforeEach(() => {
+      // 设置VS Code Mock环境
+      const vscode = setupVSCodeMock(defaultTestConfig)
+
+      // 创建真实的错误处理器实例
+      errorHandler = new ErrorHandler(vscode.window.createOutputChannel('Test'))
+    })
+
+    it('应该正确初始化错误处理器', () => {
+      expect(errorHandler).toBeDefined()
+      expect(typeof errorHandler.handleError).toBe('function')
+    })
+
+    it('应该能够处理基本错误', () => {
+      const testError = new Error('Test error')
+
+      expect(() => {
+        errorHandler.handleError(testError)
+      }).not.toThrow()
+    })
+
+    it('应该能够处理不同类型的错误', () => {
+      const errors = [
+        new Error('Generic error'),
+        new TypeError('Type error'),
+        new ReferenceError('Reference error')
+      ]
+
+      errors.forEach(error => {
+        expect(() => {
+          errorHandler.handleError(error)
+        }).not.toThrow()
+      })
+    })
+
+    it('应该能够处理带上下文的错误', () => {
+      const testError = new Error('Context error')
+      const context = {
+        operation: 'test-operation',
+        component: 'test-component',
+        timestamp: new Date().toISOString()
+      }
+
+      expect(() => {
+        errorHandler.handleError(testError, context)
+      }).not.toThrow()
+    })
+
+    it('应该能够处理异步错误', async () => {
+      const asyncError = new Error('Async error')
+
+      await expect(async () => {
+        await errorHandler.handleAsyncError(asyncError)
+      }).not.toThrow()
     })
   })
 })

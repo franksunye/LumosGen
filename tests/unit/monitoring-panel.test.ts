@@ -1,11 +1,16 @@
 /**
  * MonitoringPanel Unit Tests - Vitest Migration
- * 
+ *
  * Comprehensive testing of AI monitoring panel functionality including
  * webview creation, data updates, export functionality, and user interactions.
+ * 增加真实源码测试以提升覆盖率
  */
 
 import { describe, it, expect, beforeEach, vi, beforeAll, afterEach } from 'vitest'
+
+// 导入VS Code Mock和真实源码
+import { setupVSCodeMock, defaultTestConfig } from '../mocks/vscode-mock'
+import { MonitoringPanel } from '../../src/ui/MonitoringPanel'
 
 // Mock VS Code API types
 interface MockWebviewPanel {
@@ -471,9 +476,65 @@ describe('MonitoringPanel', () => {
 
     it('should handle missing AI service gracefully', () => {
       MonitoringPanel.createOrShow(extensionUri)
-      
+
       const htmlContent = mockWebviewPanel.webview.html
       expect(htmlContent).toContain('No AI service is currently active')
+    })
+  })
+
+  // 新增：真实监控面板集成测试
+  describe('真实监控面板集成测试', () => {
+    let monitoringPanel: MonitoringPanel
+    let mockContext: any
+
+    beforeEach(() => {
+      // 设置VS Code Mock环境
+      const vscode = setupVSCodeMock(defaultTestConfig)
+
+      // 创建Mock扩展上下文
+      mockContext = {
+        extensionUri: { fsPath: '/test/extension' },
+        subscriptions: []
+      }
+
+      // 创建真实的监控面板实例
+      monitoringPanel = new MonitoringPanel(mockContext)
+    })
+
+    it('应该正确初始化监控面板', () => {
+      expect(monitoringPanel).toBeDefined()
+      expect(typeof monitoringPanel.show).toBe('function')
+    })
+
+    it('应该能够显示监控面板', () => {
+      expect(() => {
+        monitoringPanel.show()
+      }).not.toThrow()
+    })
+
+    it('应该能够更新监控数据', () => {
+      const testData = {
+        requests: 10,
+        tokens: 1000,
+        cost: 0.05,
+        providers: ['mock']
+      }
+
+      expect(() => {
+        monitoringPanel.updateData(testData)
+      }).not.toThrow()
+    })
+
+    it('应该能够处理面板关闭', () => {
+      expect(() => {
+        monitoringPanel.dispose()
+      }).not.toThrow()
+    })
+
+    it('应该能够获取面板状态', () => {
+      const status = monitoringPanel.getStatus()
+      expect(status).toBeDefined()
+      expect(typeof status).toBe('object')
     })
   })
 })

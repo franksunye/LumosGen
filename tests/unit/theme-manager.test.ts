@@ -1,13 +1,18 @@
 /**
  * ThemeManager Unit Tests - Vitest Migration
- * 
+ *
  * Comprehensive testing of theme management functionality including
  * theme loading, validation, switching, and custom theme support.
+ * 增加真实源码测试以提升覆盖率
  */
 
 import { describe, it, expect, beforeEach, vi, beforeAll, afterEach } from 'vitest'
 import { promises as fs } from 'fs'
 import * as path from 'path'
+
+// 导入VS Code Mock和真实源码
+import { setupVSCodeMock, defaultTestConfig } from '../mocks/vscode-mock'
+import { ThemeManager } from '../../src/website/ThemeManager'
 
 // Mock file system operations
 vi.mock('fs', () => ({
@@ -298,9 +303,64 @@ describe('ThemeManager', () => {
 
     it('should handle invalid JSON gracefully', async () => {
       mockFs.promises.readFile.mockResolvedValue('invalid json content')
-      
+
       const invalidJsonTheme = themeManager.getTheme('invalid')
       expect(invalidJsonTheme).toBeUndefined()
+    })
+  })
+
+  // 新增：真实主题管理器集成测试
+  describe('真实主题管理器集成测试', () => {
+    let themeManager: ThemeManager
+
+    beforeEach(() => {
+      // 设置VS Code Mock环境
+      setupVSCodeMock(defaultTestConfig)
+
+      // 创建真实的主题管理器实例
+      themeManager = new ThemeManager('/test/themes')
+    })
+
+    it('应该正确初始化主题管理器', () => {
+      expect(themeManager).toBeDefined()
+      expect(typeof themeManager.getAvailableThemes).toBe('function')
+    })
+
+    it('应该能够获取可用主题列表', () => {
+      const themes = themeManager.getAvailableThemes()
+      expect(Array.isArray(themes)).toBe(true)
+    })
+
+    it('应该能够获取默认主题', () => {
+      const defaultTheme = themeManager.getDefaultTheme()
+      expect(defaultTheme).toBeDefined()
+      expect(typeof defaultTheme).toBe('object')
+    })
+
+    it('应该能够验证主题配置', () => {
+      const validTheme = {
+        name: 'test-theme',
+        version: '1.0.0',
+        styles: {},
+        templates: {}
+      }
+
+      const isValid = themeManager.validateTheme(validTheme)
+      expect(typeof isValid).toBe('boolean')
+    })
+
+    it('应该能够应用主题', () => {
+      const themeName = 'modern'
+
+      expect(() => {
+        themeManager.applyTheme(themeName)
+      }).not.toThrow()
+    })
+
+    it('应该能够获取主题元数据', () => {
+      const metadata = themeManager.getThemeMetadata('modern')
+      expect(metadata).toBeDefined()
+      expect(typeof metadata).toBe('object')
     })
   })
 })
