@@ -138,10 +138,11 @@ export class MonitoringPanel {
             return this.getNoServiceContent();
         }
 
-        const stats = this.aiService.getUsageStats();
-        const totalCost = this.aiService.getTotalCost();
-        const currentProvider = this.aiService.getCurrentProvider();
-        const availableProviders = this.aiService.getAvailableProviders();
+        try {
+            const stats = this.aiService.getUsageStats();
+            const totalCost = this.aiService.getTotalCost();
+            const currentProvider = this.aiService.getCurrentProvider();
+            const availableProviders = this.aiService.getAvailableProviders();
 
         return `<!DOCTYPE html>
 <html lang="en">
@@ -386,6 +387,10 @@ export class MonitoringPanel {
     </script>
 </body>
 </html>`;
+        } catch (error) {
+            console.error('Error generating monitoring content:', error);
+            return this.getErrorContent(error);
+        }
     }
 
     private getNoServiceContent(): string {
@@ -420,20 +425,80 @@ export class MonitoringPanel {
 </html>`;
     }
 
-    private getTodayCost(stats: { [key: string]: UsageStats }): number {
-        // This would need to be implemented with daily tracking
-        return Object.values(stats).reduce((total, stat) => total + stat.cost, 0) * 0.1; // Rough estimate
+    private getErrorContent(error: any): string {
+        return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LumosGen AI Monitoring - Error</title>
+    <style>
+        body {
+            font-family: var(--vscode-font-family);
+            color: var(--vscode-foreground);
+            background-color: var(--vscode-editor-background);
+            padding: 20px;
+            text-align: center;
+        }
+        .error {
+            margin-top: 50px;
+            font-size: 18px;
+            color: var(--vscode-errorForeground);
+        }
+        .error-details {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: var(--vscode-inputValidation-errorBackground);
+            border: 1px solid var(--vscode-inputValidation-errorBorder);
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 14px;
+            text-align: left;
+        }
+        .button {
+            margin-top: 20px;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            background-color: var(--vscode-button-background);
+            color: var(--vscode-button-foreground);
+            cursor: pointer;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="error">
+        <h2>⚠️ Monitoring Error</h2>
+        <p>An error occurred while loading monitoring data.</p>
+        <div class="error-details">
+            ${error?.message || 'Unknown error occurred'}
+        </div>
+        <button class="button" onclick="location.reload()">🔄 Retry</button>
+    </div>
+</body>
+</html>`;
     }
 
-    private getTotalRequests(stats: { [key: string]: UsageStats }): number {
+    private getTodayCost(stats: { [key: string]: DetailedUsageStats }): number {
+        const today = new Date().toISOString().split('T')[0];
+        return Object.values(stats).reduce((total, stat) => {
+            if (!stat || !stat.dailyUsage) {
+                return total;
+            }
+            return total + (stat.dailyUsage[today]?.cost || 0);
+        }, 0);
+    }
+
+    private getTotalRequests(stats: { [key: string]: DetailedUsageStats }): number {
         return Object.values(stats).reduce((total, stat) => total + stat.requests, 0);
     }
 
-    private getTotalTokens(stats: { [key: string]: UsageStats }): number {
+    private getTotalTokens(stats: { [key: string]: DetailedUsageStats }): number {
         return Object.values(stats).reduce((total, stat) => total + stat.tokens.total, 0);
     }
 
-    private getSuccessRate(stats: { [key: string]: UsageStats }): number {
+    private getSuccessRate(stats: { [key: string]: DetailedUsageStats }): number {
         const totalRequests = this.getTotalRequests(stats);
         const totalErrors = Object.values(stats).reduce((total, stat) => total + stat.errors, 0);
         return totalRequests > 0 ? ((totalRequests - totalErrors) / totalRequests) * 100 : 100;

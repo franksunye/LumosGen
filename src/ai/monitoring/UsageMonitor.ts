@@ -64,12 +64,12 @@ export class UsageMonitor {
     }
   }
 
-  recordRequest(provider: string, response: AIResponse, responseTime: number, error?: Error): void {
+  recordRequest(provider: string, response: AIResponse | null, responseTime: number, error?: Error): void {
     const stats = this.stats.get(provider);
     if (!stats) return;
 
     const today = new Date().toISOString().split('T')[0];
-    
+
     // Initialize daily stats if needed
     if (!stats.dailyUsage[today]) {
       stats.dailyUsage[today] = {
@@ -85,13 +85,13 @@ export class UsageMonitor {
     // Update main stats
     stats.requests++;
     stats.lastUsed = Date.now();
-    
+
     // Update daily stats
     const dailyStats = stats.dailyUsage[today];
     dailyStats.requests++;
     dailyStats.lastUsed = Date.now();
 
-    if (error) {
+    if (error || !response) {
       stats.errors++;
       dailyStats.errors++;
     } else {

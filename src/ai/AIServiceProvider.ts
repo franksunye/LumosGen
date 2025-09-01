@@ -5,6 +5,7 @@ import { AIProvider, AIRequest, AIResponse, AIServiceConfig, AIProviderConfig, U
 import { DeepSeekProvider } from './providers/DeepSeekProvider';
 import { OpenAIProvider } from './providers/OpenAIProvider';
 import { MockProvider } from './providers/MockProvider';
+import { UsageMonitor, DetailedUsageStats } from './monitoring/UsageMonitor';
 
 export class AIServiceProvider {
   private providers: Map<string, AIProvider> = new Map();
@@ -12,9 +13,11 @@ export class AIServiceProvider {
   private currentProvider: AIProvider | null = null;
   private degradationAttempts = 0;
   private maxDegradationAttempts = 3;
+  private usageMonitor: UsageMonitor;
 
   constructor(config: AIServiceConfig) {
     this.config = config;
+    this.usageMonitor = new UsageMonitor();
     this.initializeProviders();
   }
 
@@ -23,6 +26,8 @@ export class AIServiceProvider {
     this.providers.set('deepseek', new DeepSeekProvider());
     this.providers.set('openai', new OpenAIProvider());
     this.providers.set('mock', new MockProvider());
+
+    // UsageMonitor automatically initializes with these providers
   }
 
   async initialize(): Promise<void> {
@@ -71,58 +76,77 @@ export class AIServiceProvider {
 
   async generateContent(request: AIRequest): Promise<AIResponse> {
     this.degradationAttempts = 0;
-    
+
     for (const providerType of this.config.degradationStrategy) {
       const provider = this.providers.get(providerType);
-      
+
       if (!provider || !provider.isAvailable()) {
         console.log(`Provider ${providerType} is not available, trying next...`);
         continue;
       }
 
+      const startTime = Date.now();
       try {
         console.log(`Attempting content generation with ${providerType} provider...`);
         const response = await provider.generateContent(request);
-        
+        const responseTime = Date.now() - startTime;
+
+        // Record successful request in usage monitor
+        this.usageMonitor.recordRequest(providerType, response, responseTime);
+
         // Update current provider on success
         this.currentProvider = provider;
         this.degradationAttempts = 0;
-        
+
         console.log(`✅ Content generated successfully with ${providerType} provider`);
         return response;
-        
+
       } catch (error) {
+        const responseTime = Date.now() - startTime;
+        // Record failed request in usage monitor
+        this.usageMonitor.recordRequest(providerType, null, responseTime, error as Error);
+
         this.degradationAttempts++;
         console.warn(`❌ ${providerType} provider failed:`, error);
-        
+
         if (error instanceof AIServiceError && !error.retryable) {
           console.log(`Non-retryable error from ${providerType}, moving to next provider...`);
           continue;
         }
-        
+
         if (this.degradationAttempts >= this.maxDegradationAttempts) {
           console.log(`Max degradation attempts reached for ${providerType}, moving to next provider...`);
           continue;
         }
-        
+
         // For retryable errors, try the same provider once more
         if (error instanceof AIServiceError && error.retryable) {
           console.log(`Retrying ${providerType} provider...`);
+          const retryStartTime = Date.now();
           try {
             await new Promise(resolve => setTimeout(resolve, 1000)); // Brief delay
             const response = await provider.generateContent(request);
+            const retryResponseTime = Date.now() - retryStartTime;
+
+            // Record successful retry in usage monitor
+            this.usageMonitor.recordRequest(providerType, response, retryResponseTime);
+
             this.currentProvider = provider;
             this.degradationAttempts = 0;
             console.log(`✅ Content generated successfully with ${providerType} provider (retry)`);
             return response;
           } catch (retryError) {
+            const retryResponseTime = Date.now() - retryStartTime;
+            // Record failed retry in usage monitor
+            this.usageMonitor.recordRequest(providerType, null, retryResponseTime, retryError as Error);
+
             console.warn(`❌ ${providerType} provider retry failed:`, retryError);
             continue;
           }
         }
       }
     }
-    
+
     throw new AIServiceError(
       'All AI providers failed to generate content',
       'all',
@@ -154,24 +178,16 @@ export class AIServiceProvider {
     return results;
   }
 
-  getUsageStats(): { [key: string]: UsageStats } {
-    const stats: { [key: string]: UsageStats } = {};
-    
-    for (const [type, provider] of this.providers) {
-      stats[type] = provider.getUsageStats();
-    }
-    
-    return stats;
+  getUsageStats(): { [key: string]: DetailedUsageStats } {
+    return this.usageMonitor.getStats() as { [key: string]: DetailedUsageStats };
   }
 
   getTotalCost(): number {
-    let totalCost = 0;
-    
-    for (const provider of this.providers.values()) {
-      totalCost += provider.getUsageStats().cost;
-    }
-    
-    return totalCost;
+    return this.usageMonitor.getTotalCost();
+  }
+
+  getDailyCost(date?: string): number {
+    return this.usageMonitor.getDailyCost(date);
   }
 
   getCostEstimate(tokens: number, providerType?: string): number {
